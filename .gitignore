@@ -1,9 +1,19 @@
 node_modules
 .DS_Store
-.eve
 .env
 .env.*
 !.env.example
-dist
+
+# Eve / Nitro artifacts
+.eve
 .output
 .vercel
+
+# Next.js / Fumadocs artifacts
+.next
+out
+.source
+
+# Legacy build output
+dist
+docs/.vitepress/dist
