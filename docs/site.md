@@ -1,3 +1,8 @@
+---
+title: "本站点说明"
+description: "说明本站的 Next.js + Fumadocs 工程结构、本地预览和 GitHub Pages 部署方式。"
+---
+
 # 本站点说明
 
 本项目现在采用更接近 Vercel Eve 官方文档工程的路线：
