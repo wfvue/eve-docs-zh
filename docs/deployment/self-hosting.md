@@ -70,7 +70,7 @@ export default defineAgent({
 
 环境变量：
 
-```env
+```txt
 DEEPSEEK_API_KEY=sk-xxx
 DEEPSEEK_MODEL=deepseek-chat
 ```
@@ -81,7 +81,7 @@ DEEPSEEK_MODEL=deepseek-chat
 
 推荐自部署使用 Postgres World：
 
-```env
+```txt
 WORKFLOW_TARGET_WORLD="@workflow/world-postgres"
 WORKFLOW_POSTGRES_URL="postgres://user:password@postgres:5432/eve"
 ```
