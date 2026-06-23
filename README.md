@@ -4,6 +4,14 @@
 
 Eve 是 Vercel 推出的 filesystem-first durable AI agents 框架。它围绕 `agent/` 目录组织 `instructions`、`tools`、`skills`、`subagents`、`channels`、`schedules` 等能力，并结合 AI SDK、Workflow SDK、Sandbox 和 Nitro，提供可部署、可恢复、可观测的 Agent Runtime。
 
+## 项目定位
+
+本仓库是中文文档站，不是 Eve Agent Runtime 项目模板。
+
+- `docs/`：中文 Markdown / MDX 文档内容源；
+- `apps/docs/`：Next.js + Fumadocs 文档站应用；
+- 真正运行 Eve Agent 的业务项目，应直接按照 Eve 官方部署方式组织 `agent/`、`tools/`、`skills/` 和 runtime。
+
 ## 项目目标
 
 1. 用中文解释 eve.dev/docs 的核心概念。
@@ -11,6 +19,45 @@ Eve 是 Vercel 推出的 filesystem-first durable AI agents 框架。它围绕 `
 3. 补充本地部署、自托管、Hono、Vite SPA、Workflow SDK、DeepSeek provider 等实践。
 4. 记录真实项目接入经验，尤其是 `SPA + Hono API + Eve Agent` 的架构。
 5. 为中文开发者提供可运行示例、常见问题和迁移建议。
+
+## 技术路线
+
+本项目采用与官方 Eve 文档仓库同一类工程拆分：
+
+```txt
+docs/       文档内容源
+apps/docs/  Next.js + Fumadocs 文档站
+```
+
+技术栈：
+
+```txt
+Next.js
+Turbopack
+Fumadocs
+fumadocs-mdx
+Tailwind CSS
+pnpm workspace
+```
+
+## 本地开发
+
+```bash
+pnpm install
+pnpm dev
+```
+
+构建：
+
+```bash
+pnpm build
+```
+
+GitHub Pages 构建产物位于：
+
+```txt
+apps/docs/out
+```
 
 ## 推荐阅读路线
 
