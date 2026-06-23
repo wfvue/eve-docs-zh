@@ -19,7 +19,8 @@
     "next-themes": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "shiki": "latest"
+    "shiki": "latest",
+    "zod": "latest"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "latest",
