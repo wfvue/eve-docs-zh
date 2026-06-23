@@ -11,24 +11,24 @@
     "docs:generate": "fumadocs-mdx"
   },
   "dependencies": {
-    "fumadocs-core": "16.9.1",
-    "fumadocs-mdx": "14.0.4",
-    "fumadocs-ui": "16.9.1",
-    "lucide-react": "1.16.0",
-    "next": "16.2.6",
-    "next-themes": "0.4.6",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "shiki": "4.1.0"
+    "fumadocs-core": "latest",
+    "fumadocs-mdx": "latest",
+    "fumadocs-ui": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "next-themes": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "shiki": "latest"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.3.0",
-    "@types/mdx": "2.0.13",
-    "@types/node": "25.9.1",
-    "@types/react": "19.2.15",
-    "@types/react-dom": "19.2.3",
-    "postcss": "8.5.15",
-    "tailwindcss": "4.3.0",
-    "typescript": "6.0.3"
+    "@tailwindcss/postcss": "latest",
+    "@types/mdx": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
   }
 }
