@@ -1,0 +1,12 @@
+{
+  "title": "Eve 中文文档",
+  "pages": [
+    "index",
+    "core-concepts",
+    "deployment",
+    "guides",
+    "roadmap",
+    "glossary",
+    "site"
+  ]
+}
