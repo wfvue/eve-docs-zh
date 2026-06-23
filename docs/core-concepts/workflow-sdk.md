@@ -1,3 +1,8 @@
+---
+title: "Workflow SDK 原理"
+description: "解释 Workflow SDK 如何通过 workflow、step 和 event log 支持持久化执行。"
+---
+
 # Workflow SDK 原理
 
 ## 一句话解释
