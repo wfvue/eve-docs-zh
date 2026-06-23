@@ -10,11 +10,8 @@ type PageProps = {
   }>;
 };
 
-function getPageTitle(page: ReturnType<typeof source.getPage>) {
-  if (!page) return '文档';
-
-  const data = page.data as typeof page.data & { title?: string };
-  return data.title ?? page.slugs.at(-1) ?? '文档';
+function fallbackTitle(slug: string[]) {
+  return slug.length > 0 ? slug.at(-1) : 'Eve 中文文档';
 }
 
 export default async function Page({ params }: PageProps) {
@@ -50,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 
   return {
-    title: getPageTitle(page),
+    title: data.title ?? fallbackTitle(slug),
     description: data.description,
   };
 }
