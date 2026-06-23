@@ -9,16 +9,20 @@ description: "Eve 中文文档与工程实践指南的导航首页。"
 
 ## 核心概念
 
-- [filesystem-first 是什么](core-concepts/filesystem-first.md)
-- [Workflow SDK 原理](core-concepts/workflow-sdk.md)
-- [Sandbox 是什么](core-concepts/sandbox.md)
+- [filesystem-first 是什么](core-concepts/filesystem-first)
+- [Workflow SDK 原理](core-concepts/workflow-sdk)
+- [Sandbox 是什么](core-concepts/sandbox)
 
 ## 部署与运行
 
-- [自部署指南](deployment/self-hosting.md)
+- [自部署指南](deployment/self-hosting)
 
-## 官方 Guide 解读
+## Guides
 
-- [鉴权与路由保护](guides/auth-and-route-protection.md)
+- [鉴权与路由保护](guides/auth-and-route-protection)
 
-## 工程建议
+## 站点
+
+- [本站点说明](site)
+- [路线图](roadmap)
+- [术语表](glossary)
