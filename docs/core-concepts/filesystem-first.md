@@ -1,3 +1,8 @@
+---
+title: "filesystem-first 是什么"
+description: "解释 Eve 为什么以文件系统作为 Agent 能力组织入口。"
+---
+
 # filesystem-first 是什么
 
 ## 一句话解释
