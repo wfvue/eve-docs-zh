@@ -1,0 +1,14 @@
+{
+  "name": "eve-docs-zh",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress docs --host 0.0.0.0",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs --host 0.0.0.0"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}
