@@ -8,8 +8,12 @@ const config = {
   reactStrictMode: true,
   output: 'export',
   trailingSlash: true,
-  basePath: isGitHubPages ? repoBasePath : undefined,
-  assetPrefix: isGitHubPages ? `${repoBasePath}/` : undefined,
+  ...(isGitHubPages
+    ? {
+        basePath: repoBasePath,
+        assetPrefix: `${repoBasePath}/`,
+      }
+    : {}),
   images: {
     unoptimized: true,
   },
