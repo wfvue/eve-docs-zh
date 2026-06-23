@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone install and build
+        run: |
+          set -euxo pipefail
+          echo "head ref: ${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          git clone --quiet --depth 1 --branch "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" "https://github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          node --version
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
+          pnpm --version
+          pnpm install --frozen-lockfile=false --reporter append-only
+          GITHUB_PAGES=true pnpm run build

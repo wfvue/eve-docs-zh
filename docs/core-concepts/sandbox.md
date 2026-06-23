@@ -1,3 +1,8 @@
+---
+title: "Sandbox 是什么"
+description: "解释 Eve Sandbox 的隔离工作区、常见后端和自部署建议。"
+---
+
 # Sandbox 是什么
 
 ## 一句话解释

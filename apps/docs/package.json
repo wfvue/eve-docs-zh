@@ -1,0 +1,35 @@
+{
+  "name": "eve-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Eve 中文文档站，基于 Next.js 与 Fumadocs。",
+  "type": "module",
+  "scripts": {
+    "dev": "fumadocs-mdx && next dev --turbo",
+    "build": "fumadocs-mdx && next build",
+    "start": "next start",
+    "docs:generate": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "fumadocs-core": "latest",
+    "fumadocs-mdx": "latest",
+    "fumadocs-ui": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "next-themes": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "shiki": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/mdx": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

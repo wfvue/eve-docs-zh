@@ -1,0 +1,8 @@
+{
+  "title": "Guides",
+  "pages": [
+    "auth-and-route-protection",
+    "instrumentation",
+    "evals"
+  ]
+}

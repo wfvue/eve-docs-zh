@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@11.7.0",
   "scripts": {
-    "dev": "vitepress docs --host 0.0.0.0",
-    "build": "vitepress build docs",
-    "preview": "vitepress preview docs --host 0.0.0.0"
-  },
-  "devDependencies": {
-    "vitepress": "^1.6.4"
+    "dev": "pnpm --filter eve-docs dev",
+    "build": "pnpm --filter eve-docs build",
+    "start": "pnpm --filter eve-docs start",
+    "preview": "pnpm --filter eve-docs start",
+    "docs:generate": "pnpm --filter eve-docs docs:generate"
   }
 }

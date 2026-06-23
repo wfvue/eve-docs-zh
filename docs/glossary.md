@@ -1,3 +1,8 @@
+---
+title: "术语表"
+description: "Eve、Workflow、Sandbox、Skills、Tools 等核心术语解释。"
+---
+
 # Eve 术语表
 
 ## Eve
