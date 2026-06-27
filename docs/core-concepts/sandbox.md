@@ -1,17 +1,17 @@
 ---
-title: "Sandbox 是什么"
-description: "解释 Eve Sandbox 的隔离工作区、常见后端和自部署建议。"
+title: "沙盒（Sandbox）是什么"
+description: "解释 Eve 沙盒（Sandbox）的隔离工作区、常见后端和自部署建议。"
 ---
 
-# Sandbox 是什么
+# 沙盒（Sandbox）是什么
 
 ## 一句话解释
 
-Eve Sandbox 是给 Agent 准备的隔离工作区。
+Eve 沙盒（Sandbox）是给 Agent 准备的隔离工作区。
 
 当 Agent 需要执行 `bash`、读写文件、跑脚本、生成临时文件时，不应该直接操作你的主应用进程或真实服务器文件系统，而应该在 sandbox 的 `/workspace` 里完成。
 
-## 为什么需要 Sandbox
+## 为什么需要沙盒
 
 Agent 可能会调用这些工具：
 
@@ -23,108 +23,159 @@ glob
 grep
 ```
 
-如果没有隔离，模型可能直接碰到：
+如果这些能力直接运行在主应用服务器上，风险会很高。
 
-- 服务器真实文件；
-- 环境变量；
-- 数据库凭据；
-- 后端源码；
-- 内网服务；
-- 临时敏感文件。
+沙盒的价值是：
 
-Sandbox 的目标是降低这类风险。
+```txt
+把 Agent 的执行空间和主应用运行空间隔离开。
+```
 
-## `/workspace` 是什么
+## 可以把沙盒理解成什么
 
-Eve 内置文件和 shell 工具默认在 `/workspace` 下工作。
+可以把 Eve 沙盒理解成：
+
+```txt
+Agent 专属的临时工作电脑
+```
+
+Agent 可以在里面：
+
+```txt
+写文件
+读文件
+跑脚本
+生成报告草稿
+执行分析命令
+保存中间产物
+```
+
+但它不应该直接操作你的真实生产目录、数据库文件或服务器配置。
+
+## /workspace 是什么
+
+沙盒里的工作目录通常是：
+
+```txt
+/workspace
+```
+
+内置文件工具默认围绕这个目录工作。
 
 例如：
 
 ```txt
-read_file("report.md")
-```
-
-实际读取的是：
-
-```txt
 /workspace/report.md
+/workspace/data/input.csv
+/workspace/scripts/analyze.py
 ```
-
-同一个 durable session 内，sandbox 的文件状态可以跨 turn 保留。
 
 ## 常见后端
 
-Eve 支持不同 sandbox backend：
+Eve 沙盒可以运行在不同 backend 上，例如：
 
 ```txt
-vercel()       Vercel 云端 Sandbox
-docker()       本地 Docker 容器
-microsandbox() 本地轻量 VM
-justbash()     纯 JS 模拟 bash，兜底用
+Vercel Sandbox
+Docker
+microsandbox
+just-bash
 ```
 
-## Docker vs microsandbox
+简单理解：
 
-| 方案 | 特点 | 建议 |
-|---|---|---|
-| Docker | 成熟、容易部署、排查简单 | 自部署第一阶段优先选择 |
-| microsandbox | 更接近 VM 隔离，支持更细网络策略 | 安全要求更高后再评估 |
-| justbash | 只是开发兜底 | 不建议生产使用 |
+| Backend | 适合场景 |
+| --- | --- |
+| Vercel Sandbox | Vercel 托管环境 |
+| Docker | 本地或自托管服务器 |
+| microsandbox | 更接近隔离 VM 的本地环境 |
+| just-bash | 最轻量兜底，能力有限 |
 
-## 对业务系统的建议
+## 在自托管场景怎么选
 
-敏感业务动作不要靠 sandbox 的 bash 完成。
-
-例如这些动作应该做成 app runtime 工具，并由后端 service 控制权限、审批和事务：
+如果你是内网、自托管、私有化部署，一般优先考虑：
 
 ```txt
-parse_import_preview
-create_clues
-save_report
-query_database
-query_clue_detail
+Docker backend
 ```
 
-Sandbox 更适合：
+原因：
 
-- 处理临时文件；
-- 运行受控脚本；
-- 生成中间产物；
-- 执行非敏感分析；
-- 测试代码或模板。
-
-## 推荐自部署配置
-
-第一阶段建议 Docker + 禁止网络：
-
-```ts
-// agent/sandbox/sandbox.ts
-import { defineSandbox } from "eve/sandbox";
-import { docker } from "eve/sandbox/docker";
-
-export default defineSandbox({
-  backend: docker({
-    image: "ghcr.io/vercel/eve:latest",
-    networkPolicy: "deny-all",
-  }),
-});
+```txt
+隔离边界更清晰
+依赖更可控
+便于内网部署
+便于限制网络
+便于持久化或清理工作目录
 ```
 
-如果需要访问某些内网服务，先确认 Docker backend 是否支持目标网络策略；对更细粒度的域名级策略，可以评估 microsandbox 或 Vercel Sandbox。
+但要注意：Docker 本身不是万能安全边界，仍然需要限制网络、文件挂载、权限和资源。
+
+## 网络策略
+
+沙盒默认不等于“绝对安全”。
+
+正式系统里需要考虑：
+
+```txt
+是否允许访问公网
+是否允许访问内网
+是否允许访问数据库
+是否允许访问对象存储
+是否允许下载安装依赖
+```
+
+敏感系统建议默认：
+
+```txt
+deny-all
+```
+
+然后按需放行白名单。
+
+## 和 tools 的关系
+
+很多内置 tools 操作的是沙盒：
+
+```txt
+bash
+read_file
+write_file
+glob
+grep
+```
+
+但你自己写的业务 tool 不一定在沙盒中运行。
+
+例如：
+
+```txt
+agent/tools/query_database.ts
+```
+
+这种 tool 通常运行在应用 runtime 中，而不是沙盒中。
+
+所以要区分：
+
+```txt
+工具执行在哪里
+工具能访问什么
+工具是否会调用沙盒
+工具是否会访问真实业务系统
+```
 
 ## 常见误区
 
-### 误区一：Sandbox 等于业务数据库
+### 误区一：有沙盒就可以随便让 Agent 跑命令
 
-不是。Sandbox 只是临时工作区，不应该保存正式业务状态。
+不是。沙盒降低风险，但不消除风险。
 
-### 误区二：Agent 可以在 sandbox 里随便连数据库
+### 误区二：业务写入放在沙盒里就安全
 
-不建议。数据库查询和写入应该走结构化工具，由后端做权限、schema、审计和幂等控制。
+不是。正式业务写入仍然应该通过受控 tool 和后端 service 完成。
 
-### 误区三：禁用了 sandbox 就不能做 Agent
+### 误区三：沙盒可以替代权限系统
 
-不是。很多业务 Agent 只需要调用后端工具和模型，不一定需要 shell 或文件系统。
+不能。权限、审批、审计、幂等仍然应该在业务系统中实现。
 
 ## 官方链接
 
