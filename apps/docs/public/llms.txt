@@ -1,0 +1,18 @@
+# Eve 中文文档与工程实践指南
+
+面向大语言模型读取的文档入口。
+
+## 推荐入口
+
+- 文档首页: /eve-docs-zh/docs/
+- 简介: /eve-docs-zh/docs/introduction/
+- 快速开始: /eve-docs-zh/docs/getting-started/
+- 工具: /eve-docs-zh/docs/tools/overview/
+- 技能: /eve-docs-zh/docs/skills/
+- 连接: /eve-docs-zh/docs/connections/overview/
+- 沙盒: /eve-docs-zh/docs/sandbox/
+- 子智能体: /eve-docs-zh/docs/subagents/
+
+## 全量文档
+
+- llms-full.txt: /eve-docs-zh/llms-full.txt
