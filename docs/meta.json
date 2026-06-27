@@ -1,7 +1,12 @@
 {
   "title": "Eve 中文文档",
   "pages": [
-    "index",
+    "introduction",
+    "getting-started",
+    "---",
+    "agent-config",
+    "instructions",
+    "---",
     "core-concepts",
     "deployment",
     "guides",
