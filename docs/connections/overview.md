@@ -55,7 +55,7 @@ linear__list_issues
 - 远端工具 schema 由服务端动态维护。
 - 一个连接需要暴露一组相关的远端工具。
 
-详细见 [MCP connections](./mcp)。
+详细见 [MCP connections](../mcp)。
 
 ## OpenAPI connections
 
@@ -67,7 +67,7 @@ linear__list_issues
 - 你希望从 OpenAPI 文档自动生成模型可见工具。
 - 你需要通过 allow/block 过滤可见 operation。
 
-详细见 [OpenAPI connections](./openapi)。
+详细见 [OpenAPI connections](../openapi)。
 
 ## 静态 token 鉴权
 
