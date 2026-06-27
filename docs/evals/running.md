@@ -57,6 +57,6 @@ eve eval --strict --url "$DEPLOY_URL" --junit .eve/junit.xml
 
 ## 接下来读什么
 
-- [Targets](./targets)：`--url` 会和什么交互
-- [Reporters](./reporters)：Braintrust 和 JUnit 输出
-- [CLI reference](../reference/cli)：`eve` CLI 的其它内容
+- [Targets](../targets)：`--url` 会和什么交互
+- [Reporters](../reporters)：Braintrust 和 JUnit 输出
+- [CLI reference](../../reference/cli)：`eve` CLI 的其它内容
