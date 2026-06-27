@@ -25,7 +25,7 @@ export default defineEval({
 ```
 
 - `t.target.fetch(path, init)`：对 target 发起带鉴权的 fetch，适合测试 channel 和 webhook ingress。Runner 如何鉴权见 [Authentication](#authentication)。
-- `t.target.dispatchSchedule(id)`：通过 dev-only schedule route 触发一个 [schedule](../schedules)，并返回它创建的 session ids。它只适用于开启了 dev routes 的目标，例如本地 `eve eval` dev server，或以 development mode 运行的部署；其它情况下会抛错。
+- `t.target.dispatchSchedule(id)`：通过 dev-only schedule route 触发一个 [schedule](../../schedules)，并返回它创建的 session ids。它只适用于开启了 dev routes 的目标，例如本地 `eve eval` dev server，或以 development mode 运行的部署；其它情况下会抛错。
 - `t.target.attachSession(sessionId, { startIndex? })`：消费一个在 eval 外部创建的 session 的 turn，例如由 channel 或 schedule 创建的 session，让它的 events 进入 run-level assertions。`startIndex` 会跳过该位置之前的 events，因此已经执行到一半的 session 可以从你离开的地方继续，而不是从头 replay。
 
 通过这种方式 attach 的 sessions 都是完整的 `EveEvalSession`：你可以继续驱动它们，并直接在该 session 上断言，例如 `session.succeeded()`、`session.calledTool(...)`。`t` 上的聚合断言仍然会读取整个 run，包括所有 attach 进来的 session。
@@ -45,6 +45,6 @@ export default defineEval({
 
 ## 接下来读什么
 
-- [Running evals](./running)：实际使用 `--url` 和其它 CLI 参数
-- [Schedules](../schedules)：`dispatchSchedule` 驱动的 surface
-- [Channels](../channels/overview)：可以通过 `target.fetch` 测试的 ingress
+- [Running evals](../running)：实际使用 `--url` 和其它 CLI 参数
+- [Schedules](../../schedules)：`dispatchSchedule` 驱动的 surface
+- [Channels](../../channels/overview)：可以通过 `target.fetch` 测试的 ingress
