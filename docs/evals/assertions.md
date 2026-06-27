@@ -7,7 +7,7 @@ description: "Scoped methods、value assertions、matcher mini-language，以及
 
 Assertions 用来给 `test(t)` 函数产生的结果评分。每个 assertion 都会记录一个结果，并返回一个可链式调用的 handle。Runner 会读取所有记录下来的结果来计算 verdict，因此一次 run 会报告所有失败的断言，而不是在第一个失败处直接终止。
 
-确定性断言有两类 surface：scoped methods，以及用 `t.check` 对特定 value 评分。模型评分的断言见 [Judge](./judge)。
+确定性断言有两类 surface：scoped methods，以及用 `t.check` 对特定 value 评分。模型评分的断言见 [Judge](../judge)。
 
 ## Scoped assertions
 
@@ -31,7 +31,7 @@ Scoped assertions 不需要显式传入 value，并且默认是 gate。写在 `t
 | `t.eventOrder([...matchers])` | 匹配的 event groups 按顺序出现 |
 | `t.eventsSatisfy(label, predicate)` | 逃生口：对 typed event stream 写任意 predicate |
 
-`succeeded()` 同时接受已经 closed 的 session，以及仍然健康地 open、等待下一条用户消息的 session；它会拒绝 protocol failure 和未回答的 HITL。Structured output assertions 位于 turns 和 independent sessions 上，因为那里 output 的含义没有歧义，见 [output schema guide](../guides/client/output-schema)。
+`succeeded()` 同时接受已经 closed 的 session，以及仍然健康地 open、等待下一条用户消息的 session；它会拒绝 protocol failure 和未回答的 HITL。Structured output assertions 位于 turns 和 independent sessions 上，因为那里 output 的含义没有歧义，见 [output schema guide](../../guides/client/output-schema)。
 
 ```ts
 await t.send("What is the weather in Brooklyn?");
@@ -77,7 +77,7 @@ t.check(
 | `similarity(expected)` | 标准化 Levenshtein similarity，1 表示完全相同 | soft |
 | `satisfies(fn, label)` | 自定义 boolean predicate | gate |
 
-选择能表达“正确性”的最便宜 builder。精确匹配太严格、judge model 又太重时，`similarity` 是中间选择。更细腻的评分请使用 [judge](./judge)。
+选择能表达“正确性”的最便宜 builder。精确匹配太严格、judge model 又太重时，`similarity` 是中间选择。更细腻的评分请使用 [judge](../judge)。
 
 ## Matcher mini-language
 
@@ -167,6 +167,6 @@ t.check(t.reply, includes("error")).soft(); // 只跟踪，不让构建失败
 
 ## 接下来读什么
 
-- [Judge](./judge)：带阈值的 LLM-graded assertions
-- [Cases](./cases)：assertions 绑定在哪里
-- [Running evals](./running)：verdict 如何映射到退出码
+- [Judge](../judge)：带阈值的 LLM-graded assertions
+- [Cases](../cases)：assertions 绑定在哪里
+- [Running evals](../running)：verdict 如何映射到退出码
