@@ -72,5 +72,5 @@ interface EvalReporter {
 
 ## 接下来读什么
 
-- [Running evals](./running)：console output、`--json` 和 artifacts
-- [Judge](./judge)：报告里的分数是什么意思
+- [Running evals](../running)：console output、`--json` 和 artifacts
+- [Judge](../judge)：报告里的分数是什么意思
