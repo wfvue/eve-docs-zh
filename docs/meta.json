@@ -2,12 +2,6 @@
   "title": "Eve 中文文档",
   "pages": [
     "index",
-    "core-concepts",
-    "deployment",
-    "roadmap",
-    "glossary",
-    "site",
-    "---",
     "introduction",
     "getting-started",
     "agent-config",
@@ -20,11 +14,13 @@
     "subagents",
     "schedules",
     "evals",
-    "---",
+    "core-concepts",
+    "deployment",
     "guides",
     "concepts",
     "patterns",
     "reference",
-    "tutorial"
+    "tutorial",
+    "roadmap"
   ]
 }
