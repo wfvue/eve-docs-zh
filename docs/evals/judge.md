@@ -5,7 +5,7 @@ description: "通过 t.judge.autoevals 使用 LLM judge 给 eval 评分，在断
 
 # Judge
 
-当没有确定性 [assertion](./assertions) 能表达什么叫“好”时，例如事实正确性、摘要质量或自由形式标准，可以用 LLM judge 给 run 评分。`t.judge.*` 是唯一由模型支撑的 assertion surface，并且它使用的 judge model 会和被测试的 Agent 分开解析。Eve 只会用它评分，绝不会用它替换被测 Agent。
+当没有确定性 [assertion](../assertions) 能表达什么叫“好”时，例如事实正确性、摘要质量或自由形式标准，可以用 LLM judge 给 run 评分。`t.judge.*` 是唯一由模型支撑的 assertion surface，并且它使用的 judge model 会和被测试的 Agent 分开解析。Eve 只会用它评分，绝不会用它替换被测 Agent。
 
 ```ts
 import { defineEval } from "eve/evals";
@@ -91,6 +91,6 @@ export default defineEval({
 
 ## 接下来读什么
 
-- [Assertions](./assertions)：确定性的 run-level 和 value assertions
-- [Reporters](./reporters)：把 judged scores 发到 Braintrust experiments
-- [Targets](./targets)：judge-backed evals 如何跑本地或远程目标
+- [Assertions](../assertions)：确定性的 run-level 和 value assertions
+- [Reporters](../reporters)：把 judged scores 发到 Braintrust experiments
+- [Targets](../targets)：judge-backed evals 如何跑本地或远程目标
