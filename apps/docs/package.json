@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "fumadocs-mdx && next dev --turbo",
-    "build": "fumadocs-mdx && next build",
+    "build": "fumadocs-mdx && node scripts/generate-llms.mjs && next build",
     "start": "next start",
-    "docs:generate": "fumadocs-mdx"
+    "docs:generate": "fumadocs-mdx",
+    "docs:llms": "node scripts/generate-llms.mjs"
   },
   "dependencies": {
     "@orama/orama": "latest",
