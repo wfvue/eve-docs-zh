@@ -1,0 +1,14 @@
+# Eve 中文文档与工程实践指南 - 全量文档
+
+此文件会在构建时由 scripts/generate-llms.mjs 从 docs 目录自动生成。
+
+当前提交提供静态兜底文件，避免 GitHub Pages 上的 /llms-full.txt 返回 404。
+
+## 入口
+
+- 文档首页: /eve-docs-zh/docs/
+- llms.txt: /eve-docs-zh/llms.txt
+
+## 说明
+
+如果部署流程正常运行，构建产物中的本文件会被自动生成内容覆盖。
