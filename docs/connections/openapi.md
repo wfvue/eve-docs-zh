@@ -9,7 +9,7 @@ OpenAPI connection 会把 OpenAPI 3.x 或 Swagger 2.0 文档转换成 connection
 
 当服务已经发布 HTTP API 契约，并且你希望 Eve 从这个契约自动推导模型可见工具时，使用 OpenAPI connection。
 
-如果服务已经暴露 MCP Server，或者远端服务需要自己动态维护工具 schema，优先使用 [MCP connection](./mcp)。
+如果服务已经暴露 MCP Server，或者远端服务需要自己动态维护工具 schema，优先使用 [MCP connection](../mcp)。
 
 ## 定义一个 OpenAPI connection
 
@@ -251,7 +251,7 @@ export default defineOpenAPIConnection({
 
 ## 接下来读什么
 
-- [连接概览](./overview)：共享鉴权、headers、approval 和按调用者解析的模式。
-- [MCP connections](./mcp)：连接远程 MCP Server。
-- [鉴权与路由保护](../guides/auth-and-route-protection)：route auth 与交互式 OAuth 生命周期。
-- [安全模型](../concepts/security-model)：connection 凭据如何避免暴露给模型。
+- [连接概览](../overview)：共享鉴权、headers、approval 和按调用者解析的模式。
+- [MCP connections](../mcp)：连接远程 MCP Server。
+- [鉴权与路由保护](../../guides/auth-and-route-protection)：route auth 与交互式 OAuth 生命周期。
+- [安全模型](../../concepts/security-model)：connection 凭据如何避免暴露给模型。
