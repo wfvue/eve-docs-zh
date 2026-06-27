@@ -15,6 +15,8 @@ import {
   type SharedProps,
 } from 'fumadocs-ui/components/dialog/search';
 
+const searchIndexUrl = process.env.NODE_ENV === 'production' ? '/eve-docs-zh/api/search' : '/api/search';
+
 function initOrama() {
   return create({
     schema: { _: 'string' },
@@ -24,6 +26,7 @@ function initOrama() {
 export default function DefaultSearchDialog(props: SharedProps) {
   const { search, setSearch, query } = useDocsSearch({
     client: oramaStaticClient({
+      from: searchIndexUrl,
       initOrama,
     }),
   });
