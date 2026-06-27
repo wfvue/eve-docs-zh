@@ -25,6 +25,21 @@ const quickLinks = [
   { href: '/docs/guides/deployment', label: '部署指南', description: '构建、发布与生产环境注意事项。' },
 ];
 
+const llmLinks = [
+  {
+    href: '/llms.txt',
+    title: 'llms.txt',
+    badge: '精简索引',
+    description: '站点说明、推荐阅读顺序和完整文档链接，适合快速交给模型理解文档结构。',
+  },
+  {
+    href: '/llms-full.txt',
+    title: 'llms-full.txt',
+    badge: '全量聚合',
+    description: '构建时从 docs/ 自动聚合正文，适合大上下文模型、离线索引和 RAG。',
+  },
+];
+
 const stats = [
   { value: '17+', label: '官方目录同步' },
   { value: 'Next.js', label: '静态文档站' },
@@ -84,31 +99,48 @@ export default function HomePage() {
 
           <div className="relative">
             <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-r from-blue-500/20 via-violet-500/20 to-fuchsia-500/20 blur-2xl" />
-            <div className="relative overflow-hidden rounded-[2rem] border border-fd-border/70 bg-white/75 p-5 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:bg-slate-950/70 dark:shadow-black/30">
-              <div className="mb-4 flex items-center gap-2 border-b border-fd-border/70 pb-4">
+            <div className="relative overflow-hidden rounded-[2rem] border border-fd-border/70 bg-white/75 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:bg-slate-950/70 dark:shadow-black/30">
+              <div className="mb-5 flex items-center gap-2 border-b border-fd-border/70 pb-4">
                 <span className="h-3 w-3 rounded-full bg-red-400" />
                 <span className="h-3 w-3 rounded-full bg-yellow-400" />
                 <span className="h-3 w-3 rounded-full bg-green-400" />
-                <span className="ml-3 text-xs text-fd-muted-foreground">agent/workspace</span>
+                <span className="ml-3 text-xs font-medium text-fd-muted-foreground">LLM-ready docs</span>
               </div>
 
-              <div className="space-y-3 font-mono text-sm">
-                {[
-                  ['agent/instructions.md', '常驻系统提示词'],
-                  ['agent/agent.ts', '模型与运行时配置'],
-                  ['agent/tools/get_weather.ts', '类型化工具调用'],
-                  ['agent/skills/research/SKILL.md', '按需加载技能'],
-                  ['agent/channels/eve.ts', 'HTTP 与平台入口'],
-                ].map(([path, note], index) => (
-                  <div
-                    key={path}
-                    className="flex items-center justify-between rounded-2xl border border-fd-border/60 bg-fd-muted/40 px-4 py-3 transition hover:-translate-y-0.5 hover:bg-fd-muted/70"
-                    style={{ animationDelay: `${index * 80}ms` }}
+              <div className="mb-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-blue-600 dark:text-blue-300">AI Context</p>
+                <h2 className="mt-2 text-2xl font-semibold text-fd-foreground">给大模型读取的文档入口</h2>
+                <p className="mt-2 text-sm leading-6 text-fd-muted-foreground">
+                  构建时自动生成标准文本入口，让 Codex、Cursor、RAG 和大上下文模型直接读取完整文档。
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {llmLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group block rounded-2xl border border-fd-border/70 bg-fd-muted/35 p-4 transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-fd-muted/60"
                   >
-                    <span className="text-fd-foreground">{path}</span>
-                    <span className="hidden text-xs text-fd-muted-foreground sm:inline">{note}</span>
-                  </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-mono text-base font-semibold text-fd-foreground">{item.title}</div>
+                      <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-300">
+                        {item.badge}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-fd-muted-foreground">{item.description}</p>
+                    <div className="mt-3 text-xs font-medium text-fd-muted-foreground transition group-hover:text-blue-500">
+                      打开文件 →
+                    </div>
+                  </Link>
                 ))}
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-fd-border/70 bg-white/50 p-4 text-sm shadow-sm dark:bg-white/5">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-fd-muted-foreground">Build pipeline</div>
+                <div className="font-mono text-xs leading-6 text-fd-muted-foreground">
+                  docs/ → generate-llms.mjs → public/llms*.txt
+                </div>
               </div>
             </div>
           </div>
