@@ -1,11 +1,11 @@
 ---
-title: "Sandbox"
+title: "沙盒（Sandbox）"
 description: "Agent 的隔离工作区。"
 ---
 
-# Sandbox
+# 沙盒（Sandbox）
 
-Sandbox 是 eve agent 的隔离工作区，用于命令执行、脚本运行和文件读写。它让 Agent 的工作文件和应用运行时分开。
+沙盒（Sandbox）是 eve agent 的隔离工作区，用于命令执行、脚本运行和文件读写。它让 Agent 的工作文件和应用运行时分开。
 
 ## 要点
 
