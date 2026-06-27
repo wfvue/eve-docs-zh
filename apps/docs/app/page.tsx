@@ -27,13 +27,13 @@ const quickLinks = [
 
 const llmLinks = [
   {
-    href: '/llms.txt',
+    href: 'https://wfvue.github.io/eve-docs-zh/llms.txt',
     title: 'llms.txt',
     badge: '精简索引',
     description: '站点说明、推荐阅读顺序和完整文档链接，适合快速交给模型理解文档结构。',
   },
   {
-    href: '/llms-full.txt',
+    href: 'https://wfvue.github.io/eve-docs-zh/llms-full.txt',
     title: 'llms-full.txt',
     badge: '全量聚合',
     description: '构建时从 docs/ 自动聚合正文，适合大上下文模型、离线索引和 RAG。',
