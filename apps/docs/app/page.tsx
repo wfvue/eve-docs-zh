@@ -4,7 +4,7 @@ const highlights = [
   {
     title: '文件即接口',
     eyebrow: 'Filesystem-first',
-    description: '用 agent/ 目录组织 instructions、tools、skills、channels，把 Agent 能力变成可阅读、可维护的工程结构。',
+    description: '用 agent/ 目录组织 instructions、tools、skills（技能）、channels，把 Agent 能力变成可阅读、可维护的工程结构。',
   },
   {
     title: '持久会话',
@@ -21,7 +21,7 @@ const highlights = [
 const quickLinks = [
   { href: '/docs/getting-started', label: '快速开始', description: '安装、脚手架、首个工具与本地运行。' },
   { href: '/docs/tools/overview', label: '工具系统', description: '定义模型可调用的类型化动作。' },
-  { href: '/docs/skills', label: 'Skills', description: '按需加载长流程和专项操作手册。' },
+  { href: '/docs/skills', label: '技能', description: '按需加载长流程和专项操作手册。' },
   { href: '/docs/guides/deployment', label: '部署指南', description: '构建、发布与生产环境注意事项。' },
 ];
 
@@ -53,7 +53,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-fd-muted-foreground sm:text-xl">
-              用中文解释 Vercel Eve 的核心概念、目录结构、Agent Runtime、工具调用、Skills、Channels、部署和自托管经验。
+              用中文解释 Vercel Eve 的核心概念、目录结构、Agent Runtime、工具调用、技能、Channels、部署和自托管经验。
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -97,7 +97,7 @@ export default function HomePage() {
                   ['agent/instructions.md', '常驻系统提示词'],
                   ['agent/agent.ts', '模型与运行时配置'],
                   ['agent/tools/get_weather.ts', '类型化工具调用'],
-                  ['agent/skills/research/SKILL.md', '按需加载流程'],
+                  ['agent/skills/research/SKILL.md', '按需加载技能'],
                   ['agent/channels/eve.ts', 'HTTP 与平台入口'],
                 ].map(([path, note], index) => (
                   <div
