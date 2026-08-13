@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(command-code:*)",
+      "Shell(npm:*)",
+      "Shell(npm ls -g command-code 2>/dev/null; echo \"---\"; ls ~/.vite-plus/js_runtime/node/24.18.0/lib/node_modules/ 2>/dev/null)",
+      "Shell(agent-browser:*)",
+      "Shell(git:*)",
+      "Shell(cd /Users/gaozhan/mycode/eve-docs-zh/docs && for f in $(find . -name \"*.md\" | sort); do total=$(wc -l < \"$f\"); zh=$(grep -c '[一-龥]' \"$f\" 2>/dev/null || echo 0); if [ \"$zh\" -lt 25 ]; then echo \"$f: $total lines, $zh zh-lines\"; fi; done | sort -t: -k2 -n)",
+      "Shell(cd /Users/gaozhan/mycode/eve-docs-zh/docs && echo \"=== 检查所有 md 文件，列出标题只有一行或 frontmatter 后内容极少的 ===\" && for f in $(find . -name \"*.md\" | sort); do total=$(wc -l < \"$f\"); if [ \"$total\" -le 20 ]; then echo \"SHORT ($total lines): $f\"; fi; done)",
+      "Shell(for:*)",
+      "Shell(do:*)",
+      "Shell(then:*)",
+      "Shell(fi:*)",
+      "Shell(done:*)",
+      "Shell(cd /Users/gaozhan/mycode/eve-docs-zh/docs && for f in $(find . -name \"*.md\" | sort); do # count lines after frontmatter body=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2{c++} END{print c}' \"$f\"); if [ \"$body\" -le 3 ]; then echo \"STUB (body=$body): $f\"; fi done)",
+      "Shell(pnpm:*)",
+      "Shell(cd /Users/gaozhan/mycode/eve-docs-zh && find node_modules/.pnpm/zbsearch@3.3.4/node_modules/zbsearch/dist -name \"*.d.ts\" | xargs grep -ln \"orama\" 2>/dev/null | head -5 && echo \"===\" && grep -rn \"from '@orama/orama'\\|from 'orama'\" node_modules/.pnpm/fumadocs-core@16.14.3*/node_modules/fumadocs-core/dist/client-DURack0W.d.ts | head -5)",
+      "Shell(cd /Users/gaozhan/mycode/eve-docs-zh && find apps/docs -name \"*.ts\" -o -name \"*.mjs\" | xargs grep -ln \"orama\\|search\" 2>/dev/null | grep -v node_modules | head && echo \"===\" && ls apps/docs/app/api/search/ 2>/dev/null || find apps/docs -path \"*api/search*\" -name \"*.ts\" | head)",
+      "Shell(cd /Users/gaozhan/mycode/eve-docs-zh && git commit -F - <<'EOF' docs: translate channels, schedules, concepts, patterns, reference and tutorial 补齐官方目录中的全部占位页，对照 eve.dev 文档完整翻译： - Channels: overview、eve、slack、custom、discord、teams、telegram、 twilio、github、linear - Schedules: 定时任务完整文档 - Concepts: context-control、default-harness、security-model、 execution-model-and-durability、sessions-runs-and-streaming - Patterns: dynamic-scheduling、multi-tenant-auth、multi-tenant-approvals - Reference: cli、http-api、project-layout、typescript-api - Tutorial: first-agent 到 ship-it 全系列 9 篇 - 补充 core-concepts/skills、根级 sandbox 完整翻译 - 同步更新 roadmap 进度 同时修复搜索组件：fumadocs-core 升级后搜索后端迁移到 ZBSearch， 将 search.tsx 迁移到新版 staticClient API 并移除废弃的 @orama/orama 依赖。 Co-authored-by: CommandCodeBot <noreply@commandcode.ai> EOF)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}
