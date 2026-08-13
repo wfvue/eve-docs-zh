@@ -1,8 +1,7 @@
 'use client';
 
-import { create } from '@orama/orama';
 import { useDocsSearch } from 'fumadocs-core/search/client';
-import { oramaStaticClient } from 'fumadocs-core/search/client/orama-static';
+import { staticClient } from 'fumadocs-core/search/client/orama-static';
 import {
   SearchDialog,
   SearchDialogClose,
@@ -17,17 +16,10 @@ import {
 
 const searchIndexUrl = process.env.NODE_ENV === 'production' ? '/eve-docs-zh/api/search' : '/api/search';
 
-function initOrama() {
-  return create({
-    schema: { _: 'string' },
-  });
-}
-
 export default function DefaultSearchDialog(props: SharedProps) {
   const { search, setSearch, query } = useDocsSearch({
-    client: oramaStaticClient({
+    client: staticClient({
       from: searchIndexUrl,
-      initOrama,
     }),
   });
 

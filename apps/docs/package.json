@@ -12,7 +12,6 @@
     "docs:llms": "node scripts/generate-llms.mjs"
   },
   "dependencies": {
-    "@orama/orama": "latest",
     "fumadocs-core": "latest",
     "fumadocs-mdx": "latest",
     "fumadocs-ui": "latest",

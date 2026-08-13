@@ -24,7 +24,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | 首页视觉 | 已完成 | 首页已改为产品化 landing page，并展示 `llms.txt` / `llms-full.txt`。 |
 | 官方一级目录 | 已完成 | 已按 Eve 官方目录补齐根级入口，保留中文补充目录。 |
 | 入门文档 | 已完成 | Introduction、Getting Started、agent.ts、Instructions 已翻译。 |
-| 核心能力文档 | 进行中 | Tools、Skills、Sandbox、Subagents、Connections、Evals 已重点补齐；Channels、Schedules 仍需继续扩写。 |
+| 核心能力文档 | 已完成 | Tools、Skills、Sandbox、Subagents、Connections、Evals、Channels、Schedules 已全部补齐。 |
 | 搜索 | 已接入，需持续验证 | 已接入静态搜索 API 和 Orama static client；GitHub Pages 子路径需要持续检查。 |
 | LLM 入口 | 已接入，需持续验证 | 已加入自动生成脚本和兜底文件，提供 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已修复 Connections 底部相对链接问题，后续需要全站检查。 |
@@ -85,28 +85,28 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 接下来优先补齐：
 
-- [ ] Channels / 渠道完整翻译
-  - [ ] Eve channel
-  - [ ] Slack
-  - [ ] Discord
-  - [ ] Teams
-  - [ ] Telegram
-  - [ ] Twilio
-  - [ ] GitHub
-  - [ ] Linear
-  - [ ] Custom channel
-- [ ] Schedules / 定时任务完整翻译
-- [ ] Guides 高优先级页面
-  - [ ] Auth and route protection
-  - [ ] Instrumentation
-  - [ ] Hooks
-  - [ ] Session context
-  - [ ] State
-  - [ ] Dynamic capabilities
-  - [ ] Dynamic workflows
-  - [ ] Remote agents
-- [ ] TypeScript SDK / Client 文档完整翻译
-- [ ] Frontend 集成文档完整翻译
+- [x] Channels / 渠道完整翻译
+  - [x] Eve channel
+  - [x] Slack
+  - [x] Discord
+  - [x] Teams
+  - [x] Telegram
+  - [x] Twilio
+  - [x] GitHub
+  - [x] Linear
+  - [x] Custom channel
+- [x] Schedules / 定时任务完整翻译
+- [x] Guides 高优先级页面
+  - [x] Auth and route protection
+  - [x] Instrumentation
+  - [x] Hooks
+  - [x] Session context
+  - [x] State
+  - [x] Dynamic capabilities
+  - [x] Dynamic workflows
+  - [x] Remote agents
+- [x] TypeScript SDK / Client 文档完整翻译
+- [x] Frontend 集成文档完整翻译
 
 ## 第四阶段：核心概念与参考资料补强
 
@@ -114,14 +114,14 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 - [x] Workflow SDK 原理
 - [x] 沙盒说明
 - [x] 术语表合并到核心概念
-- [ ] Sessions / Runs / Streaming 深化
-- [ ] Default harness
-- [ ] Context control
-- [ ] Security model
-- [ ] HTTP API reference
-- [ ] TypeScript API reference
-- [ ] CLI reference
-- [ ] Project layout reference
+- [x] Sessions / Runs / Streaming 深化
+- [x] Default harness
+- [x] Context control
+- [x] Security model
+- [x] HTTP API reference
+- [x] TypeScript API reference
+- [x] CLI reference
+- [x] Project layout reference
 
 ## 第五阶段：中文工程实践专题
 
