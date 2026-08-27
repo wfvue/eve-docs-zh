@@ -49,7 +49,7 @@ agent/
     intake.ts
 ```
 
-用 `eve add channel/photon-imessage`、`eve add channel/slack` 或 `eve add channel/web` 从 registry 安装 channel，也可以手写这个文件。
+用 `eve add channel/photon-imessage`、`eve add channel/slack`、`eve add channel/linq` 或 `eve add channel/web` 从 registry 安装 channel，也可以手写这个文件。
 
 ## eve HTTP channel（默认）
 
@@ -71,8 +71,10 @@ eve 的一等渠道使用 eve 自有的 runtime 处理 webhook、验证、事件
 | --- | --- |
 | Web 应用 / 浏览器聊天 UI | eve channel + [`useEveAgent`](../guides/frontend/overview) |
 | 本地工具、SDK 客户端、`curl` | [eve HTTP channel](./eve)（默认） |
+| 把 Agent 发布为 MCP server | [MCP Channel](./mcp) |
 | Slack 提及、私信、按钮 | [Slack](./slack) |
-| iMessage | [Photon](./photon) |
+| iMessage 和 SMS（Linq） | [Linq](./linq) |
+| iMessage（Photon） | [Photon](./photon) |
 | Discord 斜杠命令、组件 | [Discord](./discord) |
 | Microsoft Teams 消息 + Adaptive Cards | [Teams](./teams) |
 | Telegram bot 消息 | [Telegram](./telegram) |
@@ -86,11 +88,12 @@ eve 的一等渠道使用 eve 自有的 runtime 处理 webhook、验证、事件
 
 作为部署者，你有责任确保 Agent 符合适用法律。
 
-当 eve Agent 与人交流时，法律可能要求你披露对方正在与自动化 AI 系统交互。eve 不会自动添加这一披露；请在 instructions 和/或 channel 响应中自行配置。
+当 eve Agent 与人交流时，法律可能要求你披露对方正在与自动化 AI 系统交互。eve 不会自动添加这一披露；请在 instructions 和/或 channel 响应中自行配置。见 [负责任使用（Responsible Use）](../responsible-use)。
 
 ## 接下来读什么（What to read next）
 
 - [Slack](./slack)：最常用的平台渠道，端到端讲解
+- [MCP Channel](./mcp)：把 Agent 发布为 MCP server
 - [自定义渠道（Custom channels）](./custom)：用 `defineChannel` 为任何场景构建渠道
 - [前端（Frontend）](../guides/frontend/overview)：在 eve channel 上用 `useEveAgent` 实现浏览器聊天
 - [Integrations](https://eve.dev/integrations)：用 Channels 筛选器浏览所有内置渠道
