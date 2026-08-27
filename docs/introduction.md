@@ -35,7 +35,7 @@ my-agent/
 - [`skills/`](./skills) 保存更长的操作流程，也就是技能，只有在有用时才会被模型加载。
 - [`channels/`](./channels/overview) 把 Agent 连接到 HTTP 客户端、Slack、Discord，以及其它人们和它对话的地方。
 
-刚开始只需要 `instructions.md` 和 `agent.ts`。当 Agent 需要更多能力时，再添加其它目录。
+最小 Agent 只需要 `instructions.md`；默认配置够用时 `agent.ts` 可选。当 Agent 需要更多能力时，再添加其它目录。
 
 ## 文件就是接口
 
@@ -80,7 +80,7 @@ export default defineTool({
 
 - 在工作进行时流式输出进度。
 - 调用工具和子智能体。
-- 暂停等待[审批或人工回答](./tools)。
+- 暂停等待[审批或人工回答](./tools/human-in-the-loop)。
 - 在收到回答后继续运行。
 - 在多轮之间保持持久状态。
 
@@ -92,11 +92,13 @@ export default defineTool({
 
 | 路径 | 什么时候需要添加 |
 | --- | --- |
+| [`memory/`](./memory) | 需要跨 session 的长期记忆时 |
 | [`connections/`](./connections) | 需要接入外部 MCP 或 OpenAPI 服务里的工具时 |
 | [`hooks/`](./guides/hooks) | 需要响应生命周期事件或流式事件时 |
 | [`sandbox/`](./sandbox) | 需要一个受控的沙盒工作区时 |
 | [`subagents/`](./subagents) | 需要把任务委派给专门的子智能体时 |
 | [`schedules/`](./schedules) | 需要定时或周期性工作时 |
+| [`extensions/`](./extensions) | 需要挂载可复用能力包时 |
 | `lib/` | 需要被其它 agent 文件复用的共享代码时 |
 
 这样，项目在运行之前就已经是可读的。目录结构会告诉你这个 Agent 能做什么。
@@ -105,6 +107,7 @@ export default defineTool({
 
 - [快速开始](./getting-started)：脚手架生成并运行第一个 Agent。
 - [Tools](./tools)：Agent 可以调用的类型化动作。
+- [记忆（Memory）](./memory)：跨 session 的召回与捕获。
 - [Instructions](./instructions)：塑造行为的常驻系统提示词。
 - [Channels](./channels/overview)：从 Slack、Discord 或 Web UI 访问 Agent。
 - [Connections](./connections)：从外部服务引入工具。
