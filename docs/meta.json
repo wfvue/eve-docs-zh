@@ -7,6 +7,7 @@
     "getting-started",
     "agent-config",
     "instructions",
+    "memory",
     "---",
     "tools",
     "skills",
@@ -17,6 +18,10 @@
     "schedules",
     "evals",
     "---",
+    "install-integrations",
+    "extensions",
+    "protocols",
+    "---",
     "core-concepts",
     "deployment",
     "guides",
@@ -24,6 +29,7 @@
     "patterns",
     "reference",
     "tutorial",
+    "responsible-use",
     "---",
     "roadmap"
   ]
