@@ -1,112 +1,40 @@
 # Eve 中文文档与工程实践指南
 
-> 面向大语言模型和开发者的 Eve 中文文档入口。本文档站解释 Vercel Eve 的 filesystem-first Agent 结构、工具、技能、渠道、连接、沙盒、子智能体、定时任务、评测和部署实践。
+> 面向大语言模型和开发者的 Eve 中文文档入口。本文档站解释 Vercel Eve 的 filesystem-first Agent 结构、工具、技能、记忆、渠道、连接、扩展、沙盒、子智能体、定时任务、评测和部署实践。
 
 - 站点地址：https://wfvue.github.io/eve-docs-zh
 - 文档首页：https://wfvue.github.io/eve-docs-zh/docs/
 - 全量 LLM 文档：https://wfvue.github.io/eve-docs-zh/llms-full.txt
 
+完整索引会在站点构建时从 `docs/` 重新生成。下面先列出 2026-08-27 对照 eve.dev 新增的官方页，再保留上一版完整索引。
+
 ## 推荐优先阅读
 
 - [文档首页](https://wfvue.github.io/eve-docs-zh/docs/)：Eve 中文文档与工程实践指南的导航首页。
-- [简介](https://wfvue.github.io/eve-docs-zh/docs/introduction/)：理解 eve agent 如何用文件组织、消息到达后会发生什么，以及项目增长时可以添加哪些构建块。
-- [快速开始](https://wfvue.github.io/eve-docs-zh/docs/getting-started/)：安装 eve，生成第一个 Agent，添加一个工具，并在本地运行。
-- [agent.ts](https://wfvue.github.io/eve-docs-zh/docs/agent-config/)：在 agent.ts 中使用 defineAgent 设置 Agent 运行时配置，包括模型、reasoning effort 和上下文压缩。
-- [Instructions](https://wfvue.github.io/eve-docs-zh/docs/instructions/)：使用 instructions.md 或 instructions.ts 编写 Agent 的常驻系统提示词。
-- [Tools](https://wfvue.github.io/eve-docs-zh/docs/tools/overview/)：定义 Agent 可以调用的类型化动作，并用人工审批保护敏感动作。
-- [技能（Skills）](https://wfvue.github.io/eve-docs-zh/docs/skills/)：编写按需加载的流程文档，让模型通过 load_skill 拉入上下文。
-- [渠道（Channels）](https://wfvue.github.io/eve-docs-zh/docs/channels/overview/)：Channel 契约、内置 eve HTTP 渠道与自定义渠道：用户如何触达你的 Agent。
-- [连接（Connections）](https://wfvue.github.io/eve-docs-zh/docs/connections/overview/)：把外部 MCP 或 OpenAPI 服务暴露给模型，并让凭据始终留在模型上下文之外。
-- [沙盒（Sandbox）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：Agent 的隔离 bash 环境：内置文件工具、播种的 /workspace、后端、生命周期与网络策略。
-- [子智能体（Subagents）](https://wfvue.github.io/eve-docs-zh/docs/subagents/)：把工作委派给子智能体：可以是当前 Agent 的副本，也可以是有独立目录的专门 Agent。
+- [简介](https://wfvue.github.io/eve-docs-zh/docs/introduction/)：理解 eve agent 如何用文件组织。
+- [快速开始](https://wfvue.github.io/eve-docs-zh/docs/getting-started/)：安装 eve，生成第一个 Agent，并在本地运行。
+- [记忆（Memory）](https://wfvue.github.io/eve-docs-zh/docs/memory/)：用内置或自定义 eve memory provider 召回并捕获有作用域的跨 session 上下文。
+- [工具（Tools）](https://wfvue.github.io/eve-docs-zh/docs/tools/overview/)：定义类型化动作，并用人工审批保护敏感动作。
+- [渠道（Channels）](https://wfvue.github.io/eve-docs-zh/docs/channels/overview/)：用户如何触达你的 Agent。
+- [扩展（Extensions）](https://wfvue.github.io/eve-docs-zh/docs/extensions/)：把可复用的 eve 能力打包并挂载。
+- [添加集成（Add Integrations）](https://wfvue.github.io/eve-docs-zh/docs/install-integrations/)：从官方目录或第三方源安装 integrations。
+
+## 2026-08-27 新增官方页
+
+- [记忆（Memory）](https://wfvue.github.io/eve-docs-zh/docs/memory/)
+- [添加集成（Add Integrations）](https://wfvue.github.io/eve-docs-zh/docs/install-integrations/)
+- [扩展（Extensions）](https://wfvue.github.io/eve-docs-zh/docs/extensions/)
+- [负责任使用（Responsible Use）](https://wfvue.github.io/eve-docs-zh/docs/responsible-use/)
+- [MCP Channel](https://wfvue.github.io/eve-docs-zh/docs/channels/mcp/)
+- [Chat SDK](https://wfvue.github.io/eve-docs-zh/docs/channels/chat-sdk/)
+- [Linq](https://wfvue.github.io/eve-docs-zh/docs/channels/linq/)
+- [Photon](https://wfvue.github.io/eve-docs-zh/docs/channels/photon/)
+- [Agent Client Protocol（ACP）](https://wfvue.github.io/eve-docs-zh/docs/protocols/acp/)
+- [Universal Commerce Protocol（UCP）](https://wfvue.github.io/eve-docs-zh/docs/protocols/ucp/)
+- [内置工具（Built-in Tools）](https://wfvue.github.io/eve-docs-zh/docs/concepts/built-in-tools/)
+- [状态（State）](https://wfvue.github.io/eve-docs-zh/docs/concepts/state/)
+- [跨渠道持久通知](https://wfvue.github.io/eve-docs-zh/docs/patterns/durable-cross-channel-notifications/)
 
 ## 完整文档索引
 
-- [文档首页](https://wfvue.github.io/eve-docs-zh/docs/)：Eve 中文文档与工程实践指南的导航首页。
-- [简介](https://wfvue.github.io/eve-docs-zh/docs/introduction/)：理解 eve agent 如何用文件组织、消息到达后会发生什么，以及项目增长时可以添加哪些构建块。
-- [快速开始](https://wfvue.github.io/eve-docs-zh/docs/getting-started/)：安装 eve，生成第一个 Agent，添加一个工具，并在本地运行。
-- [agent.ts](https://wfvue.github.io/eve-docs-zh/docs/agent-config/)：在 agent.ts 中使用 defineAgent 设置 Agent 运行时配置，包括模型、reasoning effort 和上下文压缩。
-- [Instructions](https://wfvue.github.io/eve-docs-zh/docs/instructions/)：使用 instructions.md 或 instructions.ts 编写 Agent 的常驻系统提示词。
-- [Tools](https://wfvue.github.io/eve-docs-zh/docs/tools/overview/)：定义 Agent 可以调用的类型化动作，并用人工审批保护敏感动作。
-- [Human-in-the-loop](https://wfvue.github.io/eve-docs-zh/docs/tools/human-in-the-loop/)：让运行过程暂停等待人工参与：审批工具调用，或让 Agent 中途提问，并在回答后持久恢复。
-- [技能（Skills）](https://wfvue.github.io/eve-docs-zh/docs/skills/)：编写按需加载的流程文档，让模型通过 load_skill 拉入上下文。
-- [渠道（Channels）](https://wfvue.github.io/eve-docs-zh/docs/channels/overview/)：Channel 契约、内置 eve HTTP 渠道与自定义渠道：用户如何触达你的 Agent。
-- [eve HTTP Channel](https://wfvue.github.io/eve-docs-zh/docs/channels/eve/)：Agent 的默认 HTTP API：session 路由、认证与定制。
-- [Slack](https://wfvue.github.io/eve-docs-zh/docs/channels/slack/)：用 Vercel Connect 托管的凭证、线程回复和交互按钮，从 Slack 应用提及和私信触达 Agent。
-- [Discord](https://wfvue.github.io/eve-docs-zh/docs/channels/discord/)：通过 Discord HTTP Interactions（斜杠命令、组件、模态框）触达 Agent。
-- [Microsoft Teams](https://wfvue.github.io/eve-docs-zh/docs/channels/teams/)：通过 Bot Framework Activity 协议从 Microsoft Teams 触达 Agent，带 Adaptive Card 的 human-in-the-loop 提示。
-- [Telegram](https://wfvue.github.io/eve-docs-zh/docs/channels/telegram/)：通过 Telegram bot webhook 触达 Agent，带 inline-keyboard 的 human-in-the-loop 提示和附件。
-- [Twilio](https://wfvue.github.io/eve-docs-zh/docs/channels/twilio/)：通过 Twilio 用 SMS 和语音转写的电话触达 Agent。
-- [GitHub](https://wfvue.github.io/eve-docs-zh/docs/channels/github/)：通过 GitHub App webhooks 触达 Agent：评论调用、PR diff 上下文、sandbox checkout 与 Vercel Connect 凭证。
-- [Linear](https://wfvue.github.io/eve-docs-zh/docs/channels/linear/)：通过 Linear Agent Sessions 触达 Agent，带原生 Agent Activities（进度、提问、回复）与 Vercel Connect 凭证。
-- [自定义渠道（Custom Channels）](https://wfvue.github.io/eve-docs-zh/docs/channels/custom/)：用 routes、events、metadata、continuation tokens 和文件上传编写自定义 HTTP 与 WebSocket 渠道。
-- [连接（Connections）](https://wfvue.github.io/eve-docs-zh/docs/connections/overview/)：把外部 MCP 或 OpenAPI 服务暴露给模型，并让凭据始终留在模型上下文之外。
-- [MCP 连接（MCP Connections）](https://wfvue.github.io/eve-docs-zh/docs/connections/mcp/)：把 Eve Agent 连接到远程 MCP Server，配置鉴权，并控制模型能发现哪些远程工具。
-- [OpenAPI 连接（OpenAPI Connections）](https://wfvue.github.io/eve-docs-zh/docs/connections/openapi/)：把 OpenAPI 3.x 或 Swagger 2.0 文档转换成 Eve connection tools，配置鉴权，并控制模型能发现哪些 operation。
-- [沙盒（Sandbox）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：Agent 的隔离 bash 环境：内置文件工具、播种的 /workspace、后端、生命周期与网络策略。
-- [子智能体（Subagents）](https://wfvue.github.io/eve-docs-zh/docs/subagents/)：把工作委派给子智能体：可以是当前 Agent 的副本，也可以是有独立目录的专门 Agent。
-- [定时任务（Schedules）](https://wfvue.github.io/eve-docs-zh/docs/schedules/)：让 Agent 按 cron 节奏运行：一次性 prompt 或把工作交给渠道的 handler。
-- [评测概览（Overview）](https://wfvue.github.io/eve-docs-zh/docs/evals/overview/)：用 defineEval 为 Eve Agent 定义可重复、可评分的检查，并通过 eve eval 运行。
-- [用例（Cases）](https://wfvue.github.io/eve-docs-zh/docs/evals/cases/)：使用 test(t) 编写 single-turn 和 multi-turn eval，并让一个文件基于数据集展开多个 eval。
-- [断言（Assertions）](https://wfvue.github.io/eve-docs-zh/docs/evals/assertions/)：Scoped methods、value assertions、matcher mini-language，以及 gate / soft severity。
-- [Judge](https://wfvue.github.io/eve-docs-zh/docs/evals/judge/)：通过 t.judge.autoevals 使用 LLM judge 给 eval 评分，在断言上设置阈值，并配置 judge model。
-- [目标（Targets）](https://wfvue.github.io/eve-docs-zh/docs/evals/targets/)：让同一组 eval 文件指向本地 dev server 或部署环境。
-- [报告器（Reporters）](https://wfvue.github.io/eve-docs-zh/docs/evals/reporters/)：把 eval 结果发送到 Braintrust experiments 或 JUnit XML。Eve 自己运行并评分全部 eval。
-- [运行评测（Running Evals）](https://wfvue.github.io/eve-docs-zh/docs/evals/running/)：eve eval CLI：参数、过滤器、退出码、artifacts，以及如何把 evals 接入 CI。
-- [filesystem-first 是什么](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/filesystem-first/)：解释 Eve 为什么以文件系统作为 Agent 能力组织入口。
-- [Instructions](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/instructions/)：`instructions` 是 Eve Agent 永远携带的常驻系统提示词。
-- [Tools](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/tools/)：Tool 是 Agent 可以调用的结构化动作。
-- [技能（Skills）](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/skills/)：编写按需加载的流程文档，让模型通过 load_skill 拉入上下文。
-- [Sessions / Runs / Streaming](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/sessions-runs-streaming/)：Eve 的一次对话不是普通 HTTP 请求，而是一个可恢复的 durable session。
-- [Workflow SDK 原理](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/workflow-sdk/)：解释 Workflow SDK 如何通过 workflow、step 和 event log 支持持久化执行。
-- [沙盒（Sandbox）是什么](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/sandbox/)：解释 Eve 沙盒（Sandbox）的隔离工作区、常见后端和自部署建议。
-- [术语表](https://wfvue.github.io/eve-docs-zh/docs/core-concepts/glossary/)：Eve、Workflow、沙盒、技能、工具等核心术语解释。
-- [Eve 自部署指南](https://wfvue.github.io/eve-docs-zh/docs/deployment/self-hosting/)：Eve 可以自部署，不是只能部署在 Vercel。
-- [部署（Deployment）](https://wfvue.github.io/eve-docs-zh/docs/guides/deployment/)：把 Eve Agent 发布到 Vercel 或自有主机的生产检查清单，覆盖构建产物、环境变量、沙盒后端、鉴权、部署和验证。
-- [鉴权与路由保护（Auth & Route Protection）](https://wfvue.github.io/eve-docs-zh/docs/guides/auth-and-route-protection/)：用有序 auth walk、验证 helper 和连接鉴权保护 Eve Agent 的 HTTP routes。
-- [可观测性（instrumentation.ts）](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/)：在 instrumentation.ts 中用 OpenTelemetry 跟踪 Agent，读取 Eve 写出的 workflow run tags，并用 eve info 和常见失败表排查 discovery。
-- [钩子（Hooks）](https://wfvue.github.io/eve-docs-zh/docs/guides/hooks/)：从 agent/hooks/ 订阅 runtime stream events。
-- [会话上下文（Session Context）](https://wfvue.github.io/eve-docs-zh/docs/guides/session-context/)：Runtime helpers：ctx.session、ctx.getSandbox、ctx.getSkill 和 defineState。
-- [状态（State）](https://wfvue.github.io/eve-docs-zh/docs/guides/state/)：使用 defineState 保存每个 session 的 durable memory：get() 和 update() 会跨 step boundaries 持久化。
-- [动态能力（Dynamic Capabilities）](https://wfvue.github.io/eve-docs-zh/docs/guides/dynamic-capabilities/)：使用 defineDynamic 在运行时解析 tools、skills 和 instructions，理解 resolver events、执行顺序，以及 dynamic tools 如何跨 step boundaries 保留。
-- [动态工作流（Dynamic Workflows）](https://wfvue.github.io/eve-docs-zh/docs/guides/dynamic-workflows/)：实验性的 Workflow 工具：让模型用自己生成的 JavaScript 编排子智能体，并作为一个 durable step 执行。
-- [远程 Agent（Remote Agents）](https://wfvue.github.io/eve-docs-zh/docs/guides/remote-agents/)：使用 defineRemoteAgent 把另一个 Eve 部署当作子智能体调用：相同的 lowered tool shape、outbound auth 和 durable callback dispatch。
-- [开发终端界面（Dev TUI）](https://wfvue.github.io/eve-docs-zh/docs/guides/dev-tui/)：在交互式终端 UI 中驱动 Eve Agent：聊天、流式输出、审批工具、回答问题、调整展示，并连接部署环境。
-- [前端概览（Overview）](https://wfvue.github.io/eve-docs-zh/docs/guides/frontend/overview/)：使用 useEveAgent 把 Eve Agent 接到浏览器聊天 UI 或 Agent UI。
-- [Next.js](https://wfvue.github.io/eve-docs-zh/docs/guides/frontend/nextjs/)：使用 withEve 把 Eve Agent 和 Next.js 应用作为一个项目运行。
-- [Nuxt](https://wfvue.github.io/eve-docs-zh/docs/guides/frontend/nuxt/)：使用 eve/nuxt module 把 Eve Agent 和 Nuxt 应用作为一个项目运行。
-- [SvelteKit](https://wfvue.github.io/eve-docs-zh/docs/guides/frontend/sveltekit/)：使用 eveSvelteKit Vite plugin 把 Eve Agent 和 SvelteKit 应用作为一个项目运行。
-- [useEveAgent（Vue）](https://wfvue.github.io/eve-docs-zh/docs/guides/frontend/use-eve-agent-vue/)：用于从浏览器驱动 Eve Agent session 的 Vue composable。
-- [useEveAgent（Svelte）](https://wfvue.github.io/eve-docs-zh/docs/guides/frontend/use-eve-agent-svelte/)：用于从浏览器驱动 Eve Agent session 的 Svelte binding。
-- [TypeScript SDK 概览（TypeScript SDK Overview）](https://wfvue.github.io/eve-docs-zh/docs/guides/client/overview/)：使用 Client、sessions、auth 和 health checks 从 TypeScript 调用 Eve Agent。
-- [消息（Messages）](https://wfvue.github.io/eve-docs-zh/docs/guides/client/messages/)：使用 eve/client 发送文本、完整 turn payload、client context、附件和 HITL responses。
-- [续接（Continuations）](https://wfvue.github.io/eve-docs-zh/docs/guides/client/continuations/)：用 continuation tokens、session IDs 和 stream cursors 持久化并恢复 Eve client sessions。
-- [流式输出（Streaming）](https://wfvue.github.io/eve-docs-zh/docs/guides/client/streaming/)：实时消费 Eve client stream events，按 event index 重连，并聚合 turn results。
-- [输出 Schema（Output Schema）](https://wfvue.github.io/eve-docs-zh/docs/guides/client/output-schema/)：从 Eve client turn 请求结构化结果，并从 MessageResult 中读取 typed data。
-- [Evals](https://wfvue.github.io/eve-docs-zh/docs/guides/evals/)：Evals 是给 Eve Agent 写自动化测试。
-- [执行模型与持久性（Execution Model and Durability）](https://wfvue.github.io/eve-docs-zh/docs/concepts/execution-model-and-durability/)：eve session 如何运行：durable 对话、按 step 打点的 turn，以及稍后恢复的 parked work。
-- [Sessions、Runs 与 Streaming](https://wfvue.github.io/eve-docs-zh/docs/concepts/sessions-runs-and-streaming/)：ID 地址化的 session 契约：消息、控制、NDJSON 事件流与重连。
-- [默认 Harness（The Harness）](https://wfvue.github.io/eve-docs-zh/docs/concepts/default-harness/)：eve 如何在一次 Agent turn 中管理模型上下文与内置工具。
-- [上下文控制（Context Control）](https://wfvue.github.io/eve-docs-zh/docs/concepts/context-control/)：控制 eve Agent 的模型看到什么、何时看到：instructions、skills、workspace 与子智能体。
-- [安全模型（Security Model）](https://wfvue.github.io/eve-docs-zh/docs/concepts/security-model/)：eve 的信任边界、secret 存放位置、凭证如何到达 host，以及默认 fail-closed 的内容。
-- [多租户记忆（Multi-tenant memory）](https://wfvue.github.io/eve-docs-zh/docs/patterns/multi-tenant-memory/)：把动态指令、已鉴权的会话上下文和普通工具组合起来，实现按租户隔离的长期记忆。
-- [动态调度（Dynamic scheduling）](https://wfvue.github.io/eve-docs-zh/docs/patterns/dynamic-scheduling/)：把一个分钟级 eve schedule、主动渠道交接和 CRUD 工具组合成应用托管的 schedules。
-- [多租户出站认证（Multi-tenant outbound auth）](https://wfvue.github.io/eve-docs-zh/docs/patterns/multi-tenant-auth/)：在 authored tools、OpenAPI connections 和 MCP connections 中，从活跃 turn 上下文选择租户 scope 的凭证。
-- [多租户审批（Multi-tenant approvals）](https://wfvue.github.io/eve-docs-zh/docs/patterns/multi-tenant-approvals/)：为 authored tools、OpenAPI operations 和 MCP tools 异步解析租户策略。
-- [HTTP API](https://wfvue.github.io/eve-docs-zh/docs/reference/http-api/)：eve 应用暴露的稳定 HTTP 接口：session 路由、事件流与控制。
-- [TypeScript API](https://wfvue.github.io/eve-docs-zh/docs/reference/typescript-api/)：define* helpers、运行时 ctx，以及每个从哪导入。
-- [CLI](https://wfvue.github.io/eve-docs-zh/docs/reference/cli/)：eve CLI 每个命令的参考：init、set、info、build、start、dev、logs、trace、link、deploy、eval、channels 和 extension。
-- [项目布局（Project Layout）](https://wfvue.github.io/eve-docs-zh/docs/reference/project-layout/)：agent/ 下的 authored slots 与路径派生的命名规则。
-- [你的第一个 Agent（Your First Agent）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/first-agent/)：Build an Agent 教程第 1 步：脚手架分析助手、给它分析师人设、运行它并提问。
-- [它如何运行（How It Runs）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/how-it-runs/)：Build an Agent 教程第 2 步：session、turn 和 durable steps，以及 turn 为什么能扛过崩溃。
-- [查询示例数据（Query Sample Data）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/query-sample-data/)：Build an Agent 教程第 3 步：在打包的示例数据集上加一个 run_sql 工具，观察工具循环。
-- [连接仓库（Connect a Warehouse）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/connect-a-warehouse/)：Build an Agent 教程第 4 步：让每个用户通过 Vercel Connect 上的 OAuth MCP 连接自己的仓库。
-- [运行分析（Run Analysis）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/run-analysis/)：Build an Agent 教程第 5 步：把仓库 schema 播种进 sandbox workspace，然后在 SQL 之外计算和绘图。
-- [记住定义（Remember Definitions）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/remember-definitions/)：Build an Agent 教程第 6 步：用 defineState 跨 turn 记住团队的指标术语表。
-- [团队手册（Team Playbooks）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/team-playbooks/)：Build an Agent 教程第 7 步：用键控 principal 的动态 skill 加载调用者的团队手册。
-- [守护支出（Guard the Spend）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/guard-the-spend/)：Build an Agent 教程第 8 步：用基于成本的审批门禁昂贵查询。Agent 暂停、询问、恢复。
-- [上线（Ship It）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/ship-it/)：Build an Agent 教程第 9 步：用 useEveAgent 给 Agent 加 Web 仪表盘，替换 placeholderAuth，并部署到 Vercel。
-- [路线图](https://wfvue.github.io/eve-docs-zh/docs/roadmap/)：Eve 中文文档项目的阶段目标、当前进度与维护节奏。
-- [AI 文档索引](https://wfvue.github.io/eve-docs-zh/docs/ai-index/)：这里提供给大模型读取的文档入口。
-- [术语表](https://wfvue.github.io/eve-docs-zh/docs/glossary/)：Eve、Workflow、Sandbox、Skills、Tools 等核心术语解释。
-- [本站点说明](https://wfvue.github.io/eve-docs-zh/docs/site/)：说明本站的 Next.js + Fumadocs 工程结构、本地预览和 GitHub Pages 部署方式。
+构建站点时 `apps/docs/scripts/generate-llms.mjs` 会用 `docs/` 全部页面覆盖本文件。部署前请运行该脚本，或依赖 CI 构建步骤生成 `llms-full.txt`。
