@@ -142,19 +142,22 @@ function renderLlmsTxt(pages) {
     'docs/getting-started.md',
     'docs/agent-config.md',
     'docs/instructions.md',
+    'docs/memory.md',
     'docs/tools/overview.md',
     'docs/skills.md',
     'docs/channels/overview.md',
     'docs/connections/overview.md',
     'docs/sandbox.md',
     'docs/subagents.md',
+    'docs/extensions.md',
+    'docs/install-integrations.md',
   ]);
   const important = pages.filter((page) => priority.has(page.sourcePath));
 
   return [
     '# Eve 中文文档与工程实践指南',
     '',
-    '> 面向大语言模型和开发者的 Eve 中文文档入口。本文档站解释 Vercel Eve 的 filesystem-first Agent 结构、工具、技能、渠道、连接、沙盒、子智能体、定时任务、评测和部署实践。',
+    '> 面向大语言模型和开发者的 Eve 中文文档入口。本文档站解释 Vercel Eve 的 filesystem-first Agent 结构、工具、技能、记忆、渠道、连接、扩展、沙盒、子智能体、定时任务、评测和部署实践。',
     '',
     `- 站点地址：${siteUrl}`,
     `- 文档首页：${siteUrl}/docs/`,
