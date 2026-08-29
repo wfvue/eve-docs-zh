@@ -15,7 +15,10 @@ description: "Eve 中文文档与工程实践指南的导航首页。"
 
 ## 部署与运行
 
-- [自部署指南](deployment/self-hosting)
+- [部署概览](guides/deployment/overview)
+- [部署到 Vercel](guides/deployment/vercel)
+- [自托管 eve](guides/deployment/self-hosting)
+- [自部署实践（中文补充）](deployment/self-hosting)
 
 ## Guides
 

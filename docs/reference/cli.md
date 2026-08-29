@@ -52,7 +52,7 @@ eve init [target] [--model <provider/model-id>] [--reasoning <effort>] [--channe
 
 | Flag | 类型 | 默认 | 描述 |
 | --- | --- | --- | --- |
-| `--model <model>` | string | `anthropic/claude-sonnet-5` | 设置根 Agent 的 AI Gateway model ID。 |
+| `--model <model>` | string | `openai/gpt-5.6-luna-fast` | 设置根 Agent 的 AI Gateway model ID。 |
 | `--reasoning <effort>` | enum | provider default | 把 reasoning 设为 `none`、`minimal`、`low`、`medium`、`high` 或 `xhigh`。`provider-default` 让该字段保持未编写。 |
 | `--channel-web-nextjs` | flag | off | 添加 Web Chat 应用（Next.js）。不适用于已有项目——在那里改跑 `eve add channel/web`。 |
 
@@ -376,4 +376,4 @@ eve channels list [--json]
 
 - [Project layout](./project-layout)：`eve info` 发现什么
 - [instrumentation.ts](../guides/instrumentation)：tracing 和错误目录
-- [部署（Deployment）](../guides/deployment)：生产环境中的 `eve build` 和 `eve start`
+- [部署（Deployment）](../guides/deployment/overview)：生产环境中的 `eve build` 和 `eve start`

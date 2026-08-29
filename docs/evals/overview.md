@@ -102,7 +102,7 @@ model: mockModel({
 
 `t` 既是驱动器，也是断言入口。这里没有单独的 `input`、`run`、`checks` 或 `scores` 字段。你写普通控制流，一边发送 turn，一边在函数内直接断言。
 
-- **驱动 Agent**：`t.send(...)`、`t.respond(...)`、`t.respondAll(...)`、`t.sendFile(...)`、`t.requireInputRequest(...)`、`t.newSession()`。通过 `t.reply`（最后一条 assistant message）、`t.sessionId` 和 `t.events` 读取返回内容。见 [Cases](../cases)。
+- **驱动 Agent**：`t.send(...)`、`t.start(...)`、`t.cancel()`、`t.respond(...)`、`t.respondAll(...)`、`t.sendFile(...)`、`t.requireInputRequest(...)`、`t.newSession()`。`start()` 返回的 live turns 可以在取消或 settle 前等待 typed mid-turn events。通过 `t.reply`（最后一条 assistant message）、`t.transcript`（主 session 的 user 和 assistant 消息）、`t.sessionId` 和 `t.events` 读取返回内容。见 [Cases](../cases)。
 - **断言**有三类 surface，下面会介绍。
 
 ## 三种断言 surface
@@ -111,7 +111,7 @@ model: mockModel({
 
 - **Scoped methods** 读取 `t` 上的最终完整 run；在独立 session 上调用时，会 snapshot 该 session；在不可变的 `EveEvalTurn` 上调用时，会检查该 turn。见 [Assertions](../assertions)。
 - **`t.check(value, assertion)`** 用 `eve/evals/expect` 中的确定性 builder 对显式值打分，例如 `t.check(t.reply, includes("sunny"))`。可以检查 `t.reply`、中间草稿、解析后的 JSON 或任何其它值。见 [Assertions](../assertions)。
-- **`t.judge.autoevals.*`** 是 LLM-as-judge surface，例如 `t.judge.autoevals.closedQA("cites a source")`。默认会对 `t.reply` 评分，使用配置好的 judge model，而不是被测试的 Agent 模型。见 [Judge](../judge)。
+- **`t.judge.autoevals.*`** 是 LLM-as-judge surface，例如 `t.judge.autoevals.closedQA("cites a source")`。默认会对 `t.reply` 评分；传入 `{ on: t.transcript }` 可以给多轮对话评分。Judge 使用配置好的 judge model，而不是被测试的 Agent 模型。见 [Judge](../judge)。
 
 ## Gate 与 soft
 

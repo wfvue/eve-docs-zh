@@ -33,6 +33,12 @@ export default defineTool({
 
 敏感动作可以配置 `approval`，让 run 暂停并等待人工确认。返回给模型的内容可以通过 `toModelOutput` 缩减，只给模型必要摘要，同时保留完整结果给 channel 或 hooks 使用。
 
+## 实验性后台执行
+
+`defineTool({ execution: "background" })` 可以立刻返回 `working` receipt，让外部 executor 继续任务。这需要根 Agent 开启 `experimental.tasks`，属于 beta。
+
+**官方说明：** 发起 turn 接受后台任务后，eve 会让模型确认工作已开始、不必等结果。[Schedule](../schedules) 发起的 turn 是例外：没有人提示它们，所以启动会保持条件投递，并且不发送 acknowledgement。
+
 ## 工程建议
 
 不要把正式业务逻辑全写在 tool 文件里。推荐让 tool 做薄封装，把权限、幂等、审计、事务和错误处理放在后端 service 中。

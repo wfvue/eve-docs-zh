@@ -90,11 +90,17 @@ export default defineEval({
   async test(t) {
     const first = await t.send("My favorite word is marigold.");
 
-    const second = await t.send("Thanks for remembering.");
+    const second = await t.send("What is my favorite word?");
     await t.require(second.sessionId, equals(first.sessionId));
 
     t.succeeded();
-    second.messageIncludes("Thanks for remembering.");
+    second.messageIncludes("marigold");
+
+    t.judge.autoevals
+      .closedQA("The assistant remembers the user's favorite word across turns", {
+        on: t.transcript,
+      })
+      .atLeast(0.8);
   },
 });
 ```
@@ -103,12 +109,17 @@ export default defineEval({
 
 `t` 会驱动主 session；`t.newSession()` 会返回同一 target 上的独立 `EveEvalSession`，它的事件也会进入同一个 run-level assertions。
 
-- `t.send(input)`：发送一个 turn，并等待它 settle。它接受和 `ClientSession.send()` 相同的输入，可以是字符串，也可以是结构化 message；resolve 后返回一个 turn，带有 `.message` 和 `.expectOk()`。
+- `t.send(message, options?)`：发送一个 turn，并等待它 settle。它匹配 `ClientSession.send()`，resolve 后返回一个 turn，带有 `.message` 和 `.expectOk()`。
+- `t.start(message)`：启动一个文本 turn，但在 server 接受后立刻返回。返回的 live turn 暴露 `.sessionId`、`.waitForEvent(...)`、`.cancel()` 和 `.result()`，用来协调仍在运行的工作。
+- `t.cancel()`：请求协作取消主 session 的活跃 turn。`accepted` 和 `no_active_turn` 都是成功结果。
 - `t.sendFile(text, path, mediaType?)`：把一个本地文件作为 data URL 附加。
 - `t.requireInputRequest(filter?)`：记录一个 gate，要求刚好存在一个 pending request，并返回它。Filter 可以匹配工具名、action input、prompt、display 和 option ids。
-- `t.respond(...responses)`：回答指定的 pending input requests，并把回答作为下一个 turn 发出去。
+- `t.respond(responses, options?)`：回答指定的 pending input requests，并把回答作为下一个 turn 发出去。
 - `t.respondAll(optionId)`：用同一个 option 回答所有 pending input requests，并发送这些 responses 作为下一个 turn。
 - `t.reply`：最后一条 assistant message（或 `null`）；`t.sessionId` 是当前 session id；`t.events` 是目前捕获到的完整 typed event stream。
+- `t.transcript`：按 turn 顺序格式化主 session 观察到的 user 和 assistant 消息。把它作为 judge 的 `on` 值，可以给整段对话评分。`t.newSession()` 返回的独立 session 暴露自己的 `session.transcript`。
+
+Transcript 使用 `User:` 和 `Assistant:` 标签，用空行分隔。它排除 reasoning、tool calls、tool results 和其它 session 的消息。每个 turn settle 后更新，所以在 `await t.send(...)`、`await t.respond(...)` 或 `await live.result()` 之后再读。
 
 每个 `send`（以及 `respond` / `respondAll`）都会 resolve 成一个不可变 turn，包含 `.message`、`.data`、`.events`、`.inputRequests`、`.toolCalls`、`.sessionId`、`.status` 和 `.expectOk()`。使用 `.sessionId` 可以关联 turn，或把后续工作附加到产生该 turn 的 session。`expectOk()` 只会在该 turn 以 failed 结束时抛出；一个 session 保持 open、等待下一条消息，是成功 turn 的正常结束状态。
 

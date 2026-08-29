@@ -72,7 +72,7 @@ const result = await sandbox.run({ command: "npm test" });
 - 只有当 active runtime path 附加了 sandbox access 时才可用。
 - Visibility 是 node-local。子智能体看到自己的 sandbox，而不是父 Agent 的 sandbox。
 
-`SandboxSession` 还暴露 `resolvePath(path)`，会把逻辑 `/workspace/...` 位置解析为 live backend-native path。 authored code 需要在传给 shell 或 child process 之前拿到真实路径时使用它。
+`SandboxSession` 还暴露 `resolvePath(path)`，会把逻辑 `/workspace/...` 位置解析为 live backend-native path。 authored code 需要在传给 shell 或 child process 之前拿到真实路径时使用它。返回的 handle 也暴露 `stop()` 和 `delete()`；行为见 [Sandbox 生命周期](../../sandbox#生命周期lifecycle)。
 
 Lifecycle 细节见 [沙盒（Sandbox）](../../sandbox)。
 

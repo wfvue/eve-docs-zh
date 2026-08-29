@@ -160,5 +160,6 @@ services:
 
 ## 官方链接
 
-- https://eve.dev/docs/guides/deployment
+- https://eve.dev/docs/guides/deployment/overview
+- 中文官方 Operate 页：[部署概览](../guides/deployment/overview)、[自托管 eve](../guides/deployment/self-hosting)
 - https://workflow-sdk.dev/worlds/postgres

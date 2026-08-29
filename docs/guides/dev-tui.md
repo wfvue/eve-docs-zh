@@ -38,6 +38,7 @@ Prompt 或 status 下方的持久行会显示 model、session token flow、已�
 | `/channels` | 展示 Agent channel 列表，并添加所选 channel。见 [添加 channel](#添加-channeladd-a-channel)。 |
 | `/connect` | 展示 Vercel Connect MCP catalog，并配置所选 server。见 [添加 connection](#添加-connectionadd-a-connection)。 |
 | `/deploy` | 把 Agent 发布到 Vercel production，未链接目录时会先链接。 |
+| `/info` | 显示解析后的应用、编译产物、discovery diagnostics 和 messaging routes。 |
 | `/vc:install` | 安装 Vercel CLI。本地和远程 session 都可用。 |
 | `/vc:login` | 本地登录 Vercel。远程 session 中会解析部署项目、刷新 OIDC token，并确认 Trusted Sources 规则。 |
 | `/loglevel` | 切换 transcript 显示哪些 logs。见 [控制日志显示](#控制日志显示control-what-logs-show)。 |
@@ -45,7 +46,7 @@ Prompt 或 status 下方的持久行会显示 model、session token flow、已�
 | `/exit` | 退出 TUI。 |
 | `/help` | 列出当前本地或远程 session 可用命令。 |
 
-`/model`、`/channels`、`/connect` 和 `/deploy` 用来管理本地 Agent 或其已链接项目。它们只在 `eve dev` 本地启动 server 时可用；连接远程 server（`--url`）时不可用。
+`/model`、`/channels`、`/connect`、`/deploy` 和 `/info` 用来管理本地 Agent 或其已链接项目。它们只在 `eve dev` 本地启动 server 时可用；连接远程 server（`--url`）时不可用。
 
 ### 配置模型和 provider（Configure the model and provider）
 

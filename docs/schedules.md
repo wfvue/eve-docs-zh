@@ -80,6 +80,8 @@ Agent 不必每次运行都投递消息。当 prompt 让投递变成条件性的
 - `waitUntil(promise)`：延长 cron task 的生命周期，让 parked session 和任何进行中的 fetch 在任务结束前 settle。把 `send` 调用包在它里面。
 - `appAuth`：app principal（`{ authenticator: "app", principalId: "eve:app", principalType: "runtime" }`）。对 Agent 代表自己执行的工作，把它作为 `to(...).send(..., { auth: appAuth })` 传入。
 
+`auth` 选项决定 session 以哪个 principal 运行。Handler 也可以在定时工作需要该用户的 grants 时传入 user principal；这次 dispatch 创建的 session 仍会保留 schedule 来源（provenance）和条件投递行为。
+
 Handler-form session 与任何其他 session 运行在同一个 durable runtime 引擎上，所以它可以 park（durable 挂起），例如当渠道交接在等待 Slack 回复时。只有 markdown task mode 被禁止等待。
 
 ## 迭代时触发 schedule
