@@ -140,6 +140,34 @@ export default defineMcpClientConnection({
 
 `auth` 和 `headers` 也可以写成函数，接收当前 session context。适合凭据、租户或路由依赖当前调用者的场景。
 
+## 应用提供的工具参数
+
+有些 MCP server 需要属于应用、而不是模型的参数。例如 UCP servers 期望每次工具调用都在 `arguments.meta` 里带上 agent profile。用 `toolCall.providedArguments` 配置这些值：
+
+```ts title="agent/connections/storefront.ts"
+import { defineMcpClientConnection } from "eve/connections";
+
+const profileUrl = "https://agent.example.com/.well-known/ucp";
+
+export default defineMcpClientConnection({
+  url: "https://store.example.com/api/ucp/mcp",
+  description: "Storefront catalog, carts, checkouts, and orders.",
+  toolCall: {
+    providedArguments: {
+      meta: ({ session }) => ({
+        "ucp-agent": {
+          profile: `${profileUrl}?session=${encodeURIComponent(session.id)}`,
+        },
+      }),
+    },
+  },
+});
+```
+
+值可以是 JSON、promise 或 callback。Callback 收到当前 session context、远端裸 `toolName`，以及这次工具调用唯一、可 replay 的 `callId`。远端 server 需要幂等键时用 `callId`。
+
+eve 把配置的 keys 当作应用自有：它会从每个远端工具面向模型的 input schema 里移除它们，并在执行前立刻补上解析后的值。它们应用到该 connection 的每次工具调用，并替换任何冲突的模型值。Approval policies 仍然只收到模型编写的输入。
+
 ## 无鉴权连接
 
 只有在服务本身明确公开、本地开发，或已经被其它安全层保护时，才应该省略 `auth` 和 `headers`：
@@ -241,7 +269,7 @@ export default defineMcpClientConnection({
 | `principal_required` | user-scoped `connect("...")` 在没有已认证用户的 session 中运行。应在 route auth 中返回 user，或改成 app-scoped。 |
 | 模型找不到远端工具 | 改进 connection `description`，并检查 `tools.allow` / `tools.block`。 |
 | OAuth 本地可用，部署后失败 | 确认 Connect connector 已 attach 到部署项目，并检查 `connect("...")` 中的 UID。 |
-| 远端拒绝请求 | 检查 MCP URL、transport、auth scheme、headers 和 token。 |
+| 远端拒绝请求 | 检查 MCP URL、transport、auth scheme、必需 headers 和应用提供的 arguments。 |
 
 ## 接下来读什么
 

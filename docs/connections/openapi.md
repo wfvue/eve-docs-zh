@@ -153,6 +153,30 @@ export default defineOpenAPIConnection({
 
 `auth` 和 `headers` 也可以写成函数，并接收当前 session context。适合凭据、租户或 API 环境依赖当前调用者的场景。
 
+## 应用提供的 operation 参数
+
+有些 API 声明的 operation 参数应该来自应用而不是模型，例如 tenant 或 organization ID。用 `toolCall.providedArguments` 配置这些值：
+
+```ts title="agent/connections/crm.ts"
+import { defineOpenAPIConnection } from "eve/connections";
+
+export default defineOpenAPIConnection({
+  spec: "https://api.example.com/openapi.json",
+  description: "CRM accounts, contacts, and opportunities.",
+  toolCall: {
+    providedArguments: {
+      tenantId: ({ session }) => String(session.auth.current?.attributes.tenant ?? ""),
+    },
+  },
+});
+```
+
+值可以是 JSON、promise 或 callback。Callback 收到当前 session context、裸 operation `toolName`，以及这次工具调用唯一、可 replay 的 `callId`。API 需要幂等键时用 `callId`。
+
+eve 会从每个 operation 面向模型的 input schema 里移除配置的 keys，并在构造 HTTP 请求前立刻补上解析后的值。这些值应用到该 connection 的每个 operation，并替换任何冲突的模型值。Keys 对应生成的顶层 operation 输入：path、query、header、cookie 参数名，以及请求体的 `body`。
+
+传输级、不是 operation 输入的 headers 继续用 `headers`。OpenAPI 文档把该值声明为 operation 参数、且应留在模型控制之外时，用 `providedArguments`。Approval policies 仍然只收到模型编写的输入。
+
 ## Operation filters
 
 大多数 OpenAPI spec 都比模型真正需要的范围更大。建议用 `operations.allow` 或 `operations.block` 缩小模型可见 operation。

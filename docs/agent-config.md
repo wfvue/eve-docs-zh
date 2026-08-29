@@ -19,7 +19,9 @@ export default defineAgent({
 });
 ```
 
-如果不需要运行时配置，可以省略根目录下的 `agent.ts`。这种情况下，eve 默认使用 `anthropic/claude-sonnet-4.6`。如果存在 `agent.ts`，则必须提供 `model`。
+如果不需要运行时配置，可以省略根目录下的 `agent.ts`。这种情况下，eve 会在同一 slot 选择默认 `agent.ts` 源，配置为 `openai/gpt-5.6-luna-fast`；自己写这个文件会替换该默认源。如果存在 `agent.ts`，则必须提供 `model`。
+
+对静态 AI Gateway model ID，也可以从项目根运行 `eve set --model anthropic/claude-opus-4.8`，或在本地 dev TUI 里用 `/model anthropic/claude-opus-4.8`。
 
 `model` 可以是一个 Gateway 模型 ID 字符串，这会通过 [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) 路由。要直接调用某个模型提供商，并在代码里配置模型，则传入该提供商实现的 `LanguageModel`。
 

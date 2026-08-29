@@ -18,17 +18,52 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-08-27，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。
+对照日期：2026-08-29，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 SHA：`f0622995ae86096c434f978d43647c3416cb6627`（docs 路径最近一次变更；当时 main 的 HEAD 是 `a6b6397`，未改 docs）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
 | 文档站基础 | 已完成 | Next.js + Fumadocs + GitHub Pages 静态部署已接入。 |
 | 官方一级目录 | 进行中 | 已补 Memory、Extensions、Add Integrations、Protocols、Responsible Use 等新一级入口。 |
-| 入门文档 | 已完成，需跟版本 | Introduction / Getting Started 已能读；官方脚手架模型和布局表仍在变。 |
+| 入门文档 | 已完成，需跟版本 | Introduction / Getting Started 已能读；默认脚手架模型现为 GPT-5.6 Luna Fast。 |
 | 核心能力 | 已完成高频补齐 | Tools、Skills、Sandbox、Subagents、Connections、Evals、Channels、Schedules、Memory、HITL。 |
 | Integrate | 已完成入口 | Extensions、Add Integrations、ACP、UCP、Remote Agents、Frontend、Client。 |
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
+
+## 2026-08-29 上游同步
+
+对照 `vercel/eve` docs 自 2026-08-27 以来的 commits（已用 `get_commit detail=stats` 核对实际 docs 文件 diff）：
+
+已更新：
+
+- [x] Memory：按官方澄清 provider 模型（内置 `fileMemory()`、Supermemory 即将推出、自定义 stub）
+- [x] Multi-tenant memory：改成「scope 决策 + 任意 provider」，示例切到 `fileMemory()`
+- [x] State：跨 session 上下文指向内置 / 第三方 / 自定义 provider
+- [x] Slack：slash commands、shortcuts、`onSlashCommand` / `onShortcut`
+- [x] Getting Started / agent-config / CLI：默认模型 `openai/gpt-5.6-luna-fast`
+- [x] Evals：`t.transcript`、judge `on: t.transcript`
+- [x] Sandbox：`sandbox.delete()` 永久删除 session sandbox
+- [x] Session Context：handle 暴露 `stop()` / `delete()`
+- [x] Schedules：dispatch 保留 schedule provenance
+- [x] Tools：schedule 发起的 background 启动不发 acknowledgement
+- [x] Dev TUI：`/info`
+- [x] Connections MCP / OpenAPI：`providedArguments` 回调收到 replay-stable `callId`
+- [x] Streaming：`action.input.appended` 工具输入增量
+- [x] Instrumentation：`$eve.schedule` tag；Agent Runs 链接改到 Operate Vercel 页
+- [x] Operate：官方 `docs/guides/deployment/` 拆成 overview / vercel / self-hosting；保留额外中文 `docs/deployment/`
+
+未拆：
+
+- [ ] Subagents：官方是 `docs/subagents/index.mdx` 目录，但只有 index 一页。中文继续用 `docs/subagents.md`，URL 仍是 `/subagents`。没有新子页就不拆。
+
+仍缺或下次优先：
+
+- [ ] 官方 Integrations 画廊（eve.dev/integrations/*）逐条中文页——数量大，本轮按计划跳过
+- [ ] 官方 Templates 画廊
+- [ ] Benchmarks（官方 sidebar 外链 `/benchmarks`）
+- [ ] CLI / TypeScript API / HTTP API 按最新命令与 helper 再对一次（本轮只改了默认模型和 deployment 链接）
+- [ ] Default harness 以外的 Concepts 深页（execution model、sessions、security）抽查
+- [ ] `llms-full.txt` 需站点构建后才会包含新页正文
 
 ## 2026-08-27 上游同步
 

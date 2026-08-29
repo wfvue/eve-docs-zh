@@ -41,6 +41,7 @@ curl http://127.0.0.1:2000/eve/v1/session/<sessionId>/stream
 | `turn.started` | 一个新 turn 开始了。 |
 | `message.received` | 一条入站用户消息被接受；携带扁平文本加上结构化文本/文件部分。 |
 | `step.started` | 一个模型 step 开始了。 |
+| `action.input.appended` | 原始工具输入文本增量、字符偏移和 tool-call 身份。 |
 | `actions.requested` | 模型请求了一个或多个动作，包括工具调用；调用在执行前流式输出。 |
 | `action.partial` | 一个本地执行的工具 generator 产出了初步输出快照。 |
 | `action.result` | 一次工具调用返回了。 |
@@ -65,7 +66,9 @@ curl http://127.0.0.1:2000/eve/v1/session/<sessionId>/stream
 | `session.failed` | Session 失败了。 |
 | `session.completed` | Session 到达了终点。 |
 
-`reasoning.appended` 和 `message.appended` 在到达时增量流式输出。当 durable stream writer 忙时，eve 可能会合并同类型的相邻增量；文本保持源顺序，任何其他事件都构成排序屏障。每个 append 都携带新增量和当前块的累计文本。最终块出现在 `message.completed` 和 `reasoning.completed` 上，这是不渲染增量流式输出的客户端的兼容路径。
+`reasoning.appended`、`message.appended` 和 `action.input.appended` 在到达时增量流式输出。当 durable stream writer 忙时，eve 可能合并同一文本块或工具调用的相邻增量，但会保留文本和事件顺序。不同事件类型、工具 `callId` 或 stream coordinate 构成排序屏障。文本和 reasoning appends 同时携带新增量和当前块的累计文本。最终块出现在 `message.completed` 和 `reasoning.completed` 上，这是不渲染增量流式输出的客户端的兼容路径。
+
+流式工具输入变成校验后的调用时，它的 `action.input.appended` 事件会先于匹配的 `actions.requested`。每次 append 携带 `callId`、`toolName`、`inputTextDelta` 和 `inputTextOffset`；offset 是增量开始处的零基 UTF-16 code-unit 位置。只存 delta 和 offset，避免在每个 durable event 里重复累计输入。默认 client reducer 从 offset `0` 开始或重启累积，忽略不连续的非零 offset，并把可能不完整的 JSON 投影成 `state: "input-streaming"` 的 `dynamic-tool` part，累计文本在 `inputText`。`actions.requested` 把同一 `toolCallId` 升级为 `state: "input-available"` 和校验后的 `input`。被排除的内部动作不会发布它们的输入流。
 
 `action.partial` 携带来自 authored async-generator 工具的一次完整初步输出快照。同一 `callId` 的后续 partial 会替换它，`action.result` 是最终快照。当 durable writer 忙时，eve 可能只保留一个调用的最新相邻 partial。把 partials 当作 last-write-wins：durable step 可以重试并重放重叠的事件运行。Provider 执行的工具进度和 MCP progress 通知不会投影为 `action.partial` 事件。
 

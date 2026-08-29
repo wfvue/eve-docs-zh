@@ -44,7 +44,7 @@ for await (const event of response) {
 }
 ```
 
-`message.appended` 和 `reasoning.appended` 是增量 delta events。对应的 completed 形式 `message.completed` 和 `reasoning.completed` 是不渲染 deltas 的兼容路径。
+`message.appended`、`reasoning.appended` 和 `action.input.appended` 是增量 delta events。eve 可能在 durable stream write 进行中合并同一文本块或工具调用的相邻增量，但会保留文本和事件顺序。不同事件类型、工具 `callId` 或 stream coordinate 是屏障。对应的 completed 形式 `message.completed` 和 `reasoning.completed` 是不渲染 deltas 的兼容路径。流式工具输入在匹配的校验调用到达 `actions.requested` 时完成。
 
 ## 处理 event types（Handle event types）
 
@@ -68,6 +68,7 @@ function handleEvent(event: HandleMessageStreamEvent) {
 | `message.received` | 确认用户消息已到达。 |
 | `reasoning.appended` | 模型提供 reasoning 时渲染 reasoning deltas。 |
 | `message.appended` | 渲染 assistant text deltas。 |
+| `action.input.appended` | 在校验完成前累积原始 tool-input deltas。 |
 | `actions.requested` | 在执行前显示模型请求的 tool calls。 |
 | `action.result` | 显示 tool call results。 |
 | `input.requested` | 暂停 UI，等待审批或问题回答。 |
@@ -77,6 +78,8 @@ function handleEvent(event: HandleMessageStreamEvent) {
 | `session.failed` | 标记对话失败。 |
 
 完整 event 表见 [Sessions, runs & streaming](../../../concepts/sessions-runs-and-streaming)。
+
+每个 `action.input.appended` 事件存储 `inputTextDelta` 和它的零基 UTF-16 code-unit `inputTextOffset`，这样消费者可以拒绝缺口，而不是拼接损坏输入。默认 message reducer 从 offset `0` 开始或重启，忽略不连续的非零 offset。它把接受的 deltas 累积进 `state: "input-streaming"` 的 `dynamic-tool` part；`inputText` 字段是可能不完整的累计原始文本。匹配的 `actions.requested` 把同一 `toolCallId` 升级为 `state: "input-available"`，并把校验后的值放进 `input`。
 
 ## 授权暂停（Authorization pauses）
 

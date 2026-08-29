@@ -75,7 +75,7 @@ Hook 和 tool import 的是同一个 module-scope `budget` handle，因此二者
 
 `defineState` 保存的是 conversation-scoped working memory，它和 session 一起存在和消亡，例如 counters、当前 plan、用户在这次对话里告诉你的信息。它是 Agent 的短期记忆，在 session 生命周期内 durable。
 
-需要跨 session 存活的上下文，应接入一等 [记忆（Memory）](../memory) provider，由你自己的应用存储负责检索和捕获。只有希望数据必须通过显式模型 tool call 查询、而不是自动 recall 时，才改用一般 [连接（Connections）](../connections)。
+需要跨 session 存活的上下文，应接入一等 [记忆（Memory）](../memory) provider。可以用内置 file provider、第三方 provider，或为应用特定存储和检索写自定义 provider。只有希望数据必须通过显式模型 tool call 查询、而不是自动 recall 时，才改用一般 [连接（Connections）](../connections)。
 
 > 中文站同时保留 [guides/state](../guides/state)，内容与本页对应。官方目录把 State 放在 Concepts 下。
 

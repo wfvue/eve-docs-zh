@@ -159,7 +159,7 @@ export default defineSandbox({
 
 `justbash()` 不需要 daemon 或 VM，但命令运行在带 `.eve/sandbox-cache/` 下虚拟文件系统的模拟 bash 里，没有真实二进制（`git`、`node`、包管理器），也没有网络隔离。`just-bash` 包是可选 peer dependency，所以缺失时 `eve dev` 自动把它安装进你的应用（用 `autoInstall: false` 禁用）；生产进程以可操作的安装错误失败。
 
-你也可以写自己的后端。`SandboxBackend` 是带 `name`、`create` 和可选 `prewarm` 的 adapter 对象。它可以指向你自己的容器 runner、VM 池、内部 sandbox 服务或另一隔离层，只要返回 eve 需要的 `SandboxSession` 操作。`create` 返回的 handles 实现 `shutdown()`，在 server 关闭时停止底层 compute。见 `eve/sandbox` 上的 `SandboxBackend*` 类型。
+你也可以写自己的后端。`SandboxBackend` 是带 `name`、`create` 和可选 `prewarm` 的 adapter 对象。它可以指向你自己的容器 runner、VM 池、内部 sandbox 服务或另一隔离层，只要返回 eve 需要的 `SandboxSession` 操作。`create` 返回的 handles 实现 `delete()`、`stop()` 和 `shutdown()`。见 `eve/sandbox` 上的 `SandboxBackend*` 类型。
 
 ## 生命周期（Lifecycle）
 
@@ -195,6 +195,29 @@ await sandbox.stop();
 ```
 
 每个内置后端都使用自己的原生生命周期操作，不删除 durable session。把 stop 当作当前回调里 sandbox 工作的结束。下一个回调时，`ctx.getSandbox()` 重新打开同一个 Docker 容器、microsandbox VM 或快照，或 just-bash 文件系统和环境。Vercel 也可以在它下一个 I/O 操作时自动恢复同一个 handle，就像不活动超时后那样。不需要单独的重连步骤或 stop 特定 state。Lifecycle `use()` 调用返回仅 I/O 的 `SandboxSession`，因为 bootstrap 和 session 初始化不拥有 runtime teardown。
+
+### 删除 sandbox（Delete a sandbox）
+
+从编写的 runtime 回调里永久删除当前 session sandbox：
+
+```ts
+const sandbox = await ctx.getSandbox();
+await sandbox.delete();
+```
+
+eve 会先停 compute，再删除物理 sandbox 和它的一次性后端 state，并清掉已保存的 reconnect state。它保留包含 `bootstrap` 和 seeded workspace 文件的可复用模板 state。
+
+Durable eve session 仍然活跃。下一次 `ctx.getSandbox()` 会按当前 sandbox 定义 provision 一份新 workspace，并再次运行 `onSession`。被删 sandbox 里的文件和其它 workspace 改动不会恢复。
+
+后端行为不同：
+
+- **Vercel Sandbox**：停止持久 sandbox、删除它的记录，并请求 Vercel 删除没有其它 sandbox 使用的 snapshots。Snapshot 清理是异步的。
+- **microsandbox**：停止并移除 session VM 及其持久 state snapshot
+- **Docker 和 just-bash**：停止 compute 并丢弃它们的 session runtime state
+
+只有拥有共享 sandbox 的 session 能删除它。删除 owner 的 sandbox 会影响当前正在使用它的每个 parent 或 child。如果后端拒绝删除，eve 会保留当前 reconnect state，方便重试。
+
+自定义 backend handles 在 `delete()` 里实现同一边界：移除 session runtime 和一次性持久 state，但不删除可复用模板。
 
 Session sandbox 按 durable session 键控，不按部署，所以重新部署应用本身不会丢弃它们。编写的 sandbox source、workspace seed 内容或 `revalidationKey` 的定义变化会在下一个 turn 替换 sandbox 并再次运行 `onSession`。
 

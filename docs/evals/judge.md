@@ -40,6 +40,21 @@ const draft = await t.send("Draft the welcome email.");
 t.judge.autoevals.closedQA("professional tone", { on: draft.message }).atLeast(0.6);
 ```
 
+对多轮 eval，传入 `t.transcript` 可以给主 session 完整观察到的对话评分，而不是只看最后一条回复：
+
+```ts
+await t.send("My favorite word is marigold. Remember it.");
+await t.send("What is my favorite word?");
+
+t.judge.autoevals
+  .closedQA("The assistant remembers the user's favorite word across turns", {
+    on: t.transcript,
+  })
+  .atLeast(0.8);
+```
+
+`t.transcript` 包含 session 按 turn 顺序的 user 和 assistant 消息。它排除 reasoning、tool calls 和 tool results。格式和独立 session 见 [Multi-turn evals](../cases#multi-turn-evals)。
+
 ## Soft scoring 和 thresholds
 
 Judge assertions 是 soft，所以 threshold 直接挂在 assertion handle 上，不需要单独的 thresholds map：

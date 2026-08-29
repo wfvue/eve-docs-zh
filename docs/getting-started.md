@@ -15,7 +15,7 @@ eve 是一个 filesystem-first 的 durable agent 框架。你把能力写在 `ag
 - npm，Node 会自带 npm。
 - 一个模型凭据，见下文。
 
-脚手架默认模型通过 Vercel AI Gateway 路由。在运行 Agent 前，需要先设置 `AI_GATEWAY_API_KEY`，或用 `vercel link` 拉取 `VERCEL_OIDC_TOKEN`。直接调用模型提供商时，安装对应 AI SDK provider 包并设置该提供商的 API Key。
+脚手架默认模型是 `openai/gpt-5.6-luna-fast`，通过 Vercel AI Gateway 路由。在运行 Agent 前，需要先设置 `AI_GATEWAY_API_KEY`，或用 `vercel link` 拉取 `VERCEL_OIDC_TOKEN`。直接调用模型提供商时，安装对应 AI SDK provider 包并设置该提供商的 API Key。
 
 你需要自行选择适合数据和场景的模型、提供商和 channel，并遵守每个模型提供商的条款以及数据处理要求。
 
@@ -109,4 +109,4 @@ curl http://127.0.0.1:3000/eve/v1/session/<sessionId>/stream
 - [记忆（Memory）](./memory) 与 [内置工具](./concepts/built-in-tools)
 - [Channels](./channels/overview)、[Extensions](./extensions)、[添加集成](./install-integrations)
 - [Frontend](./guides/frontend/overview) 和 [TypeScript SDK](./guides/client/overview)
-- [执行模型与持久性](./concepts/execution-model-and-durability)
+- [部署概览](./guides/deployment/overview) 与 [执行模型与持久性](./concepts/execution-model-and-durability)

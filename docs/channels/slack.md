@@ -1,11 +1,11 @@
 ---
 title: "Slack"
-description: "用 Vercel Connect 托管的凭证、线程回复和交互按钮，从 Slack 应用提及和私信触达 Agent。"
+description: "从 Slack 应用提及、私信、slash commands 和交互回调触达 Agent。"
 ---
 
 # Slack
 
-Slack channel 把 Agent 放进一个 workspace。它回应 `@提及` 和私信（DM）、在线程里回复、显示输入状态，并把 human-in-the-loop（HITL）提示变成按钮。[Vercel Connect](https://vercel.com/kb/guide/vercel-connect) 是推荐方案：它托管 Slack bot token、校验入站请求、支持 token 轮换和多个 workspace 安装，并在不把 Slack 密钥复制进项目环境的情况下把事件转发给你的 Agent。如果不能用 Vercel Connect，你也可以通过环境变量提供 bot token 和 signing secret。构建于其上的契约见 [Channels](./overview)。
+Slack channel 把 Agent 放进一个 workspace。它处理 `@提及`、私信（DM）、slash commands、shortcuts 和交互回调；在线程里回复；显示输入状态；并把 human-in-the-loop（HITL）提示变成按钮。[Vercel Connect](https://vercel.com/kb/guide/vercel-connect) 是推荐方案：它托管 Slack bot token、校验入站请求、支持 token 轮换和多个 workspace 安装，并在不把 Slack 密钥复制进项目环境的情况下把事件转发给你的 Agent。如果不能用 Vercel Connect，你也可以通过环境变量提供 bot token 和 signing secret。构建于其上的契约见 [Channels](./overview)。
 
 ## 添加渠道（Add the channel）
 
@@ -44,7 +44,8 @@ export default slackChannel({
 2. 安装或重装应用，把它的 Bot User OAuth Token 复制到 `SLACK_BOT_TOKEN`，把 **Basic Information** 里的 signing secret 复制到 `SLACK_SIGNING_SECRET`。
 3. 在 `.env.local`（本地开发）或目标运行环境里设置这两个值，然后在一个公开 URL 上启动或部署 Agent。
 4. 在 **Event Subscriptions** 下，把 Request URL 设为 `https://your-agent.example/eve/v1/slack`。订阅 `app_mention`，DM 还要订阅 `message.im`。
-5. 当 Agent 使用按钮或 HITL 提示时，在 **Interactivity & Shortcuts** 下使用同一个 Request URL。
+5. 当 Agent 使用按钮、shortcuts 或 HITL 提示时，在 **Interactivity & Shortcuts** 下使用同一个 Request URL。
+6. 在 **Slash Commands** 下，为应用要处理的每个 command 创建命令，并使用同一个 Request URL。
 
 如果你还想处理没有被提及的线程回复，按 [无需重复提及即可继续对话](#continue-conversations-without-repeated-mentions) 所述添加对应的 message 事件和 history scopes。
 
@@ -141,7 +142,26 @@ Message hooks 返回 `{ auth }` 以 dispatch、`null` 以丢弃，或 `{ auth, c
 
 只有第一个可用的 handler 会运行。返回 `null` 的 message hook 会丢弃消息；它不会继续往下走表。
 
-`onInteraction(action, ctx)` 单独处理未被 HITL 消费的 `block_actions` 回调。eve 会把触发用户的 Slack user id 附加到同一模型消息的文本上，无需 profile 查询即可保留说话人归属。
+`onInteraction(action, ctx)` 单独处理用户自有的 `block_actions` 回调。eve 拥有的 HITL 按钮和 modal submissions 改走 `onInputResponse(ctx, submission)`。eve 会把触发用户的 Slack user id 附加到同一模型消息的文本上，无需 profile 查询即可保留说话人归属。
+
+用 `onShortcut(shortcut, ctx)` 处理 Slack 应用 **Interactivity & Shortcuts** 下配置的 message shortcuts 和 global shortcuts。Handler 收到 shortcut callback ID、user、workspace 和 trigger ID。Message shortcuts 还包含选中的消息和频道。上下文暴露 workspace-scoped Slack API 访问，因为 global shortcuts 没有 channel 或 message。eve 立即确认 shortcut 请求，并让 handler 在后台继续活着。
+
+用 `onSlashCommand(command, ctx)` 处理 **Slash Commands** 下配置的命令。Handler 收到 command 名、参数文本、调用用户、channel、workspace、trigger ID 和 response URL，以及 workspace-scoped Slack API 访问。eve 用空的 `200 OK` 立即确认 slash command，并让 handler 在后台继续活着：
+
+```ts title="agent/channels/slack.ts"
+import { slackChannel } from "eve/channels/slack";
+
+export default slackChannel({
+  async onSlashCommand(command, ctx) {
+    if (command.command !== "/ask") return;
+    await ctx.slack.request("chat.postEphemeral", {
+      channel: command.channelId,
+      user: command.user.id,
+      text: `Received: ${command.text}`,
+    });
+  },
+});
+```
 
 #### 限制谁能调用 Agent
 
@@ -329,11 +349,11 @@ const session = await ctx.resolveSession({ target });
 
 `onEvent` 是 message hooks 之后的原始回退。如果事件未被 `onAppMention`、`onDirectMessage` 或 `onMessage` 认领，作者写的 `onEvent` 会收到它；否则 eve 应用内置的 mention/DM 默认行为或忽略它。
 
-`onEvent` 只覆盖 JSON `event_callback` 投递。URL verification、slash commands 和 interactive payloads 不会到达它。把你想要的每个事件和所需 OAuth scope 都添加到 Slack 应用的 Event Subscriptions 配置中；eve 只能处理 Slack 发送的事件。
+`onEvent` 只覆盖 JSON `event_callback` 投递。URL verification、slash commands 和 interactive payloads 不会到达它。Slash commands 走 `onSlashCommand`；把你想要的每个事件和所需 OAuth scope 都添加到 Slack 应用的 Event Subscriptions 配置中，其它回调才会到达对应 handler。
 
 ### Handler 之外的 Slack API 调用
 
-在 webhook 侧 handler（`onAppMention`、`onEvent`、`onInteraction`、`events`）内部，`ctx.slack.request(operation, body)` 是原始 API 的逃生舱。在这些上下文之外没有 handle——比如 schedule 要解析旧消息上的 reactions，就没有入站 Slack 请求。这种情况下直接调用 handle 使用的同一个原语：
+在 webhook 侧 handler（`onAppMention`、`onEvent`、`onInteraction`、`onShortcut`、`onSlashCommand`、`onInputResponse`）内部，`ctx.slack.request(operation, body)` 是原始 API 的逃生舱。在这些上下文之外没有 handle——比如 schedule 要解析旧消息上的 reactions，就没有入站 Slack 请求。这种情况下直接调用 handle 使用的同一个原语：
 
 ```ts
 import { callSlackApi } from "eve/channels/slack";

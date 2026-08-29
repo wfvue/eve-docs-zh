@@ -153,4 +153,4 @@ npx eve dev https://your-analytics-app.vercel.app
 - [动态能力（Dynamic capabilities）](../guides/dynamic-capabilities)：在这个同样的示例上做 schema 派生的动态工具、只读分析子智能体和模型编写的报告工作流。
 - [鉴权与路由保护（Auth and route protection）](../guides/auth-and-route-protection)：生产认证模式。
 
-了解更多：[前端（Frontend）](../guides/frontend/overview) · [鉴权与路由保护（Auth and route protection）](../guides/auth-and-route-protection) · [部署（Deployment）](../guides/deployment)
+了解更多：[前端（Frontend）](../guides/frontend/overview) · [鉴权与路由保护（Auth and route protection）](../guides/auth-and-route-protection) · [部署（Deployment）](../guides/deployment/overview)

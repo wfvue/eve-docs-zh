@@ -39,7 +39,7 @@ Extensions 可能在 `agent/extensions/` 下创建 mount。Connections 会把初
 
 退出码 `2` 时，读取最后一条 event 并运行它的 `next.command`。非密钥问题把占位符替换成你收集到的答案。**不要**把密钥放进 `--answer`；使用 integration 文档给出的环境变量或 secret store。加 `--yes` 接受推荐值；显式答案优先。
 
-Setup 可能把 `eve link` 报成前置条件。先运行它，再重试 continuation。非交互的 `eve link` 和 `eve deploy` 见 [部署到 Vercel](./guides/deployment)。
+Setup 可能把 `eve link` 报成前置条件。先运行它，再重试 continuation。非交互的 `eve link` 和 `eve deploy` 见 [部署到 Vercel](./guides/deployment/vercel)。
 
 ## 查找 integration
 

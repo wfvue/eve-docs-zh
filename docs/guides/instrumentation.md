@@ -132,6 +132,7 @@ Eve 为每个 turn 创建 `ai.eve.turn` parent span，并把 enriched telemetry 
 - `$eve.root`：整棵链的 root session id，可用 `$eve.root=<id>` 分组整棵树。
 - `$eve.subagent`：compiled graph node id，仅 subagent runs。
 - `$eve.trigger`：启动 run 的 channel kind。
+- `$eve.schedule`：创建该 session 的编写 schedule，包括通过目标渠道启动的 sessions。
 - `$eve.title`：从第一条 user message 派生并截断的 title。
 
 Per-turn usage tags 会写到 turn 的每个 step 上，并累计总数，最后一次写入生效：
@@ -142,7 +143,7 @@ Per-turn usage tags 会写到 turn 的每个 step 上，并累计总数，最后
 
 Tag writes 是 best-effort：失败时每个进程只记录一次，然后吞掉错误，所以 tag emit 失败不会破坏 Agent。
 
-这些 tags 驱动 Vercel dashboard 中的 **Agent Runs** tab。部署到 Vercel 后，平台会自动识别 `eve` framework，并在项目 **Observability** tab 下展示 Agent Runs 视图，你可以浏览 sessions 并进入每段对话的 trace，不需要 `instrumentation.ts`。该 tab 目前按团队 gated。开启方式见 [部署（Deployment）](../deployment#在仪表盘查看运行view-runs-in-the-dashboard)。Agent Runs 和上面的 OpenTelemetry export 是两套东西；当你需要把 spans 发到 Braintrust、Datadog 或其它第三方 backend 时，使用 OTel。
+这些 tags 驱动 Vercel dashboard 中的 **Agent Runs** tab。部署到 Vercel 后，平台会自动识别 `eve` framework，并在项目 **Observability** tab 下展示 Agent Runs 视图，你可以浏览 sessions 并进入每段对话的 trace，不需要 `instrumentation.ts`。该 tab 目前按团队 gated。开启方式见 [部署到 Vercel](../deployment/vercel#在仪表盘查看运行)。Agent Runs 和上面的 OpenTelemetry export 是两套东西；当你需要把 spans 发到 Braintrust、Datadog 或其它第三方 backend 时，使用 OTel。
 
 > 默认情况下，telemetry 会记录完整 message history 和 model outputs。如果使用这些数据流，可能需要在隐私材料中披露。
 
