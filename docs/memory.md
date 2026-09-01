@@ -29,10 +29,10 @@ Memory 是 provider 支撑的能力：上下文可以比单个 session 活得更
 | Provider | 状态 | 适合 |
 | --- | --- | --- |
 | `fileMemory()` | 内置 | 有上限、由模型自己维护的事实和偏好列表 |
-| Supermemory | 即将推出 | 第一个实现 eve provider 契约的第三方 |
+| Supermemory | 第三方 | 语义召回、自动捕获、来源抽取，以及记忆工具 |
 | 自定义 provider | 已支持 | 应用特定的检索、捕获、保留或面向模型的工具 |
 
-**官方说明：** Supermemory 正在做 eve 的第一个第三方 provider，目前还不能用。在它发布前，用 `fileMemory()`，或按下面的契约自己实现。**项目建议：** 大多数应用先用 `fileMemory()`；只有检索模型完全对不上时才写自定义 provider。
+**官方说明：** [Supermemory](https://github.com/supermemoryai/eve-supermemory#readme) 是第三方 provider：每个 turn 前召回相关上下文、捕获已完成 turn，并提供搜索、记忆管理和来源抽取工具。用 `eve add memory/supermemory` 安装。需要 Supermemory API key 和你选定的 memory scope。把敏感内容交给该服务前，先看它的保留与数据处理说明。**项目建议：** 大多数应用仍先用 `fileMemory()`；需要语义检索或自动捕获时再接 Supermemory 或自定义 provider。
 
 ## 使用文件记忆（Use file memory）
 
