@@ -21,7 +21,7 @@ Connection 通常放在：
 agent/connections/
 ```
 
-文件名会成为运行时连接名。例如：
+静态连接的运行时名来自文件名。例如：
 
 ```txt
 agent/connections/linear.ts
@@ -33,7 +33,7 @@ agent/connections/linear.ts
 linear
 ```
 
-模型不会看到连接 URL 或凭据。它通过内置 `connection_search` 发现连接中的工具，并通过限定名调用：
+动态连接文件可以在 session 或 turn 边界解析出一组随调用者变化的连接。模型不会看到连接 URL 或凭据。它通过内置 `connection_search` 发现连接中的工具，并通过限定名调用：
 
 ```txt
 <connection>__<tool>
@@ -68,6 +68,38 @@ linear__list_issues
 - 你需要通过 allow/block 过滤可见 operation。
 
 详细见 [OpenAPI connections](../openapi)。
+
+## 动态连接（Dynamic connections）
+
+连接集合取决于已认证用户、租户或其它运行时查找时，用 `defineDynamic`。从 `eve/connections` 一并导入它和 connection factories，然后在 `session.started` 或 `turn.started` 返回一个连接定义、一份定义 map，或 `null`。
+
+```ts title="agent/connections/accounts.ts"
+import { defineDynamic, defineMcpClientConnection } from "eve/connections";
+import { listAccounts } from "../lib/accounts";
+
+export default defineDynamic({
+  events: {
+    "session.started": async (_event, ctx) => {
+      const accounts = await listAccounts(ctx.session.auth.current);
+      return Object.fromEntries(
+        accounts.map((account) => [
+          account.slug,
+          defineMcpClientConnection({
+            url: account.mcpUrl,
+            description: account.description,
+            instanceKey: account.id,
+            auth: account.auth,
+          }),
+        ]),
+      );
+    },
+  },
+});
+```
+
+返回单个定义时，文件名就是连接名；返回 map 时，每个裸 key 成为连接名。每条必须是 `defineMcpClientConnection` 或 `defineOpenAPIConnection`。带鉴权的条目还必须设 `instanceKey`：稳定、非密钥的账号或租户标识。事件范围、命名冲突和 durable 恢复行为见 [动态能力（Dynamic capabilities）](../guides/dynamic-capabilities#动态连接dynamic-connections)。
+
+**官方说明：** resolver 只能看到 `ctx.session` 和 `ctx.channel.kind`，看不到对话、投递 payload 或自由 channel metadata。从已认证身份或应用自己的数据选账号和端点。**项目建议：** 多账号 SaaS 用动态连接；全员共用一个 Linear workspace 时继续用静态文件。
 
 ## 静态 token 鉴权
 
