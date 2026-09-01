@@ -14,6 +14,7 @@ description: "从 eve 官方目录或第三方源发现并安装 extensions 和�
 ```bash
 eve add extension/agent-browser
 eve add linear
+eve add memory/supermemory
 eve add instrumentation/braintrust
 ```
 
