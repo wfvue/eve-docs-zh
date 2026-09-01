@@ -1,11 +1,70 @@
 ---
 title: "动态能力（Dynamic Capabilities）"
-description: "使用 defineDynamic 在运行时解析 tools、skills 和 instructions，理解 resolver events、执行顺序，以及 dynamic tools 如何跨 step boundaries 保留。"
+description: "使用 defineDynamic 在运行时解析 models、subagents、connections、tools、skills 和 instructions。"
 ---
 
 # 动态能力（Dynamic Capabilities）
 
-`defineDynamic` 会基于 session event 在运行时解析 tools、skills 和 instructions，而不是在启动前静态声明它们。当正确能力只有在 session 开始之后才知道时，就应该使用它：例如能力取决于 caller、tenant、feature flags 或外部数据。[工具（Tools）](../../tools)、[技能（Skills）](../../skills) 和 [指令（Instructions）](../../instructions) 文档都会把各自的 dynamic form 指向这里。
+`defineDynamic` 会基于 session event 在运行时解析 model、subagents、connections、tools、skills 和 instructions，而不是在启动前静态声明它们。当正确能力只有在 session 开始之后才知道时，就应该使用它：例如能力取决于 caller、tenant、feature flags 或外部数据。[子智能体（Subagents）](../../subagents)、[连接（Connections）](../../connections/overview)、[工具（Tools）](../../tools)、[技能（Skills）](../../skills) 和 [指令（Instructions）](../../instructions) 都会把各自的 dynamic form 指向这里。
+
+官方原文：[Dynamic Capabilities](https://eve.dev/docs/guides/dynamic-capabilities)。eve 会在编译时评估一次动态定义模块来分类和校验，再把它留作 runtime entry，好让 event handlers 能跑。因此顶层代码会在两个阶段都执行；把跟调用者相关的工作放进 handlers。见 [TypeScript API](../../reference/typescript-api#authored-module-lifecycle)。
+
+动态 model 必须返回具体模型；缺失、无效或抛错会在依赖模型的工作开始前失败 turn。动态 connections、tools、skills、instructions 和 subagents 可以返回 `null` 来省略该项能力。
+
+## 动态连接（Dynamic connections）
+
+可用的 MCP 或 OpenAPI 服务取决于已认证调用者时，用动态连接。Handler 返回一个 `defineMcpClientConnection(...)` 或 `defineOpenAPIConnection(...)`、一份连接定义 map，或 `null`。每条返回的连接都要用对应协议 helper 包起来。Connection resolvers 只能看到 `ctx.session` 和 `ctx.channel.kind`；看不到对话、投递 payload、工具输入、模型输出、continuation tokens 或自由 channel metadata。从已认证身份或应用自己的数据选账号和端点。
+
+下面的例子给当前用户启用的每个 cloud account 暴露一个 MCP 连接：
+
+```ts title="agent/connections/accounts.ts"
+import { defineDynamic, defineMcpClientConnection } from "eve/connections";
+import { listEnabledAccounts, mintAccountToken } from "../lib/accounts";
+
+export default defineDynamic({
+  events: {
+    "session.started": async (_event, ctx) => {
+      const principal = ctx.session.auth.current;
+      if (principal?.principalType !== "user") return null;
+
+      const accounts = await listEnabledAccounts(principal);
+      return Object.fromEntries(
+        accounts.map((account) => [
+          account.slug,
+          defineMcpClientConnection({
+            url: "https://mcp.cloud.example.com",
+            description: `${account.label} (${account.accountId})`,
+            instanceKey: account.accountId,
+            auth: {
+              principalType: "user",
+              getToken: ({ principal }) => mintAccountToken(principal, account),
+            },
+          }),
+        ]),
+      );
+    },
+  },
+});
+```
+
+返回的定义可以使用和静态 [MCP](../../connections/mcp)、[OpenAPI](../../connections/openapi) 连接相同的 auth、headers、过滤、provided arguments 和 approval。每个解析出的连接会进入每步的 connection registry，出现在 `connection_search` 里，并把发现的工具暴露为 `<connection>__<tool>`。
+
+**官方说明：** 每个带鉴权的动态连接都要设 `instanceKey`。用稳定、非密钥的账号或租户标识；端点、账号或 auth provider 变了就换这个值。eve 在把它写进 durable 授权状态前会先 hash。如果 parked 的登录回调恢复时 resolver 选了另一个实例，eve 会拒绝该回调，而不是把它交给新连接或复用旧 token。
+
+### 命名与冲突
+
+| 返回形状 | 文件 | 连接名 |
+| --- | --- | --- |
+| 单个连接定义 | `agent/connections/accounts.ts` | `accounts` |
+| map `{ production, staging }` | `agent/connections/accounts.ts` | `production`、`staging` |
+
+Map key 必须是合法连接名：小写 ASCII 字母、数字和短横线，以字母开头，最多 64 字符。Map keys 是裸的；eve 不会用文件 slug 做前缀。动态连接会覆盖同名静态连接。两个生效的动态 resolvers 不能发出同一个名字；给其中一个 map key 加命名空间来消除歧义。
+
+### 事件与恢复
+
+动态连接支持 `session.started` 和 `turn.started`。Turn 结果会替换该文件本 turn 的 session 结果，包括 turn handler 返回 `null`。抛错或无效的 handler 会让这次生命周期失败，并且不会重建 registry，所以被动态结果盖住的静态连接不会作为 fallback 重新出现。
+
+parked turn 恢复或 durable step 重试时，eve 可能再次运行当前的 session 和 turn handlers。这会重建活的 auth、header、approval 和 provided-argument 回调，而不会把它们序列化进 workflow state。保持 connection resolvers 幂等，并把外部副作用放在 handler 外面。
 
 ## 动态工具（Dynamic tools）
 
@@ -146,7 +205,10 @@ Dynamic skills 和 dynamic instructions 都会在 prompt 组装之前解析，�
 
 ## 接下来读什么（What to read next）
 
+- 按条件暴露专家子智能体 → [子智能体（Subagents）](../../subagents)
+- 解析调用者特定的外部服务 → [连接（Connections）](../../connections/overview)
 - 这些能力建立在 static tool 基础之上 → [工具（Tools）](../../tools)
-- 内置工具以及如何覆盖它们 → [默认 Harness（Default harness）](../../concepts/default-harness)
+- 内置工具以及如何覆盖它们 → [内置工具（Built-in tools）](../../concepts/built-in-tools)
 - 给 tool 或 connection 接入外部服务鉴权 → [鉴权与路由保护（Auth & route protection）](../auth-and-route-protection)
 - 给 resolvers 读取的 durable per-session memory → [状态（State）](../state)
+- 跨 session 召回和 provider 生成的工具 → [记忆（Memory）](../../memory)
