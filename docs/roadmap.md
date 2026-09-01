@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-08-29，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 SHA：`f0622995ae86096c434f978d43647c3416cb6627`（docs 路径最近一次变更；当时 main 的 HEAD 是 `a6b6397`，未改 docs）。
+对照日期：2026-09-01，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs SHA：`e0317ffe0396470e279bd7e4b63a9fdff9f9c935`（docs 路径最近一次变更；当时 main 的 HEAD 是 `bc2a1f66802d82eb67d5d35aa68071605573f1df`）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -29,6 +29,25 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | Integrate | 已完成入口 | Extensions、Add Integrations、ACP、UCP、Remote Agents、Frontend、Client。 |
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
+
+## 2026-09-01 上游同步
+
+对照 `vercel/eve` docs 自 `f062299`（Slack slash commands）以来的 commits：
+
+已更新：
+
+- [x] Memory：Supermemory 从「即将推出」变为可用的第三方 provider；安装命令 `eve add memory/supermemory`
+- [x] Connections / Dynamic capabilities：`defineDynamic` 可解析 MCP / OpenAPI 连接；带鉴权条目必须设 `instanceKey`
+- [x] Extensions：`extension/connections/` 也可以放 `defineDynamic(...)`
+- [x] TypeScript API：`defineDynamic` 可从 `eve/connections` 导入
+- [x] Project layout：`connections/` 区分静态文件和动态文件
+- [x] CLI traces：`EVE_TRACES_CONTENT` 默认改为 off，token/cost 走 OTel GenAI `gen_ai.usage.*`
+
+仍跳过：
+
+- [ ] 官方 Integrations 画廊（含新增 Supermemory 卡片本身的独立中文页）
+- [ ] 官方 Templates 画廊
+- [ ] Benchmarks
 
 ## 2026-08-29 上游同步
 
@@ -127,7 +146,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 - [ ] Vite SPA + Eve stream 恢复
 - [ ] Nginx / Caddy 反向代理
 - [ ] 内网部署安全建议
-- [ ] GitHub Pages 静态搜索排查指南
+- [ ] GitHub Pages 静态搜索掕查指南
 - [x] 自部署入口
 - [x] llms.txt / llms-full.txt 自动生成脚本（需构建时刷新全文）
 

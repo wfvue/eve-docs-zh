@@ -36,7 +36,7 @@ export default defineTool({
 | --- | --- | --- | --- |
 | `defineAgent` | `eve` | `agent/agent.ts` | [agent.ts](../agent-config) |
 | `defineTool` | `eve/tools` | `agent/tools/<name>.ts` | [工具（Tools）](../tools) |
-| `defineDynamic` | `eve`、`eve/tools`、`eve/skills`、`eve/instructions` | 动态 model 或 subagent `agent.ts`；`agent/{tools,skills,instructions}/` | [动态能力（Dynamic capabilities）](../guides/dynamic-capabilities) |
+| `defineDynamic` | `eve`、`eve/tools`、`eve/skills`、`eve/instructions`、`eve/connections` | 动态 model 或 subagent `agent.ts`；`agent/{tools,skills,instructions,connections}/` | [动态能力（Dynamic capabilities）](../guides/dynamic-capabilities) |
 | `defineMcpClientConnection` | `eve/connections` | `agent/connections/<name>.ts` | [MCP 连接（MCP connections）](../connections/mcp) |
 | `defineOpenAPIConnection` | `eve/connections` | `agent/connections/<name>.ts` | [OpenAPI 连接（OpenAPI connections）](../connections/openapi) |
 | `defineChannel` | `eve/channels` | `agent/channels/<name>.ts` | [自定义渠道（Custom channels）](../channels/custom) |
@@ -51,12 +51,15 @@ export default defineTool({
 | `defineRemoteAgent` | `eve` | `agent/subagents/<id>/agent.ts` | [远程 Agent（Remote agents）](../guides/remote-agents) |
 | `defineEval` | `eve/evals` | `evals/*.eval.ts` | [Evals](../evals/overview) |
 | `defineEvalConfig` | `eve/evals` | `evals/evals.config.ts` | [Evals](../evals/overview) |
-| `mockModel` | `eve/evals` | 确定性 fixture agent models | [Evals](../evals/overview) |
+| `mockModel` | `eve/evals` | 硫6定性 fixture agent models | [Evals](../evals/overview) |
 | `useEveAgent` | `eve/react`、`eve/vue`、`eve/svelte` | frontend | [前端（Frontend）](../guides/frontend/overview) |
 
 几个非 `define\*` helper 补全了集合：`eve/tools` 的 `disableTool`、`experimental_workflow` 和 `webSearch`（见 [默认 Harness（Default harness）](../concepts/default-harness)），`eve/tools/sleep` 的 `sleep`，`eve/channels` 的路由动词 `GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`WS`，`eve/tools/approval` 的审批策略 `always`/`once`/`never`，以及 `eve/channels/auth` 的渠道认证 helpers `localDev`/`vercelOidc`/`placeholderAuth`。要包装内置工具，从 `eve/tools/defaults` 导入它的默认值（`bash`、`readFile`、`writeFile`、`glob`、`grep`、`webFetch`、`todo`、`loadSkill`）。`AgentReasoningDefinition` 从 `eve` 导出，用于顶层 `defineAgent({ reasoning })` 设置。`AgentLimitsDefinition` 为 `defineAgent({ limits })` 导出。`AgentWorkflowDefinition` 和 `AgentWorkflowWorldDefinition` 从 `eve` 为 `defineAgent({ experimental: { workflow } })` 配置形状导出。`ExperimentalWorkflowToolInput`、`WebSearchToolInput` 和 `WebSearchProvider` 从 `eve/tools` 为它们对应的工具配置 helpers 导出。
 
+`eve/connections` 这一份 `defineDynamic` 接受 `session.started` 和 `turn.started` handlers，返回一个 MCP 或 OpenAPI 连接定义、一份定义 map，或 `null`。Resolver 上下文暴露已认证 session 身份和 `channel.kind`，但不暴露对话历史、投递 payload、工具输入、模型输出或自由 channel metadata。带鉴权的返回定义必须设置 `instanceKey`：稳定、非密钥的账号或租户标识，这样 durable 授权恢复不会串到别的实例。
+
 ## 运行时上下文（`ctx`）
+
 
 `ctx` 传给你的工具 `execute`、hook handlers、channel 事件 handlers 和 connection auth/header resolvers。它只在 authored 代码运行时才活着，所以在模块顶层拿它会抛错。完整模型见 [Session context](../guides/session-context)。
 
@@ -77,7 +80,7 @@ export default defineTool({
 | `eve/tools/defaults` | 作为纯值的内置工具 |
 | `eve/tools/approval` | `always`、`once`、`never` |
 | `eve/tools/sleep` | 可选的 durable `sleep` 工具 |
-| `eve/connections` | `defineMcpClientConnection`、`defineOpenAPIConnection` |
+| `eve/connections` | `defineMcpClientConnection`、`defineOpenAPIConnection`、`defineDynamic` |
 | `eve/channels` | `defineChannel`、路由动词 |
 | `eve/channels/eve` | `eveChannel` |
 | `eve/channels/auth` | `localDev`、`vercelOidc`、`placeholderAuth` |
