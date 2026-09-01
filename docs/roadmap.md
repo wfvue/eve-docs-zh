@@ -146,7 +146,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 - [ ] Vite SPA + Eve stream 恢复
 - [ ] Nginx / Caddy 反向代理
 - [ ] 内网部署安全建议
-- [ ] GitHub Pages 静态搜索掕查指南
+- [ ] GitHub Pages 静态搜索排查指南
 - [x] 自部署入口
 - [x] llms.txt / llms-full.txt 自动生成脚本（需构建时刷新全文）
 
