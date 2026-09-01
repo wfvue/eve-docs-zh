@@ -294,7 +294,7 @@ Span 行在 span 记录它们时携带内联指标——`↑input`/`↓output` t
 
 除 `agent.session` 外每个 span 都携带真实时长：空闲 session 从不关闭，所以它被记录为零时长标记，span 树显示它的后代范围。Turn 的 span 在 turn settle 时写入，所以运行中的 turn 只显示它的 steps。
 
-模型和工具调用 spans 携带它们的输入和输出——模型的 system prompt、prompt messages 和响应文本；工具的调用参数和结果——每个上限 32 KB。设 `EVE_TRACES_CONTENT=off` 让负载不进入 spool。
+模型和 `execute_tool` spans 默认不携带输入和输出。设 `EVE_TRACES_CONTENT=on` 才会捕获模型的 system prompt、prompt messages 和响应文本，以及工具的调用参数和结果。每条捕获值上限 32 KB。
 
 Step spans 携带 token 计数，Vercel AI Gateway 服务调用时携带 cost。两者都遵循 [OTel GenAI semantic conventions](https://github.com/open-telemetry/semantic-conventions-genai)（`gen_ai.usage.*`），所以第三方后端无需映射即可读取。
 
@@ -305,7 +305,7 @@ eve 在 session 完成和 dev server 启动时清扫存储，超过以下界限�
 | 变量 | 默认 | 效果 |
 | --- | --- | --- |
 | `EVE_TRACES` | on | `off` 停止写 traces 并停止清扫 |
-| `EVE_TRACES_CONTENT` | on | `off` 停止在本地 spans 上捕获模型 prompt/response 和工具 input/output attributes |
+| `EVE_TRACES_CONTENT` | off | `on` 在本地 spans 上捕获模型 prompt/response 和工具 input/output attributes |
 | `EVE_TRACES_MAX_AGE_MS` | `604800000`（7d） | 超过该年龄的 trace 可能被驱逐 |
 | `EVE_TRACES_MAX_TOTAL_BYTES` | `536870912`（512 MB） | 整个存储的大小预算 |
 | `EVE_TRACES_RETAIN_COUNT` | `20` | 无论年龄或大小都保留的最新 traces |
