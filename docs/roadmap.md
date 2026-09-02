@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-01，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs SHA：`e0317ffe0396470e279bd7e4b63a9fdff9f9c935`（docs 路径最近一次变更；当时 main 的 HEAD 是 `bc2a1f66802d82eb67d5d35aa68071605573f1df`）。
+对照日期：2026-09-02，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs SHA：`e07d423d5c4242c0894803728c86427fa25a1e9c`（Memory 文档拆分为 overview / file / custom-provider）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -29,6 +29,22 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | Integrate | 已完成入口 | Extensions、Add Integrations、ACP、UCP、Remote Agents、Frontend、Client。 |
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
+
+## 2026-09-02 上游同步
+
+对照 `vercel/eve` docs commit `e07d423d5c4242c0894803728c86427fa25a1e9c`：
+
+已更新：
+
+- [x] Memory：官方拆掉单页 `docs/memory.md`，改为 `docs/memory/`（overview / file / custom-provider + meta.json）
+- [x] Multi-tenant memory：链接改到 `../memory`、`../memory/custom-provider` 与 overview 锚点
+- [x] Instructions：What to read next 补充 Memory——provider 支撑、比 session 更久的上下文
+
+仍跳过：
+
+- [ ] 官方 Integrations 画廊
+- [ ] 官方 Templates 画廊
+- [ ] Benchmarks
 
 ## 2026-09-01 上游同步
 
