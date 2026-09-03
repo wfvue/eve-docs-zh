@@ -1,6 +1,6 @@
 ---
 title: "部署到 Vercel"
-description: "用 Vercel Workflow、Sandbox、Cron 和项目凭据部署 eve Agent。"
+description: "用 Vercel Workflow、Sandbox、Cron 和项目凭据部署 eve Agent；支持 agents/ 工作区布局。"
 ---
 
 # 部署到 Vercel
@@ -46,7 +46,27 @@ export default defineSandbox({
 
 资源限制、网络策略和生命周期 hooks 见 [沙盒（Sandbox）](../../sandbox)。
 
-**官方说明（beta）：** Vercel 构建期间，如果 sandbox 有 `bootstrap()` 或 seed files，eve 会自动创建或复用 sandbox template。构建需要创建 Vercel Sandbox templates 的权限，预热失败会阻断部署。模板与 session 设置见 [sandbox 生命周期](../../sandbox#生命周期lifecycle)。
+**官方说明：** Vercel 构建期间，如果 sandbox 有 `bootstrap()` 或 seed files，eve 会自动创建或复用 sandbox template。构建需要创建 Vercel Sandbox templates 的权限，预热失败会阻断部署。模板与 session 设置见 [sandbox 生命周期](../../sandbox#生命周期lifecycle)。
+
+## 声明式 Agent 工作区
+
+只包含多个可独立寻址根 Agent 的项目，可用 eve 的 hostless workspace 布局：
+
+```text
+my-project/
+├── package.json
+└── agents/
+    ├── support/
+    │   └── agent/
+    └── research/
+        └── agent/
+```
+
+存在 `agents/` 目录即标记为 workspace。eve 只校验并发现直接子目录 `agents/<name>/agent/`；目录名成为公开身份，暴露在 `/<name>/eve/v1/*`。在子目录运行 Agent 专用命令，或在 workspace 根传入 `--agent <name>`；省略名称时，交互命令会打开 picker。项目级的 build / link / deploy 从 workspace 根运行。Workspace 根拥有项目 package、依赖和构建脚本。
+
+用 `eve init my-project --agents support,research` 创建该布局，或在已有 workspace 里用 `eve init billing` 再加一个 Agent。
+
+若没有手写 `vercel.json#services`，每次 `eve build` 都会推导完整的 Vercel Services graph。若 `vercel.json` 已声明 `services`，则以手写 graph 为准，并用 `vercel build` 构建与校验整个项目。这样异构项目（前端、私有 API、bindings、其它非 eve 服务）不必依赖生成的配置文件。
 
 ## 部署 Agent
 
@@ -73,11 +93,11 @@ Vercel 用生成的 output 配置这些服务：
 
 ## 验证部署
 
-检查 health 路由并连接开发 TUI：
+检查 health 路由并连接开发 TUI。Workspace 布局下路径带上 Agent 名：
 
 ```bash
-curl https://your_agent.vercel.app/eve/v1/health
-eve dev https://your_agent.vercel.app
+curl https://your_agent.vercel.app/support/eve/v1/health
+eve dev https://your_agent.vercel.app/support
 ```
 
 如果部署开了 Deployment Protection，连接前先在本地设置 `VERCEL_AUTOMATION_BYPASS_SECRET`。
