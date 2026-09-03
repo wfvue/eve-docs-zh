@@ -43,7 +43,7 @@ Extension 对其贡献使用与 Agent 相同的文件约定：
     lib/http.ts
 ```
 
-每个列出的 slot 都接受与 Agent 对应 slot 相同的 authored 形式。静态和动态 tools、skills、instructions 都可以：`extension/instructions.ts` 和 `extension/instructions.md` 一样有效，`extension/tools/` 也可以包含 `defineDynamic(...)`。
+每个列出的 slot 都接受与 Agent 对应 slot 相同的 authored 形式。静态和动态 tools、connections、skills、instructions 都可以：`extension/instructions.ts` 和 `extension/instructions.md` 一样有效，`extension/connections/` 也可以包含 `defineDynamic(...)`。
 
 名字来自路径，所以把工具叫 `search` 而不是 `crm_search`；消费者的 mount 会加上 `crm__` 前缀。同样的前缀适用于 channel、schedule 和父级可见的 subagent ID；channel 路由路径和 schedule cron 表达式保持不变。共享代码放在 `extension/lib/`。
 
@@ -276,4 +276,4 @@ export default defineHook({
 ## 接下来读什么
 
 - [Integrations](https://eve.dev/integrations)：用 Extensions 筛选器浏览可安装的 extensions
-- [工具（Tools）](./tools)、[动态能力](./guides/dynamic-capabilities)、[技能（Skills）](./skills)、[连接（Connections）](./connections)、[渠道（Channels）](./channels/overview)、[定时任务（Schedules）](./schedules)、[子智能体（Subagents）](./subagents)、[钩子（Hooks）](./guides/hooks)
+- [工具（Tools）](./tools)、[动态能力](./guides/dynamic-capabilities)（含动态连接）、[技能（Skills）](./skills)、[连接（Connections）](./connections)、[渠道（Channels）](./channels/overview)、[定时任务（Schedules）](./schedules)、[子智能体（Subagents）](./subagents)、[钩子（Hooks）](./guides/hooks)

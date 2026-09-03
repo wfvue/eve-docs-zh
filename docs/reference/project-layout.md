@@ -62,7 +62,7 @@ Evals 住在 app root 的 `evals/`，是 `agent/` 的兄弟，不在它里面。
 | `memory.ts` 或 `memory/` | 跨 session 记忆 | 是 | 单 slot 用 `memory.ts`；命名 slots 用 `memory/<name>.ts`。见 [记忆（Memory）](../memory)。 |
 | `extensions/` | 挂载可复用能力包 | 否 | 文件名是 mount namespace。见 [扩展（Extensions）](../extensions)。 |
 | `channels/` | HTTP / 消息入口 | 否 | 仅根。 |
-| `connections/` | 外部服务连接（MCP、OpenAPI） | 是 | 每文件一个 connection。 |
+| `connections/` | 外部服务连接（MCP、OpenAPI） | 是 | 静态文件定义一个以路径命名的 connection。动态文件可在运行时解析出一组随调用者变化的连接。 |
 | `hooks/` | 生命周期和流事件订阅者 | 是 | 仅模块支撑。 |
 | `skills/` | 按需流程和能力包 | 是 | |
 | `lib/` | 共享 authored helper 代码 | 是 | 仅导入；不挂载进 workspace。 |

@@ -1,0 +1,5 @@
+{
+  "title": "记忆（Memory）",
+  "defaultOpen": false,
+  "pages": ["overview", "file", "custom-provider"]
+}
