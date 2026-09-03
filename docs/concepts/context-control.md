@@ -65,7 +65,7 @@ workspace 和 sandbox 模型见 [Sandbox](../sandbox)。
 
 ## 用子智能体委派给专家
 
-如果任务值得拥有自己的 prompt 和工具表面，用本地子智能体而不是让根 Agent 过载。子智能体也是上下文控制的杠杆。它们有自己的 `instructions.md`、工具和 sandbox，并运行在自己被委派的上下文里，而不是内联扩展根 Agent。
+如果任务值得拥有自己的 prompt 和工具表面，用本地子智能体而不是让根 Agent 过载。子智能体也是上下文控制的杠杆。它们有自己的 `instructions.md`、工具和 sandbox，并运行在自己被委派的上下文里，而不是内联扩展根 Agent。调用先返回**任务回执**，随后由后台 task notifications 送达结果。
 
 见 [子智能体（Subagents）](../subagents)。
 
