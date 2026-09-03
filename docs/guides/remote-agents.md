@@ -1,11 +1,13 @@
 ---
 title: "远程 Agent（Remote Agents）"
-description: "使用 defineRemoteAgent 把另一个 Eve 部署当作子智能体调用：相同的 lowered tool shape、outbound auth 和 durable callback dispatch。"
+description: "使用 defineRemoteAgent 把另一个 Eve 部署当作子智能体调用：相同的 tool call、outbound auth 与 durable 后台任务回调。"
 ---
 
 # 远程 Agent（Remote Agents）
 
 `defineRemoteAgent` 可以把一个单独部署的 Eve Agent 当作本地子智能体调用。当你要委派的 specialist 是另一个 URL 后面的、由其它团队或系统拥有的 Agent，而不是当前仓库里的一个目录时，就使用它。
+
+官方原文：[Remote Agents](https://eve.dev/docs/guides/remote-agents)。
 
 文件放在 `agent/subagents/` 下，所以它的 tool name 会从路径派生，不需要 `name` 字段。
 
@@ -20,49 +22,55 @@ export default defineRemoteAgent({
 });
 ```
 
-`defineRemoteAgent` 接收以下参数：
-
 | Parameter | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
-| `url` | `string` | Yes | n/a | 要调用的远程 Eve 部署 base URL。 |
+| `url` | `string \| (() => string \| Promise<string>)` | Yes | n/a | 远程 Eve 部署 base URL。字符串在编译期固化；函数在运行时解析（可读 `process.env`）。 |
 | `description` | `string` | Yes | n/a | 模型可见的 delegation 描述。 |
 | `auth` | `OutboundAuthFn` | No | none | 来自 `eve/agents/auth` 的 outbound auth hook。 |
+| `forwardPrincipal` | `boolean` | No | `false` | 把发起 turn 的 session principal 转发给远程部署。 |
 | `headers` | `HeadersValue` | No | none | 静态或懒解析的请求 headers。 |
-| `path` | `string` | No | `/eve/v1/session` | 拼接到 `url` 后面的 create-session route。 |
-| `outputSchema` | `StandardSchema \| JSON Schema` | No | none | 调用方要求的结构化返回类型。编译时会 lowering 成 JSON Schema，并像普通 task-mode output schema 一样由远程端强制执行。 |
+| `path` | `string` | No | `/eve/v1/session` | create-session 请求拼到 `url` 后的路径。 |
+| `outputSchema` | `StandardSchema \| JSON Schema` | No | none | 每个新远程 session 首 turn 的结构化返回类型；续跑可另带 per-call schema。 |
 
-## Lowered tool（The lowered tool）
+## 动态远程 Agent
 
-远程 Agent 会被 lowered 成和本地子智能体相同的 `{ message, outputSchema? }` tool shape。父 Agent 会把远程端需要的内容都打包进 `message`。远程 Agent 看不到父 Agent 的历史。
+目标或可用性取决于当前 session 时，用 `defineDynamic` 包装：返回 `defineRemoteAgent(...)` 则暴露，返回 `null` 则省略。支持 `session.started` / `turn.started`。函数型 URL 在事件处理时解析；`auth` / `headers` 保持懒解析，且不要闭包 `_event` / `ctx`。
 
-在这里或每次调用时设置 `outputSchema` 后，远程 Agent 会以 task mode 运行，也就是一次性 delegation，返回一个结构化结果，而不是开放式对话。见 [子智能体（Subagents）](../../subagents)。结构化输出会作为 tool result 返回。
+## 调用方式
 
-## 出站鉴权（Outbound auth）
+对模型而言，远程 Agent 就是另一个子智能体工具：传 `message`，可选 `outputSchema`。`message` 必须带齐任务与上下文，因为远程端看不到父级历史。结构化结果出现在任务的 completion notification 里，远程 child 仍可续聊。续跑行为见 [子智能体](../../subagents)。
 
-`auth` 是来自 `eve/agents/auth` 的 `OutboundAuthFn`，用于给 outbound dispatch 附加请求 headers：
+## 出站鉴权
 
-| Helper | Header |
-| --- | --- |
-| `vercelOidc(opts?)` | `Authorization: Bearer <Vercel OIDC token>`，用于 deployment-to-deployment trust |
-| `bearer(token)` | `Authorization: Bearer <token>`，支持静态或懒解析 token |
-| `basic({ username, password })` | `Authorization: Basic …` |
+Vercel 上 Agent 调另一个 Vercel Agent 时，常用 `vercelOidc()`。跨项目时，在接收方的 eve channel 用 `vercelOidc({ subjects: [...] })` 允许调用方项目；若开了 Deployment Protection，还要配 Trusted Sources。细节见 [鉴权与路由保护](../auth-and-route-protection)。
 
-如果调用的是另一个部署在 Vercel 上的 Eve Agent，通常使用 `vercelOidc()`。远程端会验证 OIDC token 来授权调用方。接收侧配置见 [鉴权与路由保护（Auth & route protection）](../auth-and-route-protection)。
+## 转发调用方身份
 
-## 远程 dispatch 和 callback 如何工作（How remote dispatch and callbacks work）
+默认远程 session 以**你的调用应用**身份运行，而不是终端用户。需要远程侧按用户工作（例如 per-user Vercel Connect）时，设 `forwardPrincipal: true`。线上只传 principal 元数据，不传 token；接收方用自己的 connections 解析凭据。接收方必须用 `eveChannel({ trustedForwarders })` 显式信任转发者，否则 403。
 
-本地子智能体是 inline 运行的。远程子智能体运行在自己的部署中，因此 dispatch 是异步的：
+> ⚠️ **官方说明：** 在依赖较新的续跑 / reset 行为前，先升级两端部署。带 continuation forwarding 的发送方会在已鉴权 follow-up 上带 `forwardedPrincipal`；只支持创建时转发的旧接收方会以 HTTP 400 拒绝——eve 不会去掉该字段重试，以免静默改成 service principal。
 
-1. 父 Agent 在远程 `POST /eve/v1/session` 上启动一个 task-mode session，并传入 framework callback URL。
-2. 父 turn park，即 durably suspend 而不占用 compute，直到远程端 POST terminal callback。见 [执行模型与持久性（Execution model & durability）](../../concepts/execution-model-and-durability)。
-3. Callback 到达后，父 Agent 恢复，并浮现结果。
+## 远程 dispatch 与回调
 
-Parent stream 会带有和本地 delegation 相同的 `subagent.called`、`action.result` 和 `subagent.completed` events。对于 remote call，`subagent.called.data.remote.url` 会记录目标 URL。
+远程子智能体在自己的部署里作为 **durable 后台任务**运行：
 
-两种失败路径都会作为 failed tool result 浮现给父 Agent，调用方可以在同一 session 中解释或恢复。启动失败会 inline 返回错误。远程端已经启动但后续失败时，会 POST terminal failure callback；父 Agent 收到后，会得到携带远程错误的 errored subagent result，如果没有错误内容则为 `REMOTE_AGENT_FAILED`。Terminal callback delivery 会作为底层 workflow engine 上的 durable step 运行。Callback POST 失败会重新抛出，而不是把 task 标记为 complete，因此 engine 会重试。
+1. 父级在远程 `POST /eve/v1/session` 上启动持久会话，并传入 framework callback URL。
+2. 远程接受 child 后，调用立刻返回 `{ status: "working", taskId, agentId }`。
+3. 稍后 callback 结算任务，并向父级发送 task notification。
 
-## 接下来读什么（What to read next）
+Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`、`subagent.completed`；远程调用时 `subagent.called.data.remote.url` 记录目标。
 
-- 本地 delegation 和隔离边界 → [子智能体（Subagents）](../../subagents)
-- 让模型程序化编排远程 Agents → [动态工作流（Dynamic workflows）](../dynamic-workflows)
-- 保护接收侧部署 → [鉴权与路由保护（Auth & route protection）](../auth-and-route-protection)
+已 admit 的任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消时 eve 会重新解析 `headers` / `auth`。父 session 结束时，eve 对每个远程 child 发已鉴权 `reset`（尽力而为）。
+
+启动失败会在返回 receipt 前拒绝 admit。启动后终端失败 callback 会使任务失败并用远程错误（或 `REMOTE_AGENT_FAILED`）通知父级。Terminal callback delivery 作为 durable step；POST 失败会重抛以便 engine 重试。
+
+## 项目建议
+
+- 远程与本地子智能体对模型暴露同一形状；优先把差异放在鉴权与运维边界。
+- 跨用户复用同一远程 child session 时，注意历史与工具输出仍可能可见——需要隔离就分 session。
+
+## 接下来读什么
+
+- [子智能体](../../subagents)
+- [鉴权与路由保护](../auth-and-route-protection)
+- [Durable Tools](../../tools/workflows)
