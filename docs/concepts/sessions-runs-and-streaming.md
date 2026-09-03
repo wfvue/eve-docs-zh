@@ -47,7 +47,7 @@ curl http://127.0.0.1:2000/eve/v1/session/<sessionId>/stream
 | `action.result` | 一次工具调用返回了。 |
 | `input.requested` | Run 暂停等待人类输入（[HITL](../guides/human-in-the-loop) 审批或 `ask_question`）；携带 `requests`。 |
 | `subagent.called` | 委派了一个子智能体；携带要 attach 的 `childSessionId`。 |
-| `subagent.completed` | 一个被委派的子智能体完成了。 |
+| `subagent.completed` | 后台子智能体已被 admit，并返回任务回执。 |
 | `reasoning.appended` | 一个推理增量（增量式，带到目前为止的累计文本）。 |
 | `reasoning.completed` | 最终确定的推理块。 |
 | `message.appended` | 一个 assistant 文本增量（增量式，带到目前为止的累计文本）。 |
@@ -76,7 +76,7 @@ curl http://127.0.0.1:2000/eve/v1/session/<sessionId>/stream
 
 `message.completed` 在一个 turn 里可以触发多次：Agent 经常在工具调用之前发出临时 assistant 文本。要区分工具调用叙述和最终回复，检查 `message.completed.data.finishReason`。`step.completed.data.finishReason` 镜像 step 结果，usage 在 `step.completed` 上。
 
-被委派的子智能体在自己的 child-session stream 上发布进度。父级只发出带 `childSessionId` 的 `subagent.called`，客户端用它 attach。
+被委派的子智能体在自己的 child-session stream 上发布进度。父级发出带 `childSessionId` 的 `subagent.called`；`subagent.completed` 在 admit 后携带 working 任务回执；后续更新与结果作为 task 触发的 `message.received` 通知到达。
 
 `step.failed` 和 `turn.failed` 携带 `{ code, message, details? }` 对应失败片段或 turn，`session.failed` 是终端的 session 级变体。`turn.cancelled` 不是失败：被取消的 turn 结束时不带任何失败事件，`session.waiting` 随后出现，session 正常接受下一条消息——取消前 turn 流式输出的任何内容都留在流上，而 durable history 只保留已经 settle 的内容。当 turn 请求了输出 schema 时，最终载荷在 turn 边界之前作为 `data.result` 落在 `result.completed` 上。`authorization.required` 携带登录挑战（`data.authorization` 可能包含 `url`、`userCode`、`expiresAt`、`instructions`），`authorization.completed` 携带 `data.outcome`（`"authorized" | "declined" | "failed" | "timed-out"`）。
 
@@ -164,7 +164,7 @@ curl -X POST http://127.0.0.1:2000/eve/v1/session/<sessionId>/cancel
 # {"ok":true,"sessionId":"<sessionId>","status":"accepted"}
 ```
 
-`"accepted"` 表示活跃 session 已 durable 排队该请求。在流上以 `turn.cancelled` 后跟 `session.waiting` 确认实际取消；session 随后正常接受下一条消息。如果 turn 在等待活跃的本地或远程子智能体，eve 也会在让父级 settle 之前递归请求取消每个被收养的子级。每个子级在自己的 child-session stream 上报告自己的取消边界；父级不会为被取消的工作发出 `subagent.completed`。活跃但已 park 的 session 也返回 `"accepted"` 并把命令当作 no-op 消费。`"no_active_turn"` 表示 session 或 channel 地址未知或已终结。两种状态都是成功，所以客户端可以 fire and forget。完整路由契约见 [eve channel](../channels/eve)。
+`"accepted"` 表示活跃 session 已 durable 排队该请求。在流上以 `turn.cancelled` 后跟 `session.waiting` 确认实际取消；session 随后正常接受下一条消息。已 admit 的后台任务在发起 turn 取消后仍存活，用 `task_cancel` 停止；尚未 admit 的后台工作随取消的 step 被拒绝。每个被取消的 child 在自己的 child-session stream 上报告边界。活跃但已 park 的 session 也返回 `"accepted"` 并把命令当作 no-op 消费。`"no_active_turn"` 表示 session 或 channel 地址未知或已终结。两种状态都是成功，所以客户端可以 fire and forget。完整路由契约见 [eve channel](../channels/eve)。
 
 HTTP 路由对 `"accepted"` 返回 `202`，对 `"no_active_turn"` 返回 `200`。只有 accepted 结果包含 `sessionId`。
 
