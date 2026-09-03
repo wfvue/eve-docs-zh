@@ -1,6 +1,6 @@
 ---
 title: "文件记忆（File Memory）"
-description: "配置内置 fileMemory()：每个 scope 一份由模型维护的有限文档，带 save / remove 工具。"
+description: "配置内置 fileMemory()：每个 scope 一份由模型维护的有限文档，带 save / remove 工具；可用 eve add memory/file 开通 Vercel Blob。"
 ---
 
 # 文件记忆（File Memory）
@@ -9,7 +9,19 @@ description: "配置内置 fileMemory()：每个 scope 一份由模型维护的�
 
 官方原文：[File Memory](https://eve.dev/docs/memory/file)。
 
-```ts title="agent/memory/profile.ts"
+## 安装与开通
+
+在 eve 项目里添加并开通文件记忆：
+
+```bash
+eve add memory/file
+```
+
+选择 **Install and set up** 后，eve 会为已链接项目创建或复用一个**私有** Vercel Blob store，用 `EVE_MEMORY_` 前缀的变量连接到 production / preview / development，并拉取更新后的环境。它使用项目第一个已配置的 function region，否则回退到 `iad1`。Blob 用量可能产生费用。
+
+Registry 会写入：
+
+```ts title="agent/memory/file.ts"
 import { defineMemory } from "eve/memory";
 import { byPrincipal } from "eve/memory/scope";
 import { fileMemory } from "eve/memory/file";
@@ -23,7 +35,7 @@ export default defineMemory({
 
 ## 行为说明
 
-Provider 实现 recall 和 tools，**没有**自动 capture。模型决定何时调用 `profile__save_memory` 和 `profile__remove_memory`（这里 `profile` 是 slot 名）。Slot 的 `description` 会加到两个工具描述前面。
+Provider 实现 recall 和 tools，**没有**自动 capture。模型决定何时调用 `file__save_memory` 和 `file__remove_memory`（这里 `file` 是 slot 名）。Slot 的 `description` 会加到两个工具描述前面。
 
 每条保存的条目拿到永久数字索引，模型之后用它删除。Provider 把整份文档作为一条带稳定 ID 的消息召回，所以更新或清空后的文档会**替换**先前召回的副本，而不是堆在旁边。
 
@@ -50,7 +62,7 @@ provider: fileMemory({ maxCharacters: 8_000 });
 | 环境 | 后端 |
 | --- | --- |
 | 带 Blob 凭据的 Vercel（token，或带 OIDC 的 attached store） | Private Vercel Blob |
-| 没有 Blob 配置的 Vercel | 报错，要求 attach Blob store |
+| 没有 Blob 配置的 Vercel | 报错，建议 `/add memory/file` 或 `eve integration setup file-memory` |
 | `eve dev` | 进程内共享的 in-memory storage |
 | 其它环境 | 报错，要求显式 backend |
 
@@ -68,6 +80,21 @@ provider: fileMemory({ backend: inMemory() });
 
 ### Vercel Blob
 
+开通后的绑定使用 `EVE_MEMORY_BLOB_*` 命名空间，避免文件记忆抢走应用自己的 Blob store。`fileMemory()` 按此顺序检查 Vercel 凭据：
+
+1. `EVE_MEMORY_BLOB_READ_WRITE_TOKEN`
+2. `EVE_MEMORY_BLOB_STORE_ID` + 环境或请求上下文中的 Vercel OIDC
+3. `BLOB_READ_WRITE_TOKEN`
+4. `BLOB_STORE_ID` + Vercel OIDC
+
+手动 attach 的 store 仍可用通用 `BLOB_*` 变量。若上次开通在创建/连接 store 后中断，可**不重装** memory 定义，只重跑 setup：
+
+```bash
+eve integration setup file-memory
+```
+
+Setup 会修复半途留下的 deterministic unconnected private store，并复用完整的 `EVE_MEMORY_` 连接。它不会收养任意应用 store、改动 `BLOB_*` 连接，也不会替换 public / 不兼容的 store。若链接项目后来换了主 region，setup 会保留现有 memory store 并警告 drift，而不是冒险丢数据。
+
 需要显式配置凭据或 object prefix、而不是靠环境探测时，用 `eve/memory/file/vercel` 的 `vercelBlob()`：
 
 ```ts
@@ -79,7 +106,7 @@ provider: fileMemory({
 });
 ```
 
-`vercelBlob()` 接受 `token`、`oidcToken`、`storeId`、`prefix`。默认 prefix 是 `eve/memory/file`；文档以 private 形式存在 `<prefix>/<scope key>/MEMORY.md`。
+`vercelBlob()` 接受 `token`、`oidcToken`、`storeId`、`prefix`。默认 prefix 是 `eve/memory/file`；文档以 private 形式存在 `<prefix>/<scope key>/MEMORY.md`。传入这些选项会直接覆盖通用环境默认值。
 
 ### 自定义 backend
 
@@ -106,3 +133,9 @@ export function kvBackend(store: KvStore): MemoryDocumentBackend {
 `write()` 必须替换完整文档，并在 `expectedVersion` 不再匹配时抛出 `MemoryDocumentConflictError`。`expectedVersion` 为 `null` 表示文档尚不存在。
 
 Backend **只**改变文档存在哪，不改变文件记忆的召回格式或工具。需要不同的检索、捕获或工具时，请 [构建 Memory Provider](./custom-provider)。
+
+## 项目建议
+
+- 生产优先走 `eve add memory/file` 的开通流，让 `EVE_MEMORY_*` 与私有 store 对齐。
+- 应用自己的 Blob store 与 memory store 分开，避免互相覆盖 token。
+- 半途失败时用 `eve integration setup file-memory` 修复，而不是反复 `--overwrite` 生成文件。
