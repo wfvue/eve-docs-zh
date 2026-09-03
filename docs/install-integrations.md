@@ -14,8 +14,8 @@ description: "从 eve 官方目录或第三方源发现并安装 extensions 和�
 ```bash
 eve add extension/agent-browser
 eve add linear
-eve add memory/supermemory
 eve add instrumentation/braintrust
+eve add memory/file
 ```
 
 找不到条目时，`eve add` 会搜索可用目录并打印相近匹配，而不会安装任何东西。
@@ -27,6 +27,8 @@ Extensions 可能在 `agent/extensions/` 下创建 mount。Connections 会把初
 有些 integrations 打包了几个可独立安装的组件。例如 `eve add linear` 让你选择 Linear Channel、Linear MCP 或两者；默认两者都选。也可以用更具体的 `eve add channel/linear-agent` 和 `eve add connection/linear`。
 
 当官方条目声明了交互式 setup flow 时，eve 会在安装后询问是否运行它们，并按声明顺序执行多个 flow。跳过或取消后，运行打印出来的 `eve add --skip-install` 可以稍后从开头重跑所选组件的 declared flows。
+
+例如，`eve add memory/file` 可以通过同一 setup flow 开通所需存储。选择 **Install and set up** 后，eve 会创建或复用专用私有 Vercel Blob store，用 namespaced 凭据连接 production / preview / development，拉取环境，并可选择部署。审查与 setup 记录会展示项目、store、主 function region、环境和可能的 Blob 费用，再开始开通。
 
 ## 自动化 setup
 
