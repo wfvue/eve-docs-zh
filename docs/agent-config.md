@@ -72,6 +72,35 @@ export default defineAgent({
 
 模型循环如何应用 compaction，见 [Default harness](./concepts/default-harness#compaction)。
 
+
+## Runtime limits（运行时限额）
+
+用 `limits` 配置框架侧运行时上限。Session **用量**限额会在累计的 provider 报告 token，或模型 token 费用达到配置后，阻止该 durable session 再发起下一次模型调用：
+
+```ts title="agent/agent.ts"
+export default defineAgent({
+  model: "anthropic/claude-opus-4.8",
+  limits: {
+    maxInputTokensPerSession: 200_000,
+    maxOutputTokensPerSession: 20_000,
+    maxTokenCostUsdPerSession: 1.5,
+    sessionTimeoutMs: 7 * 24 * 60 * 60 * 1_000,
+  },
+});
+```
+
+`sessionTimeoutMs` 是每个 session（含委派 session）的绝对寿命，默认 30 天，从创建起算，跨重启与重新部署仍有效。到期时 eve 会让进行中的 turn settle，再发 `session.completed` 并释放 continuation；下一条合格 channel 消息会开新 session。设为 `false` 可关闭超时。过期**不会**删除已存 session 数据。
+
+输入 token、输出 token 与模型 token 费用**各自独立**检查。越过限额的那次模型调用仍会跑完（精确用量要等调用结束后才有）。下一次模型调用前，eve 会暂停 session，并给出确定性 continuation 提示：**Approve** 按各项配置重新开一扇预算窗；**Stop** 走标准取消路径（`turn.cancelled` → `session.waiting`）——这是用户决定，不是错误。session 仍可恢复；因仍超预算，下一条消息会再次弹出提示。
+
+无法触达真人的 task-mode（如 schedules、无 input proxy 的委派）会跳过提示，并在下一次模型调用失败：token 预算对应 `SESSION_TOKEN_LIMIT_REACHED`，模型费用对应 `SESSION_TOKEN_COST_LIMIT_REACHED`。
+
+省略 `maxInputTokensPerSession` 时，根 session 默认输入预算为 `40_000_000` provider 报告输入 token。`maxOutputTokensPerSession` 与 `maxTokenCostUsdPerSession` 默认未设。`maxTokenCostUsdPerSession` 是模型 token 费用的美元上限，**不含**工具或基础设施花费；费用取自每次模型 step 的上报值（AI Gateway 会提供），未上报费用的 step 不计入。任一项设为 `false` 即取消该轴上限。
+
+委派子智能体没有固定默认配额：派发时按当前预算窗剩余额在本批本地子调用间均分；子智能体完成后的用量（含美元费用）会计回父级。批准 continuation 会为后续子授予打开新的父级窗口，但不抹掉终身累计用量。
+
+> **官方说明：** 用量限额与继承规则以 [agent.ts](https://eve.dev/docs/agent-config) 当前页为准；中文页只抓要点。
+
 ## Workflow world
 
 默认情况下，eve 会为宿主选择 Workflow SDK world：部署在 Vercel 上时使用 Vercel Workflow；本地开发或 `eve start` 时使用 SDK 的 local world。高级自托管部署可以在根 `agent.ts` 里选择要使用的 Workflow world 包：
@@ -107,6 +136,7 @@ npm 的 `latest` tag 可能滞后于这个系列，所以不固定版本可能�
 | --- | --- | --- | --- |
 | `reasoning` | `AgentReasoningDefinition` | provider default | 跨 provider 的 reasoning effort，会转发给 Agent 每一轮的模型调用。 |
 | `modelOptions` | `AgentModelOptionsDefinition` | 无 | 转发给模型调用的 provider 选项覆盖。 |
+| `limits` | `AgentLimitsDefinition` | 字段相关 | 框架侧运行时限额。Session 默认 30 天后 complete；用量限额默认值与继承见上文。某项设为 `false` 即关闭。 |
 | `experimental` | `{ workflow?: { world?: string } }` | 未设置 | 可选的实验性设置，可能在任意版本中变化或消失。请把它们视为不稳定能力。`workflow.world` 用来选择支撑 session 状态、队列、hooks 和 streams 的 Workflow world 包。 |
 | `outputSchema` | Standard Schema 或 JSON Schema object | 无 | task-mode run 的结构化返回类型，例如 subagent、schedule 或 remote job。交互式对话轮次会忽略它，除非客户端为每条消息提供 schema。 |
 | `build` | `{ externalDependencies?: string[] }` | 无 | hosted build 的打包控制。`externalDependencies` 会让列出的包在运行时保持 external，同时 eve 会编译 tools 和 channels 这类 authored modules，并把这些包 trace 进 hosted output。 |

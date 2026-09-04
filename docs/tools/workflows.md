@@ -1,25 +1,30 @@
 ---
-title: "Durable Tools（工作流工具）"
-description: "把 tool 的 execute 写成 Workflow：可等待人、webhook 或定时器；默认等待结果，也可 background 回执。"
+title: "Workflows as Tools（工作流工具）"
+description: "定义 durable 工作流工具：可等待人、webhook 或定时器，中间不占计算。"
 url: /tools/workflows
 ---
 
-# Durable Tools（工作流工具）
+# Workflows as Tools（工作流工具）
 
-官方原文：[Durable Tools](https://eve.dev/docs/tools/workflows)。
+官方原文：[Workflows as Tools](https://eve.dev/docs/tools/workflows)。
 
-工具的 `execute` 可以是一个 workflow。eve 为每次 tool call 启动一条 durable run；**默认会等待**：run 的返回值就是 tool result，无论等多久。run 在等人、等 webhook 或 sleep 时，turn 会 park，中间不占计算。同一工具标成 `execution: "background"` 时，模型先拿到 receipt；run 结束后 eve 再用返回值唤醒 Agent。
+Workflow tool 是 authored tool：`execute` 以 `"use workflow"` 开头。每次调用启动一条 durable Workflow run。适合需要等人、等 webhook / 定时器、委派子智能体，或在较长周期内协调可重试步骤的场景。
 
-工具体内就是 [Workflow SDK](https://workflow-sdk.dev)：`"use workflow"`、`"use step"`、`createHook`、`createWebhook`、`sleep`、重试与 replay。eve 额外提供 `eve/workflow` 的 `ask`（会话 channel 上的人来回答）和 `agent`（从 workflow tool 委派）。每次 `yield` 被当作 durable 进度报告。
+**默认**模型侧的 tool call 会等待 run 返回值；run 挂起时 turn park，不占计算。设 `execution: "background"` 时对话可继续：模型先拿任务 receipt，run 结束后 eve 再带着结果唤醒 Agent。
 
-> **官方说明：** 这是正式的 durable tool 模型。原先面向模型的实验性 `Workflow` 编排工具已被这条路径与后台 subagents（任务生命周期）取代相关叙事；子智能体委派走 background task，详见 [子智能体](../subagents)。
+体内使用 [Workflow SDK](https://workflow-sdk.dev)（`"use workflow"`、`"use step"`、`createHook`、`createWebhook`、`sleep`、重试与 replay）。eve 额外提供 `eve/workflow` 的 `ask`（经 session channel 问答）和 `agent`（durable 子智能体委派）。每次 `yield` 是 durable 进度报告。
 
-## 写一个
+Workflow tool 跑的是你写的代码，对模型暴露的名称来自路径（例如 `deploy`）。
+
+> **官方说明：** 这是正式的 workflow-as-tool 模型；子智能体委派走 background task，详见 [子智能体](../subagents)。
+
+## 定义一个 workflow tool
 
 ```ts title="agent/tools/deploy.ts"
 import { defineTool } from "eve/tools";
 import { ask } from "eve/workflow";
 import { z } from "zod";
+import { computePlan, runDeploy, type DeployPlan } from "../lib/deploy";
 
 export default defineTool({
   description: "Deploy a service to production. Pauses for a human to approve the plan.",
@@ -75,7 +80,7 @@ async function applyDeploy(plan: DeployPlan) {
 | 进度（`yield`） | turn 上的 `action.partial` | 用 note 唤醒 Agent |
 | 取消 | 取消 turn 即取消 run | `task_cancel`，或 session 结束 |
 
-模型需要答案才能继续时用等待；等待可能长过对话、或希望用户继续聊时用后台。后台工具与其它 background tools 一样，需要根 Agent 的 `experimental.tasks`。
+模型需要答案才能继续时用等待；等待可能长过对话、或希望用户继续聊时用后台。后台工具**不再**需要根 Agent 上的实验开关。
 
 ## `ask`：问人
 
@@ -127,7 +132,7 @@ run 被取消时 abort（等待工具：被 steer 的 turn；后台：`task_canc
 
 ## 项目建议
 
-- 长审批、外部回调、定时提醒：优先 durable tool，而不是自己堆状态机。
+- 长审批、外部回调、定时提醒：优先 workflow tool，而不是自己堆状态机。
 - 需要人继续对话时用 `execution: "background"` + `ask`。
 - 与 [人在环中](./human-in-the-loop) 分工：入口闸用 `approval`，流程内问答用 `ask`。
 
