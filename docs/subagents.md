@@ -9,7 +9,7 @@ description: "把工作委派给根 Agent 副本或声明式专家；委派统�
 
 eve 支持两种委派：仅根可用的内置 `agent` 工具（启动或续跑根 Agent 的副本），以及目录声明的专家子智能体。用子智能体做并行独立工作、收窄工具面，或把任务交给专家。
 
-> **官方说明（2026-09-03）：** 声明式本地 / 远程子智能体，以及内置 `agent`，都作为 **durable background task** 运行：调用立刻返回 `{ status: "working", taskId, agentId }`，后续用 task notifications 唤醒父级。面向模型的实验性 `Workflow` 编排工具叙事已收敛到 [Durable Tools](./tools/workflows) 与本页的任务模型。
+> **官方说明（2026-09-03）：** 声明式本地 / 远程子智能体，以及内置 `agent`，都作为 **durable background task** 运行：调用立刻返回 `{ status: "working", taskId, agentId }`，后续用 task notifications 唤醒父级。面向模型的实验性 `Workflow` 编排工具叙事已收敛到 [Workflows as Tools](./tools/workflows) 与本页的任务模型。
 
 ## 内置 `agent` 工具
 
@@ -126,5 +126,5 @@ parked children 集合变化时，eve 注入带 `<agents>` 的 `[Agents]` 笔记
 ## 接下来读什么
 
 - [远程 Agent](./guides/remote-agents)
-- [Durable Tools](./tools/workflows)
+- [Workflows as Tools](./tools/workflows)
 - [内置工具](./concepts/built-in-tools)

@@ -9,7 +9,7 @@ eve 为每个 Agent 提供一套默认工具，以及用一个文件就能加入
 
 官方原文：[Built-in Tools](https://eve.dev/docs/concepts/built-in-tools)。
 
-> **相对旧中文稿：** `glob` / `grep` 仍非默认；可复用定义从各自 `eve/tools/<slug>` 导入。面向模型的实验性 `Workflow` 编排工具已从本页移除——durable 编排请看 [Durable Tools](../tools/workflows)；子智能体委派统一走 **background 任务**。
+> **相对旧中文稿：** `glob` / `grep` 仍非默认；可复用定义从各自 `eve/tools/<slug>` 导入。面向模型的实验性 `Workflow` 编排工具已从本页移除——durable 编排请看 [Workflows as Tools](../tools/workflows)；子智能体委派统一走 **background 任务**。
 
 ## 默认工具
 
@@ -64,7 +64,7 @@ export { grep as default } from "eve/tools/grep";
 
 文件名提供面向模型的工具名。这些工具对着 Agent sandbox 运行。需要改 description 或审批策略时，用 `defineTool({ ...glob, description: "..." })` 包装。
 
-长等待、审批、webhook 等 durable 编排，请写 `"use workflow"` 的工具，见 [Durable Tools](../tools/workflows)。
+长等待、审批、webhook 等 durable 编排，请写 `"use workflow"` 的工具，见 [Workflows as Tools](../tools/workflows)。
 
 ## 覆盖默认值
 
@@ -120,7 +120,7 @@ export default disableTool();
 
 - **覆盖**：想要相同能力但行为不同。从匹配的 `eve/tools/<slug>` 导入并包装。
 - **禁用**：模型根本不该有这个能力。`disableTool()` 移除内置工具。
-- **编写新工具**：harness 没有的能力。在 `agent/tools/` 下给新 slug。见 [工具（Tools）](../tools)。需要 durable 等待时，把 `execute` 写成 workflow，见 [Durable Tools](../tools/workflows)。
+- **编写新工具**：harness 没有的能力。在 `agent/tools/` 下给新 slug。见 [工具（Tools）](../tools)。需要 durable 等待时，把 `execute` 写成 workflow，见 [Workflows as Tools](../tools/workflows)。
 
 ## Opt-in 的 `sleep` 工具
 
@@ -132,12 +132,12 @@ import { sleep } from "eve/tools/sleep";
 export default sleep();
 ```
 
-模型用 `{ seconds }` 调用它。暂停会休眠 durable turn workflow，不会保持应用 runtime 打开，时长过后同一个 turn 自动继续。一个模型响应发出并发 `sleep` 调用时，eve 等待最长请求的时长。
+模型用 `{ seconds }` 调用它。每次调用作为 durable tool workflow 运行，不会保持应用 runtime 打开，时长过后同一个 turn 自动继续。并发 `sleep` 并行执行，turn 在最长请求时长结束后继续。
 
 ## 接下来读什么
 
 - [工具（Tools）](../tools)
-- [Durable Tools](../tools/workflows)
+- [Workflows as Tools](../tools/workflows)
 - [动态能力](../guides/dynamic-capabilities)
 - [Sandbox](../sandbox)
 - [子智能体](../subagents)
