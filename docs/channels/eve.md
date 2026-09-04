@@ -87,7 +87,7 @@ curl -X POST https://<deployment>/eve/v1/session/wrun_A/cancel
 # {"ok":true,"sessionId":"wrun_A","status":"accepted"}
 ```
 
-取消是异步的：`"accepted"` 表示活跃 session 已 durable 排队该请求。请在流上以 `turn.cancelled` 后跟 `session.waiting` 确认实际取消——绝不要把取消当作失败。活跃的本地和远程子智能体会在父级 settle 之前被递归取消。取消前已发出的内容仍保留在事件流上，而 durable 模型历史只保留已经 settle 的内容。session 之后正常接受下一条消息。
+可在 body 里带上观察到的 `turnId`，避免迟到请求误取消更新的 turn。传 `tasks: true` 可一并取消该 session 拥有的全部后台任务（session park 时也适用）。取消是异步的：请在流上以 `turn.cancelled` 后跟 `session.waiting` 确认 turn 边界，并在后续 turn 查看 task 状态以确认任务取消——绝不要把取消当作失败。活跃的本地和远程子智能体会在父级 settle 之前被递归取消。取消前已发出的内容仍保留在事件流上，而 durable 模型历史只保留已经 settle 的内容。session 之后正常接受下一条消息。
 
 已接受的取消返回 HTTP `202` 与 `sessionId`。不活跃的目标返回 HTTP `200` 与 `{"ok":true,"status":"no_active_turn"}`。
 
