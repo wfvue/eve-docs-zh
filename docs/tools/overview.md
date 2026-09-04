@@ -45,9 +45,9 @@ Async generator 可在完成前 `yield` 完整输出快照；每次 `yield` 替�
 
 发起 turn 接受后台任务后，eve 会让模型确认工作已开始、不必等结果。[Schedule](../schedules) 发起的 turn 是例外：没有人提示它们，所以启动保持条件投递且不发 acknowledgement。
 
-### Durable tools
+### Workflows as tools（工作流工具）
 
-`execute` 以 `"use workflow"` 开头时，工具作为 durable Workflow run 运行，而不是卡在模型 step 里。可等待人、webhook 或定时器；返回值仍结算该 tool call。详见 [Durable Tools](./workflows)。
+在 tool 的 `execute` 开头写上 `"use workflow"`，每次调用就会作为 durable Workflow run 跑。工具可等待人、webhook 或定时器，中间不占计算，再把结果交回模型。详见 [Workflows as Tools](./workflows)。
 
 ## 工具抛错时
 
@@ -66,6 +66,6 @@ Async generator 可在完成前 `yield` 完整输出快照；每次 `yield` 替�
 ## 接下来读什么
 
 - [人在环中](./human-in-the-loop)
-- [Durable Tools](./workflows)
+- [Workflows as Tools](./workflows)
 - [内置工具](../concepts/built-in-tools)
 - [动态能力](../guides/dynamic-capabilities)

@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-03，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs SHA：`aae26311a845b5638f701311b742fab7d9cb4baf`（后台子智能体毕业为 workflow / 任务工具；另含 instrumentation providers、memory/file Blob 开通、workspace CLI）。llms.txt fingerprint：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`，92 行（相对 2026-09-02 未变）。
+对照日期：2026-09-04，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs SHA：`4ee671565be5ba21bbf3555fe2fa3b5b64fdd99b`（docs tip 经 `38fd8d9` 等；含 token 费用限额、`tasks: true` 取消、Workflows as Tools 澄清、sandbox 镜像/用户）。llms.txt fingerprint：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`，92 行（相对 2026-09-03 未变）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -29,6 +29,25 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | Integrate | 已完成入口 | Extensions、Add Integrations、ACP、UCP、Remote Agents、Frontend、Client。 |
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
+
+## 2026-09-04 上游同步
+
+对照 `vercel/eve` docs tip `4ee671565be5ba21bbf3555fe2fa3b5b64fdd99b`（相对上次 `aae26311` 的 docs-touching：`dc08cbf` workflows 澄清、`73aec25` token cost limits、`9091777` cancel tasks、`3b73073` sleep-as-workflow、`d594b94` agents/ memory namespace、`bad0813`/`38fd8d9` sandbox）。
+
+已更新：
+
+- [x] `agent-config.md`：补 Runtime limits（含 `maxTokenCostUsdPerSession`）
+- [x] `tools/workflows.md` + `tools/overview.md`：Durable Tools → Workflows as Tools；后台工具无需根实验开关
+- [x] `sessions-runs-and-streaming` / `channels/eve` / `guides/client/streaming`：`tasks: true` 取消后台任务
+- [x] `concepts/built-in-tools.md`：`sleep` 作为 durable tool workflow、并发并行
+- [x] `memory/overview.md`：顶层 `agents/` workspace 分 namespace
+- [x] `sandbox.md`：默认镜像 / `EVE_SANDBOX_IMAGE_TAG` / `vercel()` image·source 优先级与 `vercel-sandbox` 用户
+
+仍跳过：
+
+- [ ] 官方 Integrations 画廊
+- [ ] 官方 Templates 画廊
+- [ ] Benchmarks
 
 ## 2026-09-03 上游同步
 
