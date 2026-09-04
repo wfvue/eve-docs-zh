@@ -128,7 +128,9 @@ for await (const event of session.stream({ startIndex: 0 })) {
 
 ## 中止请求（Abort a request）
 
-传入 `AbortSignal` 可以取消 POST 或 stream。应该在 await `send()` 之前启动 timeout，这样 POST 和 stream 都会被覆盖：
+传入 `AbortSignal` 可以取消 POST 或 stream。Abort 只是本地传输取消：turn 可跨断线恢复，断开连接**不会**停止服务端工作。要用 `session.cancel()` 停掉进行中的 turn，或用 `session.cancel({ tasks: true })` 一并停掉该 session 拥有的后台任务。取消是异步的；在流上观察 `turn.cancelled` 后跟 `session.waiting`，并在后续 turn 查看 task 状态以确认任务取消。
+
+应该在 await `send()` 之前启动 timeout，这样 POST 和 stream 都会被覆盖：
 
 ```ts
 const controller = new AbortController();
