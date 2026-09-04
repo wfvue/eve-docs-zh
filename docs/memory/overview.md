@@ -153,7 +153,7 @@ eve 校验 scope、为本次操作锁定它，并把由 namespace + scope 派生
 
 Namespace 在应用 scope 之前分隔应用的记忆域。省略则用 `defaultNamespace`：组合 slot 名、graph node，以及部署感知的身份：
 
-- 生产和其它 Vercel 环境使用 project 与 environment
+- 生产和其它 Vercel 环境使用 project 与 environment。顶层 `agents/` workspace 的成员使用**分开的** namespace
 - Preview 还会用 branch 或 deployment identity
 - 本地开发使用应用根目录的 digest，**不是**原始路径
 
