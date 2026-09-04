@@ -73,4 +73,4 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 
 - [子智能体](../../subagents)
 - [鉴权与路由保护](../auth-and-route-protection)
-- [Durable Tools](../../tools/workflows)
+- [Workflows as Tools](../../tools/workflows)
