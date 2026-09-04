@@ -133,6 +133,10 @@ export default defineSandbox({
 3. host 支持时用 **microsandbox**：Apple Silicon 上的 macOS，或带 KVM 的 glibc Linux。
 4. 无依赖回退用 **just-bash**。
 
+默认情况下，Docker 与 microsandbox 拉取 `ghcr.io/vercel/eve`，Vercel Sandbox 拉取 `vcr.vercel.com/vercel/eve/base`；镜像 tag 与已安装的 eve 版本一致。可用 `EVE_SANDBOX_IMAGE_TAG` 覆盖这些默认镜像的版本派生 tag。传给 `docker()`、`microsandbox()` 或 `vercel()` 的显式 `image` 优先。`vercel()` 上的 snapshot `source` 又优先于其 `image`，因为 Vercel Sandbox 把二者视为互斥。
+
+在所有后端上，authored 命令以非 root 用户 `vercel-sandbox`、经非交互 `bash -lc` login shell 运行。`/workspace` 与 `$HOME` 可写，`$HOME/.local/bin` 在 `PATH` 上；`/usr/local` 等系统路径仍属 root。确需系统级变更时用免密 `sudo`；`sudo` 会重置环境，若特权步骤依赖 `NPM_CONFIG_PREFIX` 等变量，请显式透传。
+
 `defaultBackend()` 也接受键控 bag，让每个内部后端得到自己的类型化 create options：
 
 ```ts
