@@ -15,6 +15,8 @@ description: "使用 defineDynamic 在运行时解析 models、subagents、conne
 
 编写形态、命名冲突、事件与恢复语义见官方页与既有中文分节。带鉴权的动态连接必须设稳定非密钥的 `instanceKey`。
 
+eve 会为动态工具记录 durable descriptors：`execute`、审批请求/响应策略、**按输入作用域的 `approvalKey` 回调**，以及 `toModelOutput`，以便 parked call 在新进程里重建同一套回调。
+
 ## 接下来读什么
 
 - [子智能体](../../subagents)

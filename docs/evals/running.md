@@ -34,6 +34,8 @@ eve eval --skip-report           # 跳过 config 和 eval-defined reporters，�
 
 调用 `t.skip(reason)` 的 eval 会被报告为 skipped，不算 passed 或 failed，也不会改变退出码。
 
+`eve eval --json` 会在退出前刷完整份 report，包括 stdout 被 pipe 到其它进程或重定向到文件时。
+
 ## Artifacts
 
 每次 run 都会在 `.eve/evals/<timestamp>/` 下写入 artifacts：run `summary.json`、`results.jsonl` 索引，以及每个 eval 的 assertion results、verdicts、捕获到的 event streams 和 `t.log` 行，这些都放在 `evals/` 下。Console output 故意保持简短；当 eval 失败时，artifact 里会有完整故事。

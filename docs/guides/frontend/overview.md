@@ -11,6 +11,8 @@ Frontend helpers 会把浏览器 chat UI 或 Agent UI 放在 Eve Agent 之上。
 
 大多数聊天 UI 只需要 `data.messages` 和 `status`。
 
+`resume: true` 配合 `initialSession` 时，mount 后会从 durable stream 重建投影。`status === "resuming"` 期间可渲染已 hydrate 的 `data`，但应禁用发消息与 HITL；不要展示取消或进行中 turn 的进度控件。catch-up 发现进行中 turn 会先变 `"streaming"` 再跟到边界；**已结算的尾部会在有界 catch-up 检查后直接变 `"ready"`，不必等 live stream 空闲超时**——若检查发现刚开始的 turn 或 pending authorization，eve 会继续跟随。终态 session 失败变 `"error"`。
+
 `data.messages` 是 Eve 拥有的消息投影。根 Agent 委派时，其 stream 会发出带 `childSessionId` 的 `subagent.called`，admit 后发出携带 working 任务回执的 `subagent.completed`；后续更新与最终结果经 task notifications 唤醒父级。详细子级进度在 child session 的 stream 上，不会压平进根 `data.messages`。需要 live 子级活动时，用底层 [Client SDK](../client/overview) attach 该 ID。完整契约见 [父级看到什么](../../subagents#父级看到什么)。
 
 ## 接下来读什么
