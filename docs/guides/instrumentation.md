@@ -48,7 +48,7 @@ export default defineInstrumentation({
 
 用 `setup` callback 注册你的 OTel provider，例如 `@vercel/otel` 里的 `registerOTel`。Framework 会在 server startup 时调用它，并传入解析后的 Agent name。`context.agentName` 在编译时从你的项目解析，优先使用 package `name`，否则使用 app directory name，因此不需要硬编码 service name。
 
-任何兼容 OTel 的 backend 都可以使用。安装所需 exporter package，然后在 callback 中配置它。
+任何兼容 OTel 的 backend 都可以使用（例如 Braintrust、PostHog、**Sentry**、Raindrop、Arize、Honeycomb、Datadog、Jaeger）。安装所需 exporter package，然后在 callback 中配置它。[Sentry integration](https://eve.dev/integrations/sentry-instrumentation) 提供可安装的 OTLP exporter，可把 traces 发到 Sentry 而无需再挂一份 Sentry SDK。
 
 另外三个字段控制 AI SDK 在 spans 中记录什么：
 
