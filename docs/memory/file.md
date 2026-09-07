@@ -17,7 +17,7 @@ description: "配置内置 fileMemory()：每个 scope 一份由模型维护的�
 eve add memory/file
 ```
 
-选择 **Install and set up** 后，eve 会为已链接项目创建或复用一个**私有** Vercel Blob store，用 `EVE_MEMORY_` 前缀的变量连接到 production / preview / development，并拉取更新后的环境。它使用项目第一个已配置的 function region，否则回退到 `iad1`。Blob 用量可能产生费用。
+选择 **Install and set up** 后，eve 会为已链接项目创建或复用一个**私有** Vercel Blob store，用 OIDC 连接到 production / preview / development，并拉取更新后的环境。连接会设置 `EVE_MEMORY_BLOB_STORE_ID` 与 `EVE_MEMORY_BLOB_WEBHOOK_PUBLIC_KEY`，**不会**写入 read-write token。它使用项目第一个已配置的 function region，否则回退到 `iad1`。Blob 用量可能产生费用。
 
 Registry 会写入：
 
@@ -80,12 +80,16 @@ provider: fileMemory({ backend: inMemory() });
 
 ### Vercel Blob
 
-开通后的绑定使用 `EVE_MEMORY_BLOB_*` 命名空间，避免文件记忆抢走应用自己的 Blob store。`fileMemory()` 按此顺序检查 Vercel 凭据：
+开通后的绑定使用 `EVE_MEMORY_BLOB_*` 命名空间，避免文件记忆抢走应用自己的 Blob store。Vercel 提供 OIDC token；Blob SDK 为每次操作解析当前 token 并处理刷新。文件记忆读写需要 store ID；webhook 公钥用于上传回调，文件记忆本身不用它。
 
-1. `EVE_MEMORY_BLOB_READ_WRITE_TOKEN`
-2. `EVE_MEMORY_BLOB_STORE_ID` + 环境或请求上下文中的 Vercel OIDC
-3. `BLOB_READ_WRITE_TOKEN`
-4. `BLOB_STORE_ID` + Vercel OIDC
+`fileMemory()` 按此顺序检查 Vercel 配置：
+
+1. `EVE_MEMORY_BLOB_STORE_ID` + 环境或请求上下文中的 Vercel OIDC
+2. `EVE_MEMORY_BLOB_READ_WRITE_TOKEN`
+3. `BLOB_STORE_ID` + Vercel OIDC
+4. `BLOB_READ_WRITE_TOKEN`
+
+在 Vercel 上优先用 OIDC：不必设置 read-write token，也不必把 `VERCEL_OIDC_TOKEN` 拷进配置。连接 store 后请重新部署——项目环境变量变更只作用于新部署。
 
 手动 attach 的 store 仍可用通用 `BLOB_*` 变量。若上次开通在创建/连接 store 后中断，可**不重装** memory 定义，只重跑 setup：
 
@@ -93,7 +97,7 @@ provider: fileMemory({ backend: inMemory() });
 eve integration setup file-memory
 ```
 
-Setup 会修复半途留下的 deterministic unconnected private store，并复用完整的 `EVE_MEMORY_` 连接。它不会收养任意应用 store、改动 `BLOB_*` 连接，也不会替换 public / 不兼容的 store。若链接项目后来换了主 region，setup 会保留现有 memory store 并警告 drift，而不是冒险丢数据。
+Setup 会修复半途留下的 deterministic unconnected private store，并复用完整的 `EVE_MEMORY_BLOB` 连接。若更早的 setup 建过 `EVE_MEMORY_` 连接，请在 Vercel 用 `EVE_MEMORY_BLOB` 前缀和 OIDC 重新连接同一 store，然后 redeploy；保留现有 store 才能保住记忆文档。它不会收养任意应用 store、改动 `BLOB_*` 连接，也不会替换 public / 不兼容的 store。若链接项目后来换了主 region，setup 会保留现有 memory store 并警告 drift，而不是冒险丢数据。
 
 需要显式配置凭据或 object prefix、而不是靠环境探测时，用 `eve/memory/file/vercel` 的 `vercelBlob()`：
 
@@ -106,7 +110,7 @@ provider: fileMemory({
 });
 ```
 
-`vercelBlob()` 接受 `token`、`oidcToken`、`storeId`、`prefix`。默认 prefix 是 `eve/memory/file`；文档以 private 形式存在 `<prefix>/<scope key>/MEMORY.md`。传入这些选项会直接覆盖通用环境默认值。
+`vercelBlob()` 接受 `token`、`oidcToken`、`storeId`、`prefix`。默认 prefix 是 `eve/memory/file`；文档以 private 形式存在 `<prefix>/<scope key>/MEMORY.md`。传入这些选项会直接覆盖通用环境默认值。在 Vercel 上请让 `oidcToken` 保持未设置，以便 Blob SDK 管理 token 刷新。
 
 ### 自定义 backend
 
@@ -136,6 +140,6 @@ Backend **只**改变文档存在哪，不改变文件记忆的召回格式或�
 
 ## 项目建议
 
-- 生产优先走 `eve add memory/file` 的开通流，让 `EVE_MEMORY_*` 与私有 store 对齐。
-- 应用自己的 Blob store 与 memory store 分开，避免互相覆盖 token。
+- 生产优先走 `eve add memory/file` 的开通流，让 `EVE_MEMORY_BLOB_*` + OIDC 与私有 store 对齐。
+- 应用自己的 Blob store 与 memory store 分开；优先 OIDC，避免长期持有 read-write token。
 - 半途失败时用 `eve integration setup file-memory` 修复，而不是反复 `--overwrite` 生成文件。

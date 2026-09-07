@@ -26,6 +26,8 @@ console.log(result.events.length);
 - `session.completed`
 - `session.failed`
 
+`result()` 会关闭那条 HTTP stream——包括 fetch instrumentation 为 tracing 克隆了 response 的情况。durable session 在 `session.waiting` 之后仍可继续 follow-up turns。
+
 ## 实时流式 events（Stream events live）
 
 想渲染过程时，使用 `for await...of`：
@@ -88,6 +90,9 @@ function handleEvent(event: HandleMessageStreamEvent) {
 如果 authorization prompt pending 时支持刷新，请保存 started session 的 session cursor，并在加载时重新 hydrate 已保存 events。不要把 `authorization.required` 后缺少 `session.waiting` 当作对话已结束；callback 或结构化 decline 应恢复同一个 Eve session。
 
 ## 重连（Reconnection）
+
+浏览器在读取 response body 时失败（例如 `TypeError: Load failed`、`TypeError: network error`）也走同一套重连策略。无效的 stream events 仍会让本次读取失败。
+
 
 Client 会在 transient stream disconnect 后重连。它会从当前 session 已消费的 event 数量继续：
 
