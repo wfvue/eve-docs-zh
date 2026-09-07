@@ -1,6 +1,6 @@
 ---
 title: "Workflows as Tools（工作流工具）"
-description: "定义 durable 工作流工具：可等待人、webhook 或定时器，中间不占计算。"
+description: "用 defineWorkflowTool 定义 durable 工作流工具：可等待人、webhook 或定时器，中间不占计算。"
 url: /tools/workflows
 ---
 
@@ -8,32 +8,28 @@ url: /tools/workflows
 
 官方原文：[Workflows as Tools](https://eve.dev/docs/tools/workflows)。
 
-Workflow tool 是 authored tool：`execute` 以 `"use workflow"` 开头。每次调用启动一条 durable Workflow run。适合需要等人、等 webhook / 定时器、委派子智能体，或在较长周期内协调可重试步骤的场景。
+Workflow tool 用 `eve/tools` 的 `defineWorkflowTool` 定义，且 executor 的第一条语句是 `"use workflow"`。每次调用启动一条 durable Workflow run。适合等人、等 webhook / 定时器、委派子智能体，或在较长周期内协调可重试步骤。
 
-**默认**模型侧的 tool call 会等待 run 返回值；run 挂起时 turn park，不占计算。设 `execution: "background"` 时对话可继续：模型先拿任务 receipt，run 结束后 eve 再带着结果唤醒 Agent。
+Durable 挂起与后台执行相互独立：`defineWorkflowTool` 让 body 能在 durable wait 处挂起并释放计算；`execution: "background"` 决定父 Agent 是否在 body 结束前就收到 task receipt 并继续。两种执行模式都可以挂起。
 
-体内使用 [Workflow SDK](https://workflow-sdk.dev)（`"use workflow"`、`"use step"`、`createHook`、`createWebhook`、`sleep`、重试与 replay）。eve 额外提供 `eve/workflow` 的 `ask`（经 session channel 问答）和 `agent`（durable 子智能体委派）。每次 `yield` 是 durable 进度报告。
+体内使用 [Workflow SDK](https://workflow-sdk.dev)（`"use workflow"`、`"use step"`、`createHook`、`createWebhook`、`sleep`、重试与 replay）。eve 提供 `ctx.ask`（经 session channel 问答）和 `ctx.agent`（durable 子智能体委派）。用 `yield` 报告进度，用 `await` 工作流操作做 durable 等待；等待之后还要用的值放在局部变量里。
 
-Workflow tool 跑的是你写的代码，对模型暴露的名称来自路径（例如 `deploy`）。
-
-> **官方说明：** 这是正式的 workflow-as-tool 模型；子智能体委派走 background task，详见 [子智能体](../subagents)。
+> **相对旧中文稿：** `eve/workflow` 入口与顶层 `ask(ctx, …)` / `agent(ctx, …)` 已移除；请改用 `defineWorkflowTool` + `ctx.ask` / `ctx.agent`。Webhook 由框架生成可公开 resume 的 token；需要确定性 token 时用 `createHook` + `resumeHook`。
 
 ## 定义一个 workflow tool
 
 ```ts title="agent/tools/deploy.ts"
-import { defineTool } from "eve/tools";
-import { ask } from "eve/workflow";
+import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 import { computePlan, runDeploy, type DeployPlan } from "../lib/deploy";
 
-export default defineTool({
+export default defineWorkflowTool({
   description: "Deploy a service to production. Pauses for a human to approve the plan.",
   inputSchema: z.object({ service: z.string() }),
   async execute({ service }, ctx) {
     "use workflow";
-
     const plan = await planDeploy(service);
-    const answer = await ask(ctx, {
+    const answer = await ctx.ask({
       prompt: `Deploy ${service}?\n\n${plan.summary}`,
       display: "confirmation",
       options: [
@@ -41,104 +37,86 @@ export default defineTool({
         { id: "cancel", label: "Cancel" },
       ],
     });
-
     if (answer.optionId !== "approve") {
       return { deployed: false, reason: "rejected" };
     }
     return { deployed: true, url: await applyDeploy(plan) };
   },
 });
-
-async function planDeploy(service: string) {
-  "use step";
-  return computePlan(service);
-}
-
-async function applyDeploy(plan: DeployPlan) {
-  "use step";
-  return runDeploy(plan);
-}
 ```
-
-模型调用 `deploy` → turn park → 人批准后 run 恢复 → 返回一个 tool result。
 
 ### 规则（摘要）
 
-- `"use workflow"` 单独成行，作为 `execute`（或作为 `execute` 引用的顶层 async 函数）的第一条语句。
-- `"use step"` 标记顶层 async 函数为 step；副作用、时钟、随机、`process.env`、Node API 放在 step 里；workflow body 可被 replay，须保持确定性。
-- 从 `workflow` 导入 `createHook` / `createWebhook` / `sleep` / `FatalError`；`workflow/api` 的 `start` / `getRun` / `resumeHook` 放在 step 里。应用不必安装 SDK；新项目可在 tsconfig `types` 列入 `eve/workflow-modules`。
-- Body 里的 `ctx` 有 `session`、`callId`、`toolName`、`abortSignal`。`getSandbox` / `getSkill` / `getToken` / `requireAuth` 在 body 里会抛错——凭据在 step 里读。
-- 工具输入必须是 JSON object。Workflow body 用于 `agent/tools/` 下的静态工具，不用于 `defineDynamic` 返回的工具。
+- 默认导出 `defineWorkflowTool({ ... })`；`execute` 必须是 async / async generator，且第一条语句是 `"use workflow"`（缺 directive 是构建错误）。
+- `"use step"` 标记顶层 async 函数为 step；副作用、时钟、随机、`process.env`、Node API 放在 step；body 可被 replay，须保持确定性。
+- 从 `workflow` 导入 `createHook` / `createWebhook` / `sleep` / `FatalError`；`workflow/api` 的 `start` / `getRun` / `resumeHook` 放在 step。应用不必安装 SDK；新项目可在 tsconfig `types` 列入 `eve/workflow-modules`。
+- Body 里的 `ctx` 有 `session`、`callId`、`toolName`、`abortSignal`、`agent`、`ask`。`getSandbox` / `getSkill` / `getToken` / `requireAuth` **不在** `WorkflowToolContext` 上——凭据在 step 里读 `process.env`。
+- 工具输入必须是 JSON object。Workflow body 用于 `agent/tools/` 静态工具，不用于 `defineDynamic` 返回的工具。
+- 给 `defineTool`、裸 tool 对象、channel / schedule handler 加 `"use workflow"` 会构建失败。
+
+### 从旧 workflow tool 迁移
+
+把 `defineTool` 换成 `defineWorkflowTool`，保留 `"use workflow"`，把 `agent(ctx, input)` / `ask(ctx, request)` 换成 `ctx.agent(input)` / `ctx.ask(request)`。需要显式类型时从 `eve/tools` 导入 `WorkflowToolContext` 等。
 
 ## 等待还是后台
 
+两种模式都支持相同的 durable waits；按「父 Agent 何时拿到 tool result」选择：
+
 | | 默认 | `execution: "background"` |
 | --- | --- | --- |
-| tool result | run 的返回值 | `{ status: "working", taskId }` |
-| run 存活期间的 turn | park | 继续 |
-| run 结束 | 结果落到该 tool call | 用结果或错误唤醒 Agent |
-| 进度（`yield`） | turn 上的 `action.partial` | 用 note 唤醒 Agent |
+| tool result | workflow 结束后的输出 | body 结束前的 `{ status: "working", taskId }` |
+| 父 turn | 等该 tool call 结束 | 收到 receipt 后继续 |
+| body 内 durable wait | 挂起 workflow；call 仍 pending | 挂起 workflow；父可独立继续 |
+| run 结束 | 结算 pending tool call | 向父发 task 完成/失败 notification |
 | 取消 | 取消 turn 即取消 run | `task_cancel`，或 session 结束 |
 
-模型需要答案才能继续时用等待；等待可能长过对话、或希望用户继续聊时用后台。后台工具**不再**需要根 Agent 上的实验开关。
+默认模式：模型需要答案才能继续。后台模式：对话应在任务 pending 时继续。普通 `defineTool` 也可设 `execution: "background"`，但其 executor 仍在发起 step 内跑，**不能**在 workflow wait 处挂起。对比见 [工具：后台执行](./overview#后台执行)。
 
-## `ask`：问人
+`yield` 本身不会等人、也不会把工具切成后台。step 里的普通 Promise / Node 定时器也**不会**创建 durable 挂起——要用工作流操作。
 
-`ask` 在 session 上发布 `input.requested`（渲染方式与 `ask_question` / 工具审批类似），并返回 answer 恢复用的 hook。Await 会挂起 run，直到有回复。因为它是 hook，可以和 SDK 构造组合，例如与 `sleep` 竞速设 deadline。
+## `ctx.ask` / `ctx.agent` / `yield`
 
-要点：
+- **`ctx.ask`**：在 session channel 上发 `input.requested`（渲染方式类似 `ask_question` / 审批），返回可 await 的答案；await 会挂起 run。请求属于 run 而非 turn；后台工具里可远长于发起 turn。结束 run（return / throw / 取消）会撤回 pending 请求。可用 `Promise.race([pending, sleep("4h")])` 加截止。
+- **`ctx.agent`**：调用可见子智能体并等待结果。`key` 必填且在 run 内唯一（replay 身份）；并行调用用不同 key。`target` 是模型可见子智能体名；`agentId` 续跑已有 child；可带 `outputSchema`。
+- **`yield`**：两种执行模式都可报告进度。后台下 `yield task.postMessage(message)` 才会请求父 Agent turn；调用 `task.postMessage` 只构造描述符。默认模式下显式 `return null` 也会回退到最后一次 yield——进度与最终结果形状不同时，请显式返回对象。
 
-- 请求属于 **run** 而不是 turn；后台工具里甚至可在发起 turn 之后很久仍可回答。
-- 一次请求只答一次；需要下一答再 `ask`。
-- run 结束（return / throw / cancel）会撤回未决请求。
-- 可同时 outstanding 多个请求。
-- 回复**不会** steer；有未决请求时新的人类消息仍遵循 session 的 `turnPolicy`。
+后台进度示例：
 
-对比 [`approval`](./human-in-the-loop)：审批在 `execute` 前闸住调用，且只能展示模型输入。两者可组合：`approval` 在前，`ask` 在内。
+```ts title="agent/tools/remind_with_progress.ts"
+import { defineWorkflowTool } from "eve/tools";
+import { sleep } from "workflow";
+import { z } from "zod";
 
-## `agent`：委派
-
-Workflow tools 可调用可见子智能体并等待结果：
-
-```ts
-import { agent } from "eve/workflow";
-
-const result = await agent(ctx, {
-  key: "security-review",
-  target: "reviewer",
-  message: "Review the deployment plan for security risks.",
+export default defineWorkflowTool({
+  description: "Schedule a reminder and report progress before waiting.",
+  inputSchema: z.object({ note: z.string(), delay: z.string() }),
+  execution: "background",
+  async *execute({ note, delay }, ctx, task) {
+    "use workflow";
+    yield { status: "preparing reminder" };
+    yield task.postMessage(`Reminder scheduled for ${delay}.`);
+    await sleep(delay);
+    return { reminder: note };
+  },
 });
 ```
 
-`key` 必填、非空，且在 workflow run 内唯一，用于跨 replay 的稳定身份。并行调用必须用不同 key。`target` 是模型可见的子智能体名；可用 `agentId` 续跑已有 child，用 `outputSchema` 要求结构化输出。
+## Webhook 回调
 
-## `yield`：进度
+`createWebhook` 在 `/.well-known/workflow/v1/webhook/` 下铸 URL，由 eve 服务。外部系统完成后 POST；中间不跑代码。Webhook token **由框架生成**；需要确定性 token 时用 `createHook` + `resumeHook`。自定义 HTTP 响应：向 `createWebhook` 传 `respondWith: new Response(...)`。
 
-Workflow body 可以是 async generator。每次 `yield` 是 durable 进度快照；return 值是结果（若不 return 则最后一次 yield）。
+## 取消：`ctx.abortSignal`
 
-等待工具的每个 `yield` 作为 `action.partial` 流式发出（按 tool call id last-write-wins），**不进**模型历史。后台工具的每个 `yield` 用 note 唤醒 owning Agent。
-
-## `ctx.abortSignal`
-
-run 被取消时 abort（等待工具：被 steer 的 turn；后台：`task_cancel` 或 session 结束）。它是 durable 的，会跨 replay，收到它的 step 能观察到 abort。传给应停止的 steps，并在 `try/finally` 清理。信号触发后最多给 body 约 30 秒收尾；挂在 hook / `sleep` 上的 body 可能观察不到信号。
-
-## 语义摘要
-
-- 一次调用、一个结果。等待工具的 call 解析一次（返回值 / 错误 / 取消）。后台工具的 call 先解析为 receipt；之后都是独立的 session input。
-- 等待工具运行时 turn park。`queue` 消息会等；`steer` 会取消 turn → 取消 run → 撤回请求。Input responses 永不 steer。
-- 后台 runs 属于 session：跨 turn 存活，进入 task index，可用 `task_cancel`，session 结束时取消。
-- 错误遵循 SDK：step 内抛错按 step 策略重试；`FatalError` 不重试；逃出 body 的错误使 run 失败。
-- 身份跟工具走：workflow id 来自工具路径，重命名/移动文件等于新 workflow。进行中的 runs 在启动它们的部署上完成。
+run 被取消时（等待工具的 steered turn；后台工具的 `task_cancel` / session 结束）`abortSignal` 会 abort，且 durable——能跨 replay。信号发出后，run 最多再等 30 秒让 body 收尾，然后无论是否收尾都按取消结束。停在 hook / `sleep` 上的 body 观察不到信号，宽限期结束即放弃。
 
 ## 项目建议
 
-- 长审批、外部回调、定时提醒：优先 workflow tool，而不是自己堆状态机。
-- 需要人继续对话时用 `execution: "background"` + `ask`。
-- 与 [人在环中](./human-in-the-loop) 分工：入口闸用 `approval`，流程内问答用 `ask`。
+- 新代码一律 `defineWorkflowTool` + `ctx.*`，不要再依赖已移除的 `eve/workflow`。
+- 进度用 `yield`；需要父 Agent 再想一轮时用 `task.postMessage`（仅后台）。
+- 非幂等副作用放进 `"use step"`，并自备幂等键——dispatch 重试可能再开一条 run。
 
 ## 接下来读什么
 
 - [工具（Tools）](./overview)
-- [人在环中](./human-in-the-loop)
 - [子智能体](../subagents)
-- [执行模型与持久性](../concepts/execution-model-and-durability)
+- [人在环中](./human-in-the-loop)

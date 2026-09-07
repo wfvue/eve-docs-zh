@@ -143,7 +143,7 @@ Compaction 期间，eve 把召回记录排除在 summarizer 之外，保留每�
 
 ## 失败行为
 
-- 抛错或无效的 `recall["turn.started"]` 会在模型调用前失败整个 turn；任何 slot 的召回结果都不会提交。
+- 抛错或无效的 `recall["turn.started"]` 会在模型调用前失败整个 turn；任何 slot 的召回结果都不会提交。若 turn 的 `abortSignal` **已经** aborted，eve 把该错误当作取消，并继续处理排队中的 steering 替换。信号仍活跃时的 `AbortError` 仍会让 turn 失败。
 - 抛错的 `capture["compaction.requested"]` 让历史保持不变。
 - 抛错的 `recall["compaction.completed"]` 会让自动 turn 失败。独立 compaction 时 eve 记录错误并把 session 送回 waiting（checkpoint 已经写完）。
 - 无效或抛错的 `tools()` 结果会被记录，并在该 turn 省略。

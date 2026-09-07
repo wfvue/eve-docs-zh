@@ -20,6 +20,8 @@ eve add memory/file
 
 找不到条目时，`eve add` 会搜索可用目录并打印相近匹配，而不会安装任何东西。
 
+Web Chat 会安装项目级 Next.js 应用，目前**不能**加到顶层 `agents/` workspace。那种拓扑请自建根级 Next.js 应用，再配置 [`withEve({ agents })`](./guides/frontend/nextjs)。当选中的 Agent 属于此类 workspace 时，eve 会在写文件之前拒绝 `eve add channel/web`。
+
 还不知道条目名时，直接运行 `eve add`。它的 help 会说明如何用 `eve registry search` 搜索 registry。
 
 Extensions 可能在 `agent/extensions/` 下创建 mount。Connections 会把初始定义写到 `agent/connections/`，并在需要时安装 `@vercel/connect`。Instrumentation providers 会写 `agent/instrumentation.ts`；一个 Agent 只有一个 instrumentation 文件，多个 exporters 需要你自己在那里组合。运行 Agent 前，先配置生成文件和所需环境变量。
