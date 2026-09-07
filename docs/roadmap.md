@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-04，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs SHA：`4ee671565be5ba21bbf3555fe2fa3b5b64fdd99b`（docs tip 经 `38fd8d9` 等；含 token 费用限额、`tasks: true` 取消、Workflows as Tools 澄清、sandbox 镜像/用户）。llms.txt fingerprint：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`，92 行（相对 2026-09-03 未变）。
+对照日期：2026-09-07，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`4b5fad41beeecae1286611974ea970d565d13dde`（相对上次 `4ee6715`：CLI telemetry、可关默认工具、file memory OIDC、后台工具 yield/progress、MCP 调用契约、子智能体 steering、Sentry OTel 等）。llms.txt fingerprint：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`，93 行（内容相对 2026-09-04 未变）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -29,6 +29,31 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | Integrate | 已完成入口 | Extensions、Add Integrations、ACP、UCP、Remote Agents、Frontend、Client。 |
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
+
+
+## 2026-09-07 上游同步
+
+对照 `vercel/eve` docs tip `4b5fad41beeecae1286611974ea970d565d13dde`（相对上次 `4ee671565be5ba21bbf3555fe2fa3b5b64fdd99b`）。
+
+已更新：
+
+- [x] NEW：`docs/reference/telemetry.md`（CLI 遥测）+ reference meta + `cli.md` 遥测入口
+- [x] `concepts/built-in-tools.md`：`defaultTools: false` / 按工具 `eve add` / `disableTool`（#3069）
+- [x] `memory/file.md`：Blob 开通走 OIDC，`EVE_MEMORY_BLOB_*` 探测顺序（#3077）
+- [x] `memory/custom-provider.md`：abort / steering 下的 recall 失败语义（#3082）
+- [x] `guides/instrumentation.md`：OTel 兼容 backend 列表含 Sentry（#3052）
+- [x] `guides/client/streaming.md`：`result()` 关 HTTP stream；浏览器 body 读取失败重连（#3071 / #3082）
+- [x] `tools/overview.md` + `tools/workflows.md`：后台 yield / `task.postMessage`、`defineWorkflowTool` + owner hooks（#2997 / #3042 / #3082）
+- [x] `install-integrations.md`：拒绝 `agents/` workspace 安装 Web Chat（#3059）
+- [x] `channels/mcp.md`：发布 MCP 调用契约、structured errors、请求大小边界（#2988）
+- [x] `channels/slack.md` / `connections/openapi.md` / `evals/running.md` / `guides/dynamic-capabilities.md` / `guides/frontend/overview.md`：#3082 小修
+- [x] `subagents.md` + `guides/remote-agents.md`：后台子智能体 steering（#3016）
+
+仍跳过：
+
+- [ ] 官方 Integrations 画廊
+- [ ] 官方 Templates 画廊
+- [ ] Benchmarks
 
 ## 2026-09-04 上游同步
 

@@ -18,7 +18,7 @@ eve 支持两种委派：仅根可用的内置 `agent` 工具（启动或续跑�
 ```ts
 {
   message: string;       // 子级看不到父级历史，要带齐上下文
-  agentId?: string;      // 续跑已有 child
+  agentId?: string;      // 续跑或 steer 已有 child
   outputSchema?: object; // 本 turn 要求结构化输出
 }
 ```
@@ -115,7 +115,11 @@ Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不�
 
 ## Agent messaging
 
-Child 回答后 park 而不是终结，保留 session 与历史。失败 turn 也可能 park。把 park 的 `agentId` 传回同一子智能体工具并带新 `message` 即可续跑。省略 `agentId`（或空 / null）总是新开 child；未知 `agentId` 回退为新开而不是失败。已知 `agentId` 走错子智能体工具 → `AGENT_MISMATCH`；仍在 starting/working → `AGENT_BUSY`。
+Child 回答后 park 而不是终结，保留 session 与历史。失败 turn 也可能 park。把 park 的 `agentId` 传回同一子智能体工具并带新 `message` 即可续跑。省略 `agentId`（或空 / null）总是新开 child；未知 `agentId` 回退为新开而不是失败。已知 `agentId` 走错子智能体工具 → `AGENT_MISMATCH`。
+
+要 **steer** 正在运行的后台 child：用同一子智能体工具，带上它的 `agentId` 和更新后的 `message`。eve 会先取消旧任务，再在同一 child session 里开新任务。child 保留对话历史；receipt 里是同一个 `agentId` 与新的 `taskId`。被取消的任务不能再发布后续成功结果。Steering **不会**撤销已经发生的工具副作用。
+
+仍在 starting、或归属于阻塞中的 workflow 调用（而不是已 admit 的后台任务）的 child，继续返回 `AGENT_BUSY`。取消或投递失败会报告给调用方；eve 不会另开替换 child 来掩盖失败。
 
 parked children 集合变化时，eve 注入带 `<agents>` 的 `[Agents]` 笔记；仅在列表变化时追加（利于 prompt cache）。父 session 结束时，eve 终结本地 children，并对远程 children 发已鉴权 reset（尽力而为）。
 

@@ -160,26 +160,44 @@ Protected-resource metadata 端点有意 CORS-readable。MCP transport 本身不
 MCP 客户端收到四个工具：
 
 | 工具 | 输入 | 用途 |
-| --- | --- | --- |
+| --- | --- |
 | `agent_start` | `{ message, outputSchema? }` | 启动 durable 工作并立即返回 invocation ID。 |
 | `agent_get` | `{ invocationId }` | 读取 invocation 的完整当前状态。 |
 | `agent_update` | `{ invocationId, responses }` | 回答完整的 pending human-input batch。 |
 | `agent_cancel` | `{ invocationId }` | 请求协作式取消非终态工作。 |
 
-`agent_start` 创建一个 task-mode eve session，并在 durable 接受后返回。保留它的 `invocationId`，然后调用 `agent_get` 直到 invocation 到达终态。状态为 `working` 时，至少等待 `pollAfterMs` 再轮询。
+服务器还会在 `initialize` 与 `server/discover` 返回 `instructions`，向连接中的模型摘要这套 durable 调用协议，托管客户端不必只靠 tool schema 推断。
+
+`agent_start` 创建一个 task-mode eve session，并在 durable 接受后返回（不等 session continuation hook 可读）。保留它的 `invocationId`，然后调用 `agent_get` 直到 invocation 到达终态。状态为 `working` 时，至少等待 `pollAfterMs` 再轮询。
 
 Invocation 响应用 `status` 区分：
 
 - `working`：工作进行中；按 `pollAfterMs` 继续轮询。
-- `input_required`：展示 `inputRequests`，再通过 `agent_update` 发送完整答案 batch。成功的 update 返回新的 `working` 状态。
+- `input_required`：展示 `inputRequests`，再通过 `agent_update` 发送完整答案 batch。成功的 update 返回当前 invocation 状态。
 - `authorization_required`：展示返回的登录 URL、user code 或说明。Connection callback 会自动恢复 invocation；继续轮询。
 - `completed`：消费可选的 `result`。
 - `failed`：检查结构化 `error`。
 - `cancelled`：取消到达终态。
 
-取消是协作式的，所以 `agent_cancel` 之后继续调用 `agent_get` 直到状态变成终态。
+带 `isError: true` 的 tool result 表示**这次调用本身**被拒绝；`failed` status 表示调用成功但任务失败——两者要分开处理。被拒调用会带 `structuredContent.error`：稳定的 `code`、短 `message`、以及 `retryable`：
 
-可选 output schemas 限制为 64 KiB、32 层和 2,048 个节点。外部 `$ref` 会被拒绝。
+| `code` | 含义 | `retryable` |
+| --- | --- | --- |
+| `invalid_input` | 参数被拒（例如过大或外部 `$ref` 的 `outputSchema`） | `false` |
+| `not_found` | invocation 不存在、已过期或不属于当前调用者 | `false` |
+| `conflict` | 不在预期状态；先用 `agent_get` 读取 | `true` |
+| `internal` | eve 失败；`errorId` 可对上服务端日志，不暴露细节 | `false` |
+
+取消是协作式的，所以 `agent_cancel` 之后继续调用 `agent_get` 直到状态变成终态（`cancelled` / `completed` / `failed`）。
+
+请求有界：整个 MCP body ≤ 1 MiB；`message` ≤ 64 KiB；每条 input-response `text` ≤ 16 KiB（均按 UTF-8 字节计）；一次 `agent_update` ≤ 64 条响应。可选 output schemas 限制为 64 KiB、32 层和 2,048 个节点；外部 `$ref` 会被拒绝。过大 body 返回 JSON-RPC `413`；过大字段在开工前就做输入校验失败。
+
+### Durability 保证
+
+- `agent_start` 一旦返回，工作就是 durable 的。HTTP 断开、客户端重启或 MCP session 关闭都不会取消它；只有 `agent_cancel` 能停。
+- `agent_start` **不幂等**。若响应丢失，客户端没有 `invocationId` 可查，第二次调用会再开一个任务——应先问用户，而不是盲目重试。
+- `agent_update` 回答一个 pending batch。eve 接受后重发同一答案会返回当前状态；对已回答 batch 发不同答案是 conflict。
+- `agent_cancel` 可与完成竞态；轮询直到终态，不要死盯 `cancelled`。
 
 ## Invocation ownership
 
