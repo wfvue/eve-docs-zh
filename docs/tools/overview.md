@@ -39,15 +39,38 @@ Async generator 可在完成前 `yield` 完整输出快照；每次 `yield` 替�
 
 ### 后台执行
 
-`defineTool({ execution: "background" })` 会收到第三个 `task` 参数。返回普通值即完成 durable task；返回 `task.delegated({ executor, receipt })` 则立刻给出 `working` receipt，由外部 executor 继续。后台工具是常规执行模式，**不再**要求根 Agent 开实验开关才能作为执行模式存在（与旧中文稿「必须 `experimental.tasks`」的表述相比：subagents / 部分后台能力仍可能依赖任务基建，以官方当前页为准）。
+后台执行决定结果如何交回父 Agent；durable 挂起决定 executor 能否在 workflow wait 处暂停并释放计算。二者独立：
 
-内置、声明式本地与远程子智能体自动使用这套 background task 生命周期。进程内 executor 用 `task.send({ kind: "update" | "complete" | ... })` 报告进度与终态。跨进程 executor 线仍由框架拥有，尚非稳定 authored-tool API。
+| 定义 | `execute` 内 durable 等待 | 交给模型的结果 |
+| --- | --- | --- |
+| `defineTool` | 否；在发起 step 内跑完 | executor 结束后的输出 |
+| `defineTool` + `execution: "background"` | 否；发起 step 仍等 executor | 先 task receipt，再 task notifications |
+| `defineWorkflowTool` | 是；工具 call 等待时可挂起 | workflow 结束后的输出 |
+| `defineWorkflowTool` + `execution: "background"` | 是；body 可长于发起 step | 先 receipt，再 notifications |
+
+后台工具收到第三个 `task` 参数。工具结果是 receipt `{ status: "working", taskId }`；最终输出属于该 task。`outputSchema` / `toModelOutput` 描述的是固定 receipt。
+
+`task.delegated()` **已移除**。把外部工作放进 `defineWorkflowTool` executor，结束后再返回结果。迁移后请重建仍引用旧 API 的 extensions。
+
+`yield task.postMessage(message)` 是唯一会请求父 Agent 再开一轮 turn 的 yield。调用 `task.postMessage` 只构造描述符，必须 `yield` 才会发送。workflow body 里，等待之后还要用的值放在局部变量中（replay 会重建）。需要人回答时用 [`ctx.ask`](./workflows#ask-a-human-ctxask)。后台工具是常规执行模式，**不需要**根 Agent 实验开关。内置 / 声明式本地 / 远程子智能体自动走这套任务生命周期。
 
 发起 turn 接受后台任务后，eve 会让模型确认工作已开始、不必等结果。[Schedule](../schedules) 发起的 turn 是例外：没有人提示它们，所以启动保持条件投递且不发 acknowledgement。
 
+### Yield 与 return
+
+`yield` 把值交给 eve 的 generator consumer；它本身**不会**创建对人 / 定时器 / 外部事件的 durable 等待。含义取决于执行模式：
+
+| Executor | 普通 `yield value` | 最终输出 |
+| --- | --- | --- |
+| `defineTool` 默认 | 更早的值是 `action.partial` 快照；最后一次 yield 成 tool result | 最后一次 yield；generator `return` 被忽略 |
+| `defineWorkflowTool` 默认 | 每次 yield 都是 `action.partial` | 显式 return；若 return 为 `null`/`undefined` 则回退到最后一次 yield，再否则 `null` |
+| 任一 + `execution: "background"` | 仅流式任务进度，**不**请求父 turn | 显式 return 成为 task 输出；无 return 则以 `null` 完成；最后一次 yield **不是**回退 |
+
+后台工具上，`yield task.postMessage(message)` 在任务仍开放时向父 Agent 发消息。`return` 完成任务；`throw` 使任务失败。进度快照不进模型历史作为中间 tool result。
+
 ### Workflows as tools（工作流工具）
 
-在 tool 的 `execute` 开头写上 `"use workflow"`，每次调用就会作为 durable Workflow run 跑。工具可等待人、webhook 或定时器，中间不占计算，再把结果交回模型。详见 [Workflows as Tools](./workflows)。
+用 `eve/tools` 的 `defineWorkflowTool`，且 executor 以 `"use workflow"` 开头，每次调用作为 durable Workflow run。可等人、webhook、定时器而不占计算，再把结果交回模型。详见 [Workflows as Tools](./workflows)。
 
 ## 工具抛错时
 

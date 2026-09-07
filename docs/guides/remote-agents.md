@@ -60,7 +60,11 @@ Vercel 上 Agent 调另一个 Vercel Agent 时，常用 `vercelOidc()`。跨项�
 
 Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`、`subagent.completed`；远程调用时 `subagent.called.data.remote.url` 记录目标。
 
-已 admit 的任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消时 eve 会重新解析 `headers` / `auth`。父 session 结束时，eve 对每个远程 child 发已鉴权 `reset`（尽力而为）。
+已 admit 的任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消时 eve 会重新解析 `headers` / `auth`。
+
+也可以用同一 `agentId` 与更新后的 `message` **steer** 正在运行的远程后台 child：eve 会取消旧任务并请求取消远程 turn，再在同一远程 session 上以新 `taskId` 续跑。远程端需支持标准 eve 取消与 session-message 路由。共享契约见 [Agent messaging](../../subagents#agent-messaging)。
+
+父 session 结束时，eve 对每个远程 child 发已鉴权 `reset`（尽力而为）。
 
 启动失败会在返回 receipt 前拒绝 admit。启动后终端失败 callback 会使任务失败并用远程错误（或 `REMOTE_AGENT_FAILED`）通知父级。Terminal callback delivery 作为 durable step；POST 失败会重抛以便 engine 重试。
 
