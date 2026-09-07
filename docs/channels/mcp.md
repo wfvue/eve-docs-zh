@@ -160,7 +160,7 @@ Protected-resource metadata 端点有意 CORS-readable。MCP transport 本身不
 MCP 客户端收到四个工具：
 
 | 工具 | 输入 | 用途 |
-| --- | --- |
+| --- | --- | --- |
 | `agent_start` | `{ message, outputSchema? }` | 启动 durable 工作并立即返回 invocation ID。 |
 | `agent_get` | `{ invocationId }` | 读取 invocation 的完整当前状态。 |
 | `agent_update` | `{ invocationId, responses }` | 回答完整的 pending human-input batch。 |
