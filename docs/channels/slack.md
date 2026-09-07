@@ -412,6 +412,8 @@ events: {
   },
 },
 ```
+私有授权按钮的文案固定为 **Sign in**，这样连接显示名很长时按钮也不会因标签过长而无效。公开状态用来标识是哪个 connection。
+
 
 ### 主动 session（Proactive sessions）
 
