@@ -173,7 +173,7 @@ export default defineOpenAPIConnection({
 
 值可以是 JSON、promise 或 callback。Callback 收到当前 session context、裸 operation `toolName`，以及这次工具调用唯一、可 replay 的 `callId`。API 需要幂等键时用 `callId`。
 
-eve 会从每个 operation 面向模型的 input schema 里移除配置的 keys，并在构造 HTTP 请求前立刻补上解析后的值。这些值应用到该 connection 的每个 operation，并替换任何冲突的模型值。Keys 对应生成的顶层 operation 输入：path、query、header、cookie 参数名，以及请求体的 `body`。
+ eve 会从每个 operation 面向模型的 input schema 里移除配置的 keys，并在构造 HTTP 请求前立刻补上解析后的值。这些值应用到该 connection 的每个 operation，并替换任何冲突的模型值。Keys 对应生成的顶层 operation 输入：path、query、header、cookie 参数名，以及请求体的 `body`。
 
 传输级、不是 operation 输入的 headers 继续用 `headers`。OpenAPI 文档把该值声明为 operation 参数、且应留在模型控制之外时，用 `providedArguments`。Approval policies 仍然只收到模型编写的输入。
 
@@ -240,6 +240,10 @@ export default defineOpenAPIConnection({
 ```
 
 `parameter.name` 必须和 path 里的 `{name}` 完全一致。如果 spec 漏掉了 `in: "path"` 参数，生成的工具就没有输入可以填充这段 path，Eve 也不能从 query 参数里猜出来。
+
+## Schema annotations
+
+当 `default` / `example` 注解的值与声明的 schema 类型冲突时，eve 会去掉该注解。例如布尔属性带 `default: "false"` 会丢掉该注解，而 `default: false` 会保留。这样可避免无效示例误导模型输入；eve **不会**去强转注解值。
 
 ## 审批 gates
 
