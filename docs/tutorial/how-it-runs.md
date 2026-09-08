@@ -17,9 +17,10 @@ description: "Build an Agent 教程第 2 步：session、turn 和 durable steps�
 
 这就是本教程其余特性如此工作的原因：
 
-- 第 4 步的仓库登录让 turn park，直到你在浏览器里授权。几分钟没问题。
-- 第 6 步的指标术语表跨 turn 存活。State 在 step boundaries 打点，所以它粘得住。
-- 第 8 步的支出审批把你的 yes/no 暂停 turn，然后从它离开的确切位置继续。
+- 第 5 步的指标术语表跨 turn 存活。State 在 step boundaries 打点，所以它粘得住。
+- 第 7 步的支出审批把你的 yes/no 暂停 turn，然后从它离开的确切位置继续。
+
+> **说明：** 连接真实仓库（可选）时的浏览器授权也会 park turn；默认学习路径用示例数据即可，不必先走 Connect。
 
 你编写能力，包括 tools、instructions、channels 和 skills。eve 驱动模型到工具的循环，并决定 turn 何时继续、等待或结束。你从不自己写那个循环。
 
