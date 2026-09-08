@@ -54,6 +54,8 @@ export default defineWorkflowTool({
 - 工具输入必须是 JSON object。Workflow body 用于 `agent/tools/` 静态工具，不用于 `defineDynamic` 返回的工具。
 - 给 `defineTool`、裸 tool 对象、channel / schedule handler 加 `"use workflow"` 会构建失败。
 
+Workflow 导入会解析应用 `tsconfig.json` / `jsconfig.json` 里的 `paths` 别名，即使应用是 workspace package 也可以。eve 只打包从 Agent runtime 模块可达的 workflow 与 step 模块；宿主应用里无关的 workflow 留在 Agent bundle 之外。未解析的 workflow 导入会让构建失败，并在错误中指出缺失导入。
+
 ### 从旧 workflow tool 迁移
 
 把 `defineTool` 换成 `defineWorkflowTool`，保留 `"use workflow"`，把 `agent(ctx, input)` / `ask(ctx, request)` 换成 `ctx.agent(input)` / `ctx.ask(request)`。需要显式类型时从 `eve/tools` 导入 `WorkflowToolContext` 等。
