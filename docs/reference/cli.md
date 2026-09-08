@@ -92,7 +92,7 @@ eve build [--profile <path>] [--skip-sandbox-prewarm]
 eve start [--host <host>] [--port <port>]
 ```
 
-`eve info` 先于 `eve dev` 核对发现结果。`eve build` 在 `.eve/builds/` 编译并发布 host 输出；`--profile` 记录阶段计时与体积。`eve start` 服务 `.output/`（默认端口 `$PORT` 或 3000）。
+`eve info` 先于 `eve dev` 核对发现结果。`eve build` 在 `.eve/builds/` 编译并发布 host 输出；`--profile` 记录阶段计时与体积。编写的 bundle 会保留通过 `--conditions`、`-C` 或 `NODE_OPTIONS` 传入的自定义 Node.js resolution conditions。例如 `NODE_OPTIONS="--conditions=react-server" eve build` 会让 channel 的 `server-only` 导入继续使用编译时同一条 export。`eve start` 服务 `.output/`（默认端口 `$PORT` 或 3000）。自托管部署时，请把应用源码、`.output/` 与已安装依赖一起拷贝；部署目录可以不同于构建目录。保留应用所用 workspace packages 的相对布局；启动会从已部署源码解析 sandbox prewarm 模块。
 
 ## `eve dev`、`eve invoke`、logs、traces
 
