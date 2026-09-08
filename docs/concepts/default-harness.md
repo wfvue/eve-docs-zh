@@ -22,6 +22,8 @@ export default defineAgent({
 });
 ```
 
+在摘要之前，eve 会尝试缩短较早历史里过大的工具结果。它用最近一次提供方报告的 input token 数，加上对新消息的估计，来判断缩短是否够用。仅靠更小的字符估计，无法满足由更高提供方计数触发的压缩。若裁剪仍腾不出足够空间，eve 才会摘要更早的历史。
+
 压缩也会自动保留框架自己的工具状态。它重置 read-before-write 追踪（因此之后的写入会重新读取那个读证据已被摘要掉的文件），并重新注入活跃 todo 列表，让模型跨摘要保留任务列表。没有 per-tool hook 可配置。
 
 一等 [记忆（Memory）](../memory) 参与另一套生命周期。eve 会在 compaction 前请 providers capture，把可归因的召回记录排除在 summarizer 之外，保留它们规范化后的最新值，并在 checkpoint 之后再次召回。
