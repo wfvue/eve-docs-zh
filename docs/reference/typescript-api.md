@@ -92,7 +92,7 @@ export default defineTool({
 | `eve/context` | `defineState`、session 和 state 类型 |
 | `eve/sandbox` | `defineSandbox`、backends |
 | `eve/instrumentation` | `defineInstrumentation`、`isChannel` |
-| `eve/models/openai` | `experimental_chatgpt` |
+| `eve/models/openai` | `chatgpt`（`experimental_chatgpt` 为弃用别名） |
 | `eve/evals` | `defineEval`、`defineEvalConfig`、`mockModel`、eval 类型 |
 | `eve/evals/expect` | `includes`、`equals`、`matches`、`similarity` |
 | `eve/evals/reporters` | `Braintrust`、`JUnit`、`EvalReporter` |
@@ -105,19 +105,39 @@ export default defineTool({
 
 ## ChatGPT 订阅模型
 
-`eve/models/openai` 的 `experimental_chatgpt()` 通过本地 Codex 登录服务 OpenAI 模型，并记到 ChatGPT 订阅账上。不带参数时选择 `gpt-5.6-sol`：
+`eve/models/openai` 的 `chatgpt()` 通过本地 ChatGPT 登录服务 OpenAI 模型，并记到 ChatGPT 订阅账上。不带参数时选择 `gpt-5.6-sol`：
 
 ```ts title="agent/agent.ts"
 import { defineAgent } from "eve";
-import { experimental_chatgpt } from "eve/models/openai";
+import { chatgpt } from "eve/models/openai";
 
 export default defineAgent({
-  model: experimental_chatgpt(),
-  modelContextWindowTokens: 200_000,
+  model: chatgpt(),
 });
 ```
 
-传另一个裸 OpenAI 模型 slug 覆盖默认。Helper 从 `codex login` 读取凭证，所以只在那个本地登录存在时使用它。
+传另一个裸 OpenAI 模型 slug 覆盖默认。`experimental_chatgpt()` 仍作为已弃用别名保留。
+
+`chatgpt()` 使用无状态请求（`store: false`）。eve 在 session 历史中保留 reasoning summaries 与加密 reasoning，并在工具调用后与后续 turn 重放。你不必显式配置 `reasoning.encrypted_content`。
+
+直接在 eve 里登录即可，**不需要 Codex CLI**：
+
+1. 运行 `eve dev`，打开 `/model`，选择 **Provider** → **ChatGPT subscription**。
+2. 在浏览器完成登录。若浏览器未打开，使用终端打印的 URL。
+3. 终端确认订阅已连接后回到 eve。正常的 token 过期会自动刷新。
+
+eve 把该 session 存在 `~/.eve/auth/chatgpt.json`，在 Unix 上使用仅 owner 可读写的文件权限。它与任何 Codex 登录分离，也从不写入你的项目。请把该文件当作私密。要移除本地 eve 登录：停止 eve 进程并删除该文件。已有 Codex 用户升级后需通过 eve 再登录一次。
+
+在 SSH 上，或本机 1455 端口被占用时，eve 会改显示 device code。在浏览器打开显示的链接并输入代码。Device 登录需要在 **ChatGPT Settings → Security** 启用 device code authorization，或由 workspace 管理员在权限中启用。登录五分钟超时；更早取消可按 **Ctrl+C**。
+
+ChatGPT 订阅凭证是本地用户凭证。`eve deploy` 会阻止活跃模型为 `chatgpt()` 的 Agent，因为这些凭证不会上传到部署。部署前请改用带可部署模型的环境分支，或切换到 AI Gateway 模型。
+
+排障：
+
+- **`chatgpt-sub login`**：打开 `/model`，再选 **Provider** → **ChatGPT subscription** 重新登录。正在跑的 dev session 会拾取新登录。
+- **`chatgpt-sub unavailable`**：检查网络并从 `/model` 重试。若 eve 报告凭证文件无效，删除 `~/.eve/auth/chatgpt.json` 后重新登录。
+- **后端拒绝模型**：可用性取决于已登录的 ChatGPT 账户。换一个受支持的 OpenAI 模型。
+- **无法使用 device 登录**：在 ChatGPT 安全设置启用 device code authorization，或在本机终端且 1455 端口可用时登录。
 
 ## 接下来读什么（What to read next）
 
