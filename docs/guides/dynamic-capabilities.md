@@ -15,7 +15,7 @@ description: "使用 defineDynamic 在运行时解析 models、subagents、conne
 
 编写形态、命名冲突、事件与恢复语义见官方页与既有中文分节。带鉴权的动态连接必须设稳定非密钥的 `instanceKey`。
 
-Eve 会为动态工具记录 durable descriptors：`execute`、审批请求/响应策略、**按输入作用域的 `approvalKey` 回调**，以及 `toModelOutput`，以便 parked call 在新进程里重建同一套回调。parked call 在其 session、生命周期作用域与 resolver 条目内绑定回调；另一 session 或作用域可以暴露同名工具而不替换该绑定。回调身份不依赖源码位置。编辑回调体但保持 resolver 条目与工具名不变是安全的；若 session 作用域回调在新进程/重部署后缺失实现，eve 会再跑一次 `session.started` resolvers 以重绑，然后重放。若所属 resolver 不再返回该工具，重放 fail-closed。
+eve 会为动态工具记录 durable descriptors：`execute`、审批请求/响应策略、**按输入作用域的 `approvalKey` 回调**，以及 `toModelOutput`，以便 parked call 在新进程里重建同一套回调。parked call 在其 session、生命周期作用域与 resolver 条目内绑定回调；另一 session 或作用域可以暴露同名工具而不替换该绑定。回调身份不依赖源码位置。编辑回调体但保持 resolver 条目与工具名不变是安全的；若 session 作用域回调在新进程/重部署后缺失实现，eve 会再跑一次 `session.started` resolvers 以重绑，然后重放。若所属 resolver 不再返回该工具，重放 fail-closed。
 
 ## 接下来读什么
 
