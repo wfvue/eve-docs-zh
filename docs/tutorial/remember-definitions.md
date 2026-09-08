@@ -1,6 +1,6 @@
 ---
 title: "记住定义（Remember Definitions）"
-description: "Build an Agent 教程第 6 步：用 defineState 跨 turn 记住团队的指标术语表。"
+description: "Build an Agent 教程第 5 步：用 defineState 跨 turn 记住团队的指标术语表。"
 ---
 
 # 记住定义（Remember Definitions）
@@ -57,15 +57,15 @@ export default defineTool({
 ## 看它持久
 
 ```txt
-> For us, an active customer is one with a purchase in the last 30 days.
+> For this dataset, a high-value customer has at least $50 in total orders.
   Remember that.
-→ calls define_metric("active customer", "purchase in the last 30 days")
+→ calls define_metric("high-value customer", "at least $50 in total orders")
 
-> How many active customers do we have?
+> How many high-value customers do we have?
 → recalls the definition, writes the matching SQL, answers
 ```
 
-第二个 turn 是同一 session 里的独立 turn，但定义还在那里。State 在 step boundaries 打点，所以它是第 2 步的同一个持久性，现在应用到你自己数据上。
+示例数据里有两个高价值客户：Acme（$57）和 Globex（$99）。这个定义在每次跑教程时都对应同一份固定数据集。第二个 turn 是同一 session 里的独立 turn，但定义还在那里。State 在 step boundaries 打点，所以它是第 2 步的同一个持久性，现在应用到你自己数据上。
 
 State 是 session scope 的，按 Agent 隔离，所以子智能体从全新 state 开始，永远看不到父级的。需要每个 turn 重置某些东西？在 lifecycle hook 里调用 `update(() => fresh)`。更多见 [State](../guides/state)。
 

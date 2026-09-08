@@ -1,11 +1,11 @@
 ---
 title: "团队手册（Team Playbooks）"
-description: "Build an Agent 教程第 7 步：用键控 principal 的动态 skill 加载调用者的团队手册。"
+description: "Build an Agent 教程第 6 步：用键控 principal 的动态 skill 加载调用者的团队手册。"
 ---
 
 # 团队手册（Team Playbooks）
 
-第 6 步的术语表是 per-session 的。但你的团队对分析助手有长期分析约定（Growth 用某种方式跑队列留存，Finance 有自己的收入确认规则），这些不应该跨租户泄露。为提问的人加载正确团队的手册。
+第 5 步的术语表是 per-session 的。但你的团队对分析助手有长期分析约定（Growth 按日期汇总收入，Finance 核对客户合计），这些不应该跨租户泄露。为提问的人加载正确团队的手册。
 
 Skill 是按需流程。模型只在某个 turn 需要时用 `load_skill` 拉入它。让它变成动态的，skill 就在运行时决定，而不是写死。一个 `defineDynamic` resolver 读取 session 并返回一个 `defineSkill`（或不返回）。这里你把决定键控到 `ctx.session.auth` 里调用者的身份上。
 
@@ -20,14 +20,14 @@ const PLAYBOOKS: Record<string, { title: string; markdown: string }> = {
   growth: {
     title: "Growth analysis playbook",
     markdown:
-      "When analyzing retention, use weekly cohorts anchored on signup week, " +
-      "report curves not point estimates, and exclude trial accounts.",
+      "When analyzing sample orders, group revenue by order date, report dollars, " +
+      "and compare customers by plan.",
   },
   finance: {
     title: "Finance analysis playbook",
     markdown:
-      "Report revenue net of refunds and recognized over the subscription term. " +
-      "Always reconcile against the close-of-month snapshot.",
+      "Reconcile total order revenue against the daily and customer totals. " +
+      "Report dollars and label this as gross order revenue; the dataset has no refunds.",
   },
 };
 
@@ -53,14 +53,14 @@ export default defineDynamic({
 
 ## 看它路由
 
-团队来自已认证 claims，认证层在第 9 步盖上。在那之前 `ctx.session.auth.current` 没有 `team`，所以 resolver 返回 `null`，不加载手册。要现在验证路由，在本地 dev 里盖一个团队。在 `localDev()` 之前给 `agent/channels/eve.ts` 加一个仅 dev 的条目，并在第 9 步接真实认证前移除它：
+团队来自已认证 claims，认证层在第 8 步盖上。在那之前 `ctx.session.auth.current` 没有 `team`，所以 resolver 返回 `null`，不加载手册。要现在验证路由，在本地 dev 里盖一个团队。在 `localDev()` 之前给 `agent/channels/eve.ts` 加一个仅 dev 的条目，并在第 8 步接真实认证前移除它：
 
 ```ts title="agent/channels/eve.ts"
 import { eveChannel } from "eve/channels/eve";
 import { localDev, placeholderAuth, vercelOidc, type AuthFn } from "eve/channels/auth";
 
-// Dev-only: stamp a team so Step 7's playbook resolver has something to read.
-// Remove before Step 9.
+// Dev-only: stamp a team so Step 6's playbook resolver has something to read.
+// Remove before Step 8.
 const devTeam: AuthFn<Request> = () =>
   process.env.NODE_ENV === "production"
     ? null
@@ -76,7 +76,7 @@ export default eveChannel({
 });
 ```
 
-用 `npm run dev` 重启并问 "what's our 8-week retention?"。模型看到 Growth 手册匹配，调用 `load_skill`，并把 Growth 约定应用到那个 turn（周队列、无试用账户）。把 `team` 换成 `"finance"`，重启，同一个问题路由到 Finance 的手册。
+用 `npm run dev` 重启并问 "Summarize May 2026 revenue using our team's playbook."。模型调用 `load_skill`，查询示例数据，并应用 Growth 的按日与按套餐分组。把 `team` 换成 `"finance"`，重启，并在新 session 里再问同一问题。resolver 在 `session.started` 运行，改团队不会替换已有 session 的手册；新 session 会走 Finance 的核对规则。
 
 因为团队来自已认证 claims，而不是消息，一个租户无法通过消息内容借用另一个租户的手册。
 

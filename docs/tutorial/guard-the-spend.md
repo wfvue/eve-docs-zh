@@ -1,17 +1,17 @@
 ---
 title: "守护支出（Guard the Spend）"
-description: "Build an Agent 教程第 8 步：用基于成本的审批门禁昂贵查询。Agent 暂停、询问、恢复。"
+description: "Build an Agent 教程第 7 步：用基于成本的审批门禁昂贵查询。Agent 暂停、询问、恢复。"
 ---
 
 # 守护支出（Guard the Spend）
 
-一次仓库查询可以扫描数 TB 并推高账单。所以在分析助手发出昂贵扫描之前，让它停下来问你。Agent 暂停、问你，然后用你的回答恢复。这就是 human-in-the-loop，你在工具上加一个字段就能接上。
+用示例数据集练习「工具运行前的审批」。示例给每条查询分配模拟扫描成本，不会产生真实仓库费用。让分析助手在查询超过阈值前停下来问你。Agent 暂停、问你，然后用你的回答恢复。这就是 human-in-the-loop，你在工具上加一个字段就能接上。
 
 `approval` 在 `execute` 之前运行。返回 `"user-approval"`，turn 就在审批请求上 park；你回答后，run 从那个确切 step 继续。函数拿到工具输入，所以你可以做基于成本的决策。
 
 ## 估算，然后门禁
 
-这一步把 `run_sql` 保留在第 3 步的示例数据集上，让你能在本地演示门禁。有真仓库时，你按同样的方式门禁第 4 步的仓库 connection 工具，基于 dry-run 字节估算而不是下面的玩具启发式。
+这一步把 `run_sql` 保留在第 3 步的示例数据集上，让你能在本地演示门禁。若以后[连接仓库](./connect-a-warehouse)，用提供方的 dry-run 估算决定何时需要审批。
 
 添加一个廉价估算器，并用它门禁 `run_sql`：
 
@@ -32,7 +32,7 @@ const THRESHOLD_GB = 50;
 
 export default defineTool({
   description: "Run a read-only SQL query against the analytics tables.",
-  inputSchema: z.object({ sql: z.string() }),
+  inputSchema: z.object({ sql: z.string().max(10_000) }),
   // Cost-based gate: only the expensive queries need a human yes.
   approval: ({ toolInput }) =>
     estimateScanGb(toolInput?.sql ?? "") > THRESHOLD_GB ? "user-approval" : "not-applicable",
