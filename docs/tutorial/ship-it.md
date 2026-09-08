@@ -1,11 +1,11 @@
 ---
 title: "上线（Ship It）"
-description: "Build an Agent 教程第 9 步：用 useEveAgent 给 Agent 加 Web 仪表盘，替换 placeholderAuth，并部署到 Vercel。"
+description: "Build an Agent 教程第 8 步：用 useEveAgent 给 Agent 加 Web 仪表盘，替换 placeholderAuth，并部署到 Vercel。"
 ---
 
 # 上线（Ship It）
 
-分析助手在 TUI 里跑得很好。现在真正上线：作为你的团队登录的 Web 仪表盘，在真实认证后面，部署在 Vercel 上。有三块要接：一个 React UI、channel 的认证，以及部署本身。
+分析助手在 TUI 里运行。现在加上 Web 仪表盘，并在 Vercel 上部署一个私有的单用户版本。本例用用户名和密码保护示例应用，不需要再接另一套认证服务。
 
 ## 添加 Web Chat 应用
 
@@ -26,119 +26,110 @@ const nextConfig: NextConfig = {};
 export default withEve(nextConfig);
 ```
 
-## 用 `useEveAgent` 做仪表盘
+## 使用生成的聊天组件
 
-仪表盘对话内置 eve HTTP channel（`agent/channels/eve.ts`）。在浏览器侧，`useEveAgent` 处理 session 创建、流式输出和 HITL。脚手架从 `app/_components/agent-chat.tsx` 渲染它的聊天，由 `app/page.tsx` 挂载。那个组件比你需要起步的更完整，所以把它的内容换成这个最小版本：
+保留生成的 `app/_components/agent-chat.tsx` 与 `agent-message.tsx`。`app/page.tsx` 已经渲染聊天，`useEveAgent` 处理 session 创建与流式输出。
 
-```tsx title="app/_components/agent-chat.tsx"
-"use client";
-import { useEveAgent } from "eve/react";
+生成 UI 会展示工具结果与错误、授权链接、审批按钮和提问表单。[守护支出](./guard-the-spend) 的支出审批需要这些控件才能恢复等待中的 turn。只渲染文本消息的组件会让这些交互不可用。
 
-export function AgentChat() {
-  const agent = useEveAgent();
-  const isBusy = agent.status === "submitted" || agent.status === "streaming";
-  return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        const message = String(data.get("q") ?? "").trim();
-        if (message) void agent.send(message);
-      }}
-    >
-      {agent.data.messages.map((message) => (
-        <article key={message.id}>
-          <header>{message.role}</header>
-          {message.parts.map((part, index) =>
-            part.type === "text" ? <p key={index}>{part.text}</p> : null,
-          )}
-        </article>
-      ))}
-      <input name="q" disabled={isBusy} placeholder="Ask about the data…" />
-      <button type="submit" disabled={isBusy}>
-        Ask
-      </button>
-    </form>
-  );
-}
-```
-
-生成的 `app/page.tsx` 已经 import 并渲染这个 `AgentChat` 导出，所以不需要其他接线：
-
-```tsx title="app/page.tsx"
-import { AgentChat } from "@/app/_components/agent-chat";
-
-export default function Page() {
-  return <AgentChat />;
-}
-```
-
-`agent.data.messages` 和 `agent.status` 覆盖大多数聊天 UI。Hook 也浮出 HITL 提示（第 8 步的支出审批），所以仪表盘可以渲染 approve/cancel 控件。完整 API 见 [前端（Frontend）](../guides/frontend/overview)。
+运行 `npm run dev`，打开 server 打印的本地 Web URL，问一个无过滤的收入查询。确认审批会出现，批准后查询能完成。流程通了再自定义 UI；见 [前端（Frontend）](../guides/frontend/overview)。
 
 ## 替换 `placeholderAuth`
 
-脚手架的 channel 带 `placeholderAuth()`，它 fail-closed。它拒绝生产流量，让未认证应用不会意外上线。部署前把它换成你应用的真实认证。
+脚手架的 channel 带 `placeholderAuth()`，会拒绝未认证的生产请求。换成在每次请求上核对凭证的 verifier。切勿在不检查请求的情况下返回固定用户。
 
-你的认证住在一个把请求变成用户的模块里。创建 `agent/lib/auth.ts`，在这里接你的真实 provider（cookie session、Auth.js、Clerk）。下面的 stub 返回固定用户，让页面端到端编译运行：
+创建 `agent/lib/auth.ts`。这里使用 eve 的 HTTP Basic verifier，并以常数时间比较密码。缺少环境变量、缺少凭证、凭证错误都会 fail-closed：
 
 ```ts title="agent/lib/auth.ts"
-export interface AppUser {
-  id: string;
-  team: string;
-}
+import { verifyHttpBasic, withAuthChallenges } from "eve/channels/auth";
 
-// Replace with your real session/provider lookup.
-export async function authenticate(_request: Request): Promise<AppUser | null> {
-  return { id: "demo-user", team: "growth" };
-}
+export const appAuth = withAuthChallenges(
+  (request: Request) => {
+    const username = process.env.ANALYTICS_USERNAME;
+    const password = process.env.ANALYTICS_PASSWORD;
+    if (!username || !password) return null;
+
+    if (request.headers.has("origin") && request.headers.get("sec-fetch-site") !== "same-origin")
+      return null;
+
+    const result = verifyHttpBasic(request.headers.get("authorization"), { username, password });
+    if (!result.ok) return null;
+
+    return {
+      ...result.sessionAuth,
+      attributes: { team: "growth" },
+      issuer: "analytics-tutorial",
+    };
+  },
+  [{ scheme: "Basic", parameters: { realm: "analytics", charset: "UTF-8" } }],
+);
 ```
 
-现在把 channel 指向它。替换 `agent/channels/eve.ts` 的内容（第 7 步留了一个仅 dev 的 `devTeam` 条目和 `placeholderAuth()`）。把你的应用 auth 列在最前，在 catch-all helpers 之前，这样任何不识别调用者的条目都会落到下一个：
+替换 `agent/channels/eve.ts`，去掉早先的 `devTeam` 条目。eve channel 对 session 创建、消息、控件和流都会检查 `appAuth`。其余 helper 保留已认证的 Vercel CLI 访问与本地开发：
 
 ```ts title="agent/channels/eve.ts"
 import { eveChannel } from "eve/channels/eve";
-import { localDev, vercelOidc, type AuthFn } from "eve/channels/auth";
-import { authenticate } from "../lib/auth";
-
-const appAuth: AuthFn<Request> = async (request) => {
-  const user = await authenticate(request); // your cookie/session/provider
-  if (!user) return null;
-  return {
-    attributes: { team: user.team }, // the claim Step 7's playbook reads
-    principalType: "user",
-    principalId: user.id,
-    authenticator: "app",
-    issuer: "analytics-dashboard",
-  };
-};
+import { localDev, vercelOidc } from "eve/channels/auth";
+import { appAuth } from "../lib/auth";
 
 export default eveChannel({
   auth: [appAuth, vercelOidc(), localDev()],
 });
 ```
 
-那个 `team` attribute 正是第 7 步的动态手册从 `ctx.session.auth` 读取的东西。身份在这一点设置，并从那里流向每个能力。
+验证后的用户名成为 user principal。`growth` 团队会选中 [团队手册](./team-playbooks) 里的示例手册。把这些凭证只留给一个人。共享密码不会给每个人独立身份或隔离 session。多用户应用请用真实 session provider，并强制 [session ownership](../guides/auth-and-route-protection#what-reaches-ctxsessionauth)。
+
+在项目根添加 `proxy.ts`，让打开仪表盘时触发浏览器原生用户名/密码提示。它保护生成的 UI 路由；eve API 路由仍走 channel auth，因此 OIDC 认证的 CLI 请求不会撞上仅浏览器的门禁：
+
+```ts title="proxy.ts"
+import { routeAuth } from "eve/channels/auth";
+import { NextResponse } from "next/server";
+import { appAuth } from "./agent/lib/auth";
+
+export async function proxy(request: Request) {
+  if (process.env.NODE_ENV === "development") return NextResponse.next();
+  const result = await routeAuth(request, appAuth);
+  return result instanceof Response ? result : NextResponse.next();
+}
+
+export const config = { matcher: ["/", "/s/:path*"] };
+```
+
+登录后，浏览器会在生成聊天的同源请求上带上凭证。当浏览器发送 `Origin` 头时，Basic verifier 还要求 [`Sec-Fetch-Site: same-origin`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Site)。认证模块保持在服务端：不要把密码放进 React 组件、`NEXT_PUBLIC_` 变量或客户端 `useEveAgent` 选项。部署的 HTTP Basic 请使用 HTTPS。
 
 ## 部署到 Vercel
 
+从 `analytics-assistant/` link 一个 Vercel 项目，并添加用户名与足够长的唯一密码。这些命令会交互式提示输入，避免密码进入 shell 历史：
+
 ```sh
-vercel deploy
+npx vercel@latest link
+npx vercel@latest env add ANALYTICS_USERNAME preview
+npx vercel@latest env add ANALYTICS_PASSWORD preview
 ```
 
-在 Vercel 上，web 应用保持公开，eve runtime 在它后面同源，sandbox 运行在 Vercel Sandbox 上。你可以不离开 CLI 冒烟测试部署：
+部署前，在项目的 Preview 环境配置 Agent 使用的模型凭证；本地 `.env` 不会随部署上传。若本地用过 ChatGPT 订阅，请把 `agent/agent.ts` 换成 AI Gateway 模型，并为该模型配置 `AI_GATEWAY_API_KEY`。订阅凭证留在笔记本上。模型与 runtime 配置见 [部署（Deployment）](../guides/deployment/overview)。
+
+```sh
+npx vercel@latest deploy
+```
+
+打开 HTTPS preview URL，输入配置的用户名和密码。创建 session 并问一个示例数据问题。在隐私窗口取消登录提示，确认仪表盘被拒绝。不带凭证的 `POST /eve/v1/session` 也必须返回 `401`。
+
+已认证 Web 应用与 eve runtime 同源，sandbox 跑在 Vercel Sandbox。也可以通过已认证 CLI 冒烟测试部署：
 
 ```sh
 npx eve dev https://your-analytics-app.vercel.app
 ```
 
-这就是完整的助手：已部署、已认证。它查询仓库、在 sandbox 里运行分析、绘制结果图表、记住团队的术语、按团队加载正确手册，并在花钱之前询问。
+生产部署时，也把用户名、密码和模型凭证加到 Production 环境，然后运行 `npx vercel@latest deploy --prod`。缺少 Basic 凭证会保持浏览器访问关闭。
+
+这个私有助手查询示例数据、在 sandbox 里做分析、绘制图表、记住定义、加载 Growth 手册，并在昂贵查询前征求确认。
 
 ## 你学到了什么
 
-跨九步你构建并上线了一个 Agent，沿途用了：
+跨八步你构建并上线了一个 Agent，沿途用了：
 
 - **工具（Tools）** 给模型类型化动作（`run_sql`、`chart_series`、`define_metric`）。
-- **连接（Connections）** 通过 OAuth MCP 触达仓库，带 eve 为你解析的 per-user tokens。
 - **Sandbox** 在隔离的 `/workspace` 里做 SQL 之外的计算和绘图。
 - **状态（State）**（`defineState`）跨 turn 记住团队的术语表。
 - **动态技能（Dynamic skills）**（`defineDynamic`）按调用者加载正确团队手册。
@@ -148,6 +139,7 @@ npx eve dev https://your-analytics-app.vercel.app
 
 ## 下一步
 
+- 有数据服务要替换示例数据集时，见 [连接仓库](./connect-a-warehouse)。
 - [MCP 连接（MCP connections）](../connections/mcp)：工具 allowlists 和 per-connection 审批。
 - [Sandbox](../sandbox)：后端、生命周期和网络策略。
 - [动态能力（Dynamic capabilities）](../guides/dynamic-capabilities)：在这个同样的示例上做 schema 派生的动态工具、只读分析子智能体和模型编写的报告工作流。
