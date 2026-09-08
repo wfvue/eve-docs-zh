@@ -55,6 +55,10 @@ Instructions 不会运行代码。需要类型化的可执行行为时，应该�
 
 如果需要在运行时根据 session context（例如鉴权、租户或 channel）解析 prompt，可以把 `defineInstructions` 包在 `defineDynamic` resolver 里。见 [Dynamic capabilities](./guides/dynamic-capabilities)。
 
+## 角色、压缩与框架上下文
+
+尽量让 system-role 内容稳定，并在实际可行时放在频繁变化的上下文之前。这能给提供方复用 prompt 前缀更好的机会，但缓存行为与计费仍因提供方而异。user-role instructions 保留正常的 append-only 消息前缀。框架上下文（例如动态 skill 公告）也会在工具步骤之间、以及 durable step 恢复时，保持在当前请求之前的位置。eve 不承诺一定命中缓存。
+
 ## 免责声明
 
 作为部署者，你有责任确保自己的 Agent 遵守适用法律。
