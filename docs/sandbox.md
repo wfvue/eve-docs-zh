@@ -256,7 +256,7 @@ networkPolicy: {
 
 默认 egress 是 `allow-all`。对非公开、敏感、受监管或生产工作负载，在运行不可信工具或处理敏感数据之前配置 `deny-all` 或显式 allow-list。
 
-在工厂上设置（`vercel({ networkPolicy: "deny-all" })`），它会在编写的 `bootstrap` 代码运行前生效；框架自有基础设置可能短暂保持 egress 打开以安装所需包。在 `onSession` 的 `use()` 里设置为 per-session 覆盖。同 sandbox key 的 provider-loss 替代品不会重跑 `onSession`，所以在工厂上强制安全默认基线。如果 `bootstrap` 需要网络访问，只给工厂它需要的 destinations，然后在 `onSession` 里进一步收窄策略。要 turn 中途改变策略，在活跃 handle 上调用 `sandbox.setNetworkPolicy(...)`。
+在工厂上设置（`vercel({ networkPolicy: "deny-all" })`），它会在编写的 `bootstrap` 代码运行前生效；框架自有基础设置可能短暂保持 egress 打开以安装所需包。在 `onSession` 的 `use()` 里设置为 per-session 覆盖。同 sandbox key 的 provider-loss 替代品不会重跑 `onSession`，所以在工厂上强制安全关键基线。如果 `bootstrap` 需要网络访问，只给工厂它需要的 destinations，然后在 `onSession` 里进一步收窄策略。要 turn 中途改变策略，在活跃 handle 上调用 `sandbox.setNetworkPolicy(...)`。
 
 `vercel()` 和 `microsandbox()` 支持域名级 allow-lists 和凭证代理。Docker 后端只遵循 `"allow-all"` 和 `"deny-all"`（创建时和通过 `setNetworkPolicy`）；just-bash 后端完全拒绝 `setNetworkPolicy`。
 
