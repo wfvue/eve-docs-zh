@@ -93,7 +93,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 - [x] `tools/workflows.md` + `tools/overview.md`：Durable Tools → Workflows as Tools；后台工具无需根实验开关
 - [x] `sessions-runs-and-streaming` / `channels/eve` / `guides/client/streaming`：`tasks: true` 取消后台任务
 - [x] `concepts/built-in-tools.md`：`sleep` 作为 durable tool workflow、并发并行
-- [x] `memory/overview.md`：顶层 `agents/` workspace 分命名空间
+- [x] `memory/overview.md`：顶层 `agents/` workspace 分 namespace
 - [x] `sandbox.md`：默认镜像 / `EVE_SANDBOX_IMAGE_TAG` / `vercel()` image·source 优先级与 `vercel-sandbox` 用户
 
 仍跳过：
