@@ -87,7 +87,7 @@ Hooks 总是在 event 已经 durable 记录之后运行。因此，即使 hook �
 
 ## Hook 抛错会怎样（What happens when a hook throws）
 
-抛错的 handler 会沿 emit composer 传播，并表现为 `turn.failed`。如果订阅 failure-cascade event 的 hook 自己也抛错，会升级为 `session.failed`。如果需要更稳妥的语义，请在 hook 内部用 `try` / `catch` 包住逻辑。Eve 会把抛错的 hook 视为真实失败。
+抛错的 handler 会沿 emit composer 传播，并表现为 `turn.failed`。在对话 session 中，这包括 `turn.started` 与模型调用的第一个 `step.started` 的 handler：失败的 turn 以 `session.waiting` 结束，下一条消息可以开启新 turn。任务模式的边界失败仍是终态。如果订阅 failure-cascade event 的 hook 自己也抛错，会升级为 `session.failed`。如果需要更稳妥的语义，请在 hook 内部用 `try` / `catch` 包住逻辑。Eve 会把抛错的 hook 视为真实失败。
 
 ## 子智能体隔离（Subagent isolation）
 
