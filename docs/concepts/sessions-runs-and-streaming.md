@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_FAIL
+@/tmp/sess_restore_content.md
