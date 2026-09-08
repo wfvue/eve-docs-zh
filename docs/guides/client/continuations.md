@@ -64,6 +64,10 @@ await response.result();
 
 Shorthand 可以发送 follow-up，但不知道之前的 stream cursor。当你控制持久化时，优先保存完整 `SessionState`。
 
+`send()` 会把响应与服务器已接受的那条消息关联起来。若保存的 cursor 落后，它会跳过更早的 turn 并前进，再收集新结果——即使另有 turn 正在进行或排队。你不必在发送前排空 stream。请把 server 与 client 一起升级：若 server 省略已接受投递的身份，`send()` 会抛错，而不是返回含糊结果。
+
+若配置的重连上限在已接受 turn 到达边界前结束了 stream，收集其响应会抛错。部分 stream 不算完成结果。
+
 ## Waiting、completed 和 failed sessions（Waiting, completed, and failed sessions）
 
 当一个 turn 以 `session.waiting` 结束时，client 会保留 state，让下一次 send 继续同一段对话。
