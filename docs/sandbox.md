@@ -35,6 +35,11 @@ export default defineTool({
     const sandbox = await ctx.getSandbox();
     await sandbox.writeTextFile({ path: "analysis/run.py", content: script });
     const result = await sandbox.run({ command: "python analysis/run.py" });
+    if (result.exitCode !== 0) {
+      throw new Error(
+        `Analysis failed (exit ${result.exitCode}): ${result.stderr || result.stdout}`,
+      );
+    }
     return { stdout: result.stdout };
   },
 });
@@ -42,13 +47,15 @@ export default defineTool({
 
 `ctx.getSandbox()` 不带参数、是异步的，只在编写的 runtime 执行中有效。
 
+`sandbox.run()` 在进程退出时（含非零退出）resolve 为 `{ exitCode, stdout, stderr }`。报告成功或使用生成文件前先检查 `exitCode`。工具里抛错把失败操作报告给模型；在 `bootstrap` 里抛错可阻止 eve 缓存不完整的 setup。内置 `bash` 工具会返回这三个字段，让模型自行解读命令结果。
+
 `/workspace` 在每一个后端上是同一个命名空间，所以无论后端是本地还是 Vercel，`/workspace/foo` 都指向同一个文件。当你需要把路径插值进生成的命令时，`sandbox.resolvePath("repo/build.py")` 把相对路径锚定到它绝对的 `/workspace/repo/build.py` 形式。
 
 Handle 能做的比 `run` 和 `writeTextFile` 更多。每个方法里，相对路径从 `/workspace` 解析，绝对路径原样通过：
 
 | 方法 | 作用 |
 | --- | --- |
-| `run({ command })` | 运行一个命令，阻塞到退出，返回 `{ stdout, stderr, ... }` |
+| `run({ command })` | 运行一个命令，阻塞到退出，返回 `{ exitCode, stdout, stderr }` |
 | `spawn(options)` | 启动长运行进程（server、watcher）并返回 `SandboxProcess` handle |
 | `readTextFile` / `writeTextFile` | 读写 UTF-8（或指定编码）文件；`readTextFile` 支持 1 基行范围 |
 | `readBinaryFile` / `writeBinaryFile` | 读写原始字节（图片、归档、任何非文本） |
@@ -102,7 +109,12 @@ export default defineSandbox({
   revalidationKey: () => "repo-bootstrap-v1",
   async bootstrap({ use }) {
     const sandbox = await use();
-    await sandbox.run({ command: "sudo apt-get install -y jq" });
+    const result = await sandbox.run({ command: "sudo apt-get install -y jq" });
+    if (result.exitCode !== 0) {
+      throw new Error(
+        `Sandbox setup failed (exit ${result.exitCode}): ${result.stderr || result.stdout}`,
+      );
+    }
   },
   async onSession({ use }) {
     await use({ networkPolicy: "deny-all" });
@@ -244,7 +256,7 @@ networkPolicy: {
 
 默认 egress 是 `allow-all`。对非公开、敏感、受监管或生产工作负载，在运行不可信工具或处理敏感数据之前配置 `deny-all` 或显式 allow-list。
 
-在工厂上设置（`vercel({ networkPolicy: "deny-all" })`），它会在编写的 `bootstrap` 代码运行前生效；框架自有基础设置可能短暂保持 egress 打开以安装所需包。在 `onSession` 的 `use()` 里设置为 per-session 覆盖。同 sandbox key 的 provider-loss 替代品不会重跑 `onSession`，所以在工厂上强制安全关键基线。如果 `bootstrap` 需要网络访问，只给工厂它需要的 destinations，然后在 `onSession` 里进一步收窄策略。要 turn 中途改变策略，在活跃 handle 上调用 `sandbox.setNetworkPolicy(...)`。
+在工厂上设置（`vercel({ networkPolicy: "deny-all" })`），它会在编写的 `bootstrap` 代码运行前生效；框架自有基础设置可能短暂保持 egress 打开以安装所需包。在 `onSession` 的 `use()` 里设置为 per-session 覆盖。同 sandbox key 的 provider-loss 替代品不会重跑 `onSession`，所以在工厂上强制安全默认基线。如果 `bootstrap` 需要网络访问，只给工厂它需要的 destinations，然后在 `onSession` 里进一步收窄策略。要 turn 中途改变策略，在活跃 handle 上调用 `sandbox.setNetworkPolicy(...)`。
 
 `vercel()` 和 `microsandbox()` 支持域名级 allow-lists 和凭证代理。Docker 后端只遵循 `"allow-all"` 和 `"deny-all"`（创建时和通过 `setNetworkPolicy`）；just-bash 后端完全拒绝 `setNetworkPolicy`。
 
