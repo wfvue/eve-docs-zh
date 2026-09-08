@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-07，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`4b5fad41beeecae1286611974ea970d565d13dde`（相对上次 `4ee6715`：CLI telemetry、可关默认工具、file memory OIDC、后台工具 yield/progress、MCP 调用契约、子智能体 steering、Sentry OTel 等）。llms.txt fingerprint：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`，93 行（内容相对 2026-09-04 未变）。
+对照日期：2026-09-08，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`c952497cd15c36680f6723bf311cb74878ac30c8`（相对上次 `4b5fad41`：教程默认走示例数据、Connect 可选、sandbox exitCode、ChatGPT 浏览器登录等）。llms.txt fingerprint：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`，未变。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -30,6 +30,34 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
 
+
+## 2026-09-08 上游同步
+
+对照 `vercel/eve` docs tip `c952497cd15c36680f6723bf311cb74878ac30c8`（相对上次 `4b5fad41beeecae1286611974ea970d565d13dde`）。llms.txt fingerprint 未变：sha256 `19d6b745d7ea95fcc6d966301b494ff402618bb449ecad70316ebcc9c983d11d`。
+
+已更新：
+
+- [x] 教程：默认学习路径改为示例数据；`connect-a-warehouse` 标为可选并移到导航末尾；Connect GA + connector UID 说明
+- [x] `tutorial/run-analysis`：图表依赖 bootstrap、`exitCode` 检查、下载生成图表脚本
+- [x] `tutorial/ship-it`：HTTP Basic 保护已部署仪表盘（`proxy.ts`）
+- [x] `sandbox.md`：`sandbox.run` / bootstrap 的 `exitCode` 检查与方法表
+- [x] `connections/overview`：Connect connector UID（非 `--name` 显示名）
+- [x] `reference/typescript-api`：ChatGPT 订阅改为 eve `/model` 浏览器登录（无需 Codex CLI；`~/.eve/auth/chatgpt.json`；device code）
+- [x] `concepts/default-harness`：摘要前先按提供方 token 计量裁剪工具结果
+- [x] `concepts/sessions-runs-and-streaming`：`meta.deliveryIds`
+- [x] `guides/client/continuations`：`send()` 与已接受投递关联；server/client 同升
+- [x] `reference/cli`：保留 Node `--conditions`；自托管拷贝布局 + prewarm
+- [x] `guides/hooks`：对话 session 中 `turn.started`/首个 `step.started` 失败以 `session.waiting` 结束
+- [x] `subagents.md`：取消仍投递最终通知
+- [x] `instructions.md`：框架上下文跨工具步骤保持位置
+- [x] `guides/dynamic-capabilities`：回调身份限定在 session/lifecycle/resolver
+- [x] `tools/workflows.md`：tsconfig `paths` 别名用于 workflow 导入
+
+仍跳过：
+
+- [ ] 官方 Integrations 画廊
+- [ ] 官方 Templates 画廊
+- [ ] Benchmarks
 
 ## 2026-09-07 上游同步
 
@@ -65,7 +93,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 - [x] `tools/workflows.md` + `tools/overview.md`：Durable Tools → Workflows as Tools；后台工具无需根实验开关
 - [x] `sessions-runs-and-streaming` / `channels/eve` / `guides/client/streaming`：`tasks: true` 取消后台任务
 - [x] `concepts/built-in-tools.md`：`sleep` 作为 durable tool workflow、并发并行
-- [x] `memory/overview.md`：顶层 `agents/` workspace 分 namespace
+- [x] `memory/overview.md`：顶层 `agents/` workspace 分命名空间
 - [x] `sandbox.md`：默认镜像 / `EVE_SANDBOX_IMAGE_TAG` / `vercel()` image·source 优先级与 `vercel-sandbox` 用户
 
 仍跳过：
