@@ -16,9 +16,9 @@ eve 会收集 CLI 使用数据，用来改进命令与开发体验。你可以�
 eve 会向 Vercel 发送：
 
 - eve 版本、操作系统、CPU 架构，以及 stdin 是否为终端。
-- 你运行的命令，以及成功、用法错误或失败。
+- 你运行的命令及其结果，以及适用时的 setup / onboarding 步骤。setup 或 onboarding 失败时，eve 只发送有界的失败类别（例如 target resolution、scaffolding、package-manager startup、workspace probing、dependency installation、Git initialization、handoff、onboarding），**不**发送底层错误本身。
 - 对 `eve dev`：连到本地还是远程 Agent，以及 UI 是交互还是 headless。
-- CLI session、本机 eve 安装、以及项目的随机标识符。
+- CLI session、安装与项目的随机标识符，以及安装 / 项目标识符是 ephemeral 还是 persistent。
 
 项目标识符只用来把同一项目的用量归在一起，**不会**发送项目名或路径。有 Git remote 时从 remote 派生，否则用 `REPOSITORY_URL` 或工作目录，发送前会做变换。
 
