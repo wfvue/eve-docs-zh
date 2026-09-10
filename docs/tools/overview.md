@@ -37,6 +37,29 @@ export default defineTool({
 
 Async generator 可在完成前 `yield` 完整输出快照；每次 `yield` 替换上一份；最终 yield 是模型看到的 tool result。更早的 yield 作为 `action.partial` 发给 channels / hooks / clients，**不进**模型历史。
 
+可用 `label` 把这些快照投影成面向用户的 activity 文案：
+
+```ts
+export default defineTool({
+  description: "Build a project report.",
+  inputSchema: z.object({ project: z.string() }),
+  label: {
+    start: ({ project }) => `Build report for ${project}`,
+    delta: (_input, partial) => partial.phase,
+    complete: (_input, output) => `Report ready with ${output.report.sections.length} sections`,
+  },
+  async *execute({ project }) {
+    yield { phase: "Collecting sources", report: null };
+    const report = await buildReport(project);
+    yield { phase: "Complete", report };
+  },
+});
+```
+
+`label.delta(input, partial)` 把初步快照投成用户可见进度；`label.complete(input, output)` 描述成功结算。两者都先收校验后的 input，再收 `execute` yield 出的 typed 值。非空更新会替换上一条 activity label；结果投影会在 eve 标记动作完成前立刻替换最新进度。
+
+eve 在渲染前会规范化并截断投影文本。回调抛错或返回空字符串时，保留已有 activity label。失败或被拒绝的 tool call **不会**跑 `label.complete`。完整值仍在 `action.partial` / `action.result`；renderer 只拿到投影文本。
+
 ### 后台执行
 
 后台执行决定结果如何交回父 Agent；durable 挂起决定 executor 能否在 workflow wait 处暂停并释放计算。二者独立：
