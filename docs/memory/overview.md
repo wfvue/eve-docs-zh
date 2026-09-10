@@ -21,7 +21,7 @@ export default defineMemory({
 });
 ```
 
-上面的文件声明了一个 `profile` slot：用内置 file provider，按已认证调用者记住事实。把 `provider` 换成 [Supermemory](#选择-provider) 或自实现，其它定义可以不动。
+上面的文件声明了一个 `profile` slot：用内置 file provider，按已认证调用者记住事实。把 `provider` 换成 [Supermemory](#supermemory)、[Upstash AgentKit](#upstash-agentkit)、[Kybernesis Arcana](#kybernesis-arcana) 或自实现，其它定义可以不动。
 
 ## Memory slot 如何工作
 
@@ -51,11 +51,19 @@ Memory slot 是 eve 管理的单元。每个 slot 把一个 provider 绑到 eve 
 
 | Provider | 形态 | 召回 | 捕获 |
 | --- | --- | --- | --- |
-| [Supermemory](#supermemory) | `@supermemory/eve` | 对已存记忆做语义搜索 | 每 turn 后自动捕获，另有工具 |
 | [文件记忆](#文件记忆-file-memory) | 内置于 eve | 每个 scope 一份有上限的文档 | 模型驱动的 `save_memory` / `remove_memory` |
+| [Supermemory](#supermemory) | `@supermemory/eve` | 对已存记忆做语义搜索 | 每 turn 后自动捕获，另有工具 |
+| [Upstash AgentKit](#upstash-agentkit) | `@upstash/agentkit-eve` | 排序后的 Redis Search 召回，或 Redis 文档后端 | 默认自动捕获用户消息，或模型驱动工具 |
+| [Kybernesis Arcana](#kybernesis-arcana) | `@kybernesis/arcana` | 语义搜索与 brain notes | 模型驱动工具，或可选自动捕获 |
 | [自建 provider](#自建-provider) | 你的代码 | 你的 store 返回什么就是什么 | 你实现的规则 |
 
-**项目建议：** 多数应用先用 `fileMemory()` 打通；需要语义检索或自动捕获时再接 Supermemory 或自定义 provider。
+**项目建议：** 多数应用先用 `fileMemory()` 打通（本地零外部依赖）；需要语义检索或自动捕获时再接 Supermemory / Upstash / Arcana，或自定义 provider。Integrations 画廊卡片本身按路线图暂不逐页翻译。
+
+### 文件记忆（File memory）
+
+`eve/memory/file` 的 `fileMemory()` 为每个 scope 保留一份有上限的文档，并给模型 `save_memory` / `remove_memory`。它**不会**自动抽取事实；模型决定存什么。`eve dev` 不依赖外部服务；部署到 Vercel 时落到 Vercel Blob——这是最短的可用路径。
+
+详见 [文件记忆（File memory）](./file)：大小限制、存储后端与选项。
 
 ### Supermemory
 
@@ -81,13 +89,58 @@ export default defineMemory({
 });
 ```
 
-在 Agent 环境里设置 `SUPERMEMORY_API_KEY`。Provider 会把对话内容和抽取来源发给 Supermemory；敏感数据启用前先看它的保留与数据处理说明。Provider 选项见官方 [Supermemory integration](https://eve.dev/integrations/supermemory)（Integrations 画廊本站按路线图暂不逐页翻译）。
+在 Agent 环境里设置 `SUPERMEMORY_API_KEY`。Provider 会把对话内容和抽取来源发给 Supermemory；敏感数据启用前先看它的保留与数据处理说明。Provider 选项见官方 [Supermemory integration](https://eve.dev/integrations/supermemory)。
 
-### 文件记忆（File memory）
+### Upstash AgentKit
 
-`eve/memory/file` 的 `fileMemory()` 为每个 scope 保留一份有上限的文档，并给模型 `save_memory` / `remove_memory`。它**不会**自动抽取事实；模型决定存什么。`eve dev` 不依赖外部服务；部署到 Vercel 时落到 Vercel Blob——这是最短的可用路径。
+[Upstash AgentKit](https://upstash.com/docs/redis/sdks/agentkit/eve) 用你的 Upstash Redis 支撑一个 memory slot。`redisMemory()` 在每个 turn 前召回按相关性排序的事实，默认在 turn 结束后捕获用户消息，并给模型保存、搜索、读过去 session、遗忘等工具。
 
-详见 [文件记忆（File memory）](./file)：大小限制、存储后端与选项。
+```bash
+eve add memory/upstash-agentkit
+```
+
+该命令安装 `@upstash/agentkit-eve`，并写出一个 `upstash-agentkit` slot：
+
+```ts title="agent/memory/upstash-agentkit.ts"
+import { redisMemory } from "@upstash/agentkit-eve/memory";
+import { defineMemory } from "eve/memory";
+import { byPrincipal } from "eve/memory/scope";
+
+export default defineMemory({
+  description: "Recall and manage durable context for the current user.",
+  provider: redisMemory({ topK: 5 }),
+  scope: byPrincipal,
+});
+```
+
+选项见官方 [Upstash AgentKit integration](https://eve.dev/integrations/upstash-agentkit)。
+
+### Kybernesis Arcana
+
+[Kybernesis Arcana](https://github.com/KybernesisAI/platform/tree/master/packages/arcana#readme) 用语义搜索和 brain notes 支撑一个 memory slot。它给模型 remember / recall / search 工具；默认**关闭**自动 capture。
+
+```bash
+eve add memory/arcana
+```
+
+该命令安装 `@kybernesis/arcana`，并写出一个 `arcana` slot：
+
+```ts title="agent/memory/arcana.ts"
+import { arcanaMemory } from "@kybernesis/arcana/memory";
+import { defineMemory } from "eve/memory";
+import { byPrincipal } from "eve/memory/scope";
+
+export default defineMemory({
+  description: "Recall and manage durable context for the current user.",
+  provider: arcanaMemory({
+    apiKey: process.env.ARCANA_API_KEY!,
+    workspace: process.env.ARCANA_WORKSPACE!,
+  }),
+  scope: byPrincipal,
+});
+```
+
+需要 Arcana 自动捕获已完成 turn 时，设 `capture: { enabled: true }`。Provider 选项见 [Arcana 包文档](https://github.com/KybernesisAI/platform/tree/master/packages/arcana#readme)。
 
 ### 自建 provider
 
