@@ -111,7 +111,7 @@ Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不�
 
 已 admit 的后台任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消会把任务的最终通知投递给仍活跃的父级，即使必须强制停止该任务。父 session 终结会取消剩余 live tasks。
 
-子智能体模型调用会对分类后的瞬时 provider 失败自动重试（含流开始后的 overload），最多三次新尝试，只重复当前未提交的 call。其它可恢复错误回落到 Workflow 的 durable step 重试。
+子智能体模型调用会对分类后的瞬时 provider 失败自动重试（含流开始后的 overload），最多三次新尝试，默认只重复当前未提交的 call。若声明的子智能体开启了 [Workflow checkpoint batching](./agent-config)，则可能重放当前批内未提交的多次调用与内联工具。其它可恢复错误回落到 Workflow 的 durable step 重试。瞬时模型重试与空响应补发耗尽后返回一次失败任务结果，不会叠两套重试预算；终端错误立即失败。
 
 ## Agent messaging
 
