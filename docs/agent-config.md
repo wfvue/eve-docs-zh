@@ -128,6 +128,48 @@ npm 的 `latest` tag 可能滞后于这个系列，所以不固定版本可能�
 
 凭据和宿主专属选项应该放在 world 包读取的运行时环境变量里，而不是放在 `agent.ts` 中。以 Postgres world 为例，也就是把连接字符串或凭据放进它会读取的环境变量。如果已安装的包在 hosted output 中必须保持 external，请把它列入 `build.externalDependencies`。
 
+## Workflow checkpoint batching（实验）
+
+默认每个模型调用及其内联工具会落成一个 durable Workflow step。可实验性地让一个 step 跑多次顺序模型调用：
+
+```ts title="agent/agent.ts"
+import { defineAgent } from "eve";
+
+export default defineAgent({
+  model: "anthropic/claude-opus-4.8",
+  experimental: {
+    workflow: {
+      modelCallsPerStep: 4,
+    },
+  },
+});
+```
+
+`experimental.workflow.modelCallsPerStep` 是正整数上限，默认 `1`，对根 Agent 与声明的子智能体各自独立生效。调高可减少顺序 tool loop 里的 checkpoint 开销，但会**扩大 replay 单元**：step 被打断时，同批更早的模型调用与内联工具可能再跑一遍（重复费用、事件与副作用）。非幂等工具请自备稳定幂等键。
+
+eve 在等待输入 / 授权 / 阻塞协调，或确认后台任务之前会结束当前 batch；turn 结束也可能低于上限提前收束。Steering 会取消当前模型-工具周期，提交批内已完成的周期，并从该状态开替代 turn——不会把 session 滚回整批开头。此选项 experimental，任意版本可能变更或移除。重试语义见 [执行模型与持久性](./concepts/execution-model-and-durability)。
+
+## Run data retention（实验）
+
+run 结束后，运行时默认仍保留该 run 的数据（模型与工具载荷、流式输出、供 replay 的事件日志）；保留多久由 World 决定，在 Vercel 上跟团队套餐走。把 `experimental.workflow.retention` 设为 `0`，可在 run 一结束就删除：
+
+```ts title="agent/agent.ts"
+import { defineAgent } from "eve";
+
+export default defineAgent({
+  model: "anthropic/claude-opus-4.8",
+  experimental: {
+    workflow: {
+      retention: 0,
+    },
+  },
+});
+```
+
+该值作用于 session run、它派发的每个 turn run，以及收集 session activity 的 run。session 超时、后台任务、[workflow tools](./tools/workflows) 等其它用途仍用 World 默认保留。按 Agent 生效：跑自己 session 的 [subagent](./subagents) 用自己的值；`experimental.workflow.world` 仍仅根 Agent。自定义 World 若不支持，会回退到 World 默认。
+
+> ⚠️ **官方说明：** `retention: 0` 时，已结束 session 的输出通常在你读到之前就没了；轮询已完成 session 的客户端也可能看到结果消失。
+
 ## 其它 defineAgent 字段
 
 `defineAgent` 还接收一些可选字段。导出的类型见 [TypeScript API](./reference/typescript-api)。
@@ -137,7 +179,7 @@ npm 的 `latest` tag 可能滞后于这个系列，所以不固定版本可能�
 | `reasoning` | `AgentReasoningDefinition` | provider default | 跨 provider 的 reasoning effort，会转发给 Agent 每一轮的模型调用。 |
 | `modelOptions` | `AgentModelOptionsDefinition` | 无 | 转发给模型调用的 provider 选项覆盖。 |
 | `limits` | `AgentLimitsDefinition` | 字段相关 | 框架侧运行时限额。Session 默认 30 天后 complete；用量限额默认值与继承见上文。某项设为 `false` 即关闭。 |
-| `experimental` | `{ workflow?: { world?: string } }` | 未设置 | 可选的实验性设置，可能在任意版本中变化或消失。请把它们视为不稳定能力。`workflow.world` 用来选择支撑 session 状态、队列、hooks 和 streams 的 Workflow world 包。 |
+| `experimental` | `AgentExperimentalDefinition` | 未设置 | 不稳定 opt-in。`workflow.world` 选 Workflow world 包（仅根）；`workflow.modelCallsPerStep` 把顺序模型调用打进更宽的 replay 单元；`workflow.retention` 控制 durable 运行时保留 run 数据多久。 |
 | `outputSchema` | Standard Schema 或 JSON Schema object | 无 | task-mode run 的结构化返回类型，例如 subagent、schedule 或 remote job。交互式对话轮次会忽略它，除非客户端为每条消息提供 schema。 |
 | `build` | `{ externalDependencies?: string[] }` | 无 | hosted build 的打包控制。`externalDependencies` 会让列出的包在运行时保持 external，同时 eve 会编译 tools 和 channels 这类 authored modules，并把这些包 trace 进 hosted output。 |
 
