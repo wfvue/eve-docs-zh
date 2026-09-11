@@ -58,7 +58,7 @@ Workflow 导入会解析应用 `tsconfig.json` / `jsconfig.json` 里的 `paths` 
 
 ### 从旧 workflow tool 迁移
 
-把 `defineTool` 换成 `defineWorkflowTool`，保留 `"use workflow"`，把 `agent(ctx, input)` / `ask(ctx, request)` 换成 `ctx.agent(input)` / `ctx.ask(request)`。需要显式类型时从 `eve/tools` 导入 `WorkflowToolContext` 等。
+把 `defineTool` 换成 `defineWorkflowTool`，保留 `"use workflow"`，把 `agent(ctx, input)` / `ask(ctx, request)` 换成 `ctx.agent(target, input)` / `ctx.ask(request)`。需要显式类型时从 `eve/tools` 导入 `WorkflowToolContext` 等。
 
 ## 等待还是后台
 
@@ -79,7 +79,7 @@ Workflow 导入会解析应用 `tsconfig.json` / `jsconfig.json` 里的 `paths` 
 ## `ctx.ask` / `ctx.agent` / `yield`
 
 - **`ctx.ask`**：在 session channel 上发 `input.requested`（渲染方式类似 `ask_question` / 审批），返回可 await 的答案；await 会挂起 run。请求属于 run 而非 turn；后台工具里可远长于发起 turn。结束 run（return / throw / 取消）会撤回 pending 请求。可用 `Promise.race([pending, sleep("4h")])` 加截止。
-- **`ctx.agent`**：调用可见子智能体并等待结果。`key` 必填且在 run 内唯一（replay 身份）；并行调用用不同 key。`target` 是模型可见子智能体名；`agentId` 续跑已有 child；可带 `outputSchema`。
+- **`ctx.agent(target, input)`**：第一个参数是模型可见子智能体名；eve 为每次调用（含对同一子智能体的重复 / 并行调用）派生 replay-stable 调用身份，作者不必再传 `key`。`agentId` 续跑已有 child；内联 `outputSchema` 既要求结构化输出，也决定返回类型。
 - **`yield`**：两种执行模式都可报告进度。后台下 `yield task.postMessage(message)` 才会请求父 Agent turn；调用 `task.postMessage` 只构造描述符。默认模式下显式 `return null` 也会回退到最后一次 yield——进度与最终结果形状不同时，请显式返回对象。
 
 后台进度示例：
