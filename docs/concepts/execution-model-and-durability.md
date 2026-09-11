@@ -11,7 +11,9 @@ eve session 是一次 durable 对话。它可以运行数天，并且在你不�
 
 ## Sessions、turns 和 steps
 
-工作嵌套在三个层级：session（整段 durable 对话）、turn（一条用户消息触发的工作）、step（turn 内的 durable checkpoint）。每个 turn 作为 durable workflow 运行。详见官方页与 [Sessions 和 streaming](./sessions-runs-and-streaming)。
+工作嵌套在三个层级：session（整段 durable 对话）、turn（一条用户消息触发的工作）、step（turn 内的 durable checkpoint；默认含一次模型调用及其内联工具）。每个 turn 作为 durable workflow 运行。详见官方页与 [Sessions 和 streaming](./sessions-runs-and-streaming)。
+
+实验性 [`workflow.modelCallsPerStep`](../agent-config) 可把多次顺序模型-工具周期打进同一个 Workflow step，以减少 checkpoint 开销，但整组成为同一 replay 单元。被打断的 step 可能重跑同批更早的模型调用与内联工具；等待输入 / 授权 / 阻塞协调 / 确认后台任务之前仍会强制 checkpoint。Steering 不会整批回滚：会中止当前周期、提交批内已完成周期，并在下一个 Workflow step 从该状态开替代 turn。
 
 ## Parked work
 
