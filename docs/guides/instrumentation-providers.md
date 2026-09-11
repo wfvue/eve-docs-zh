@@ -197,9 +197,9 @@ export default agentRuns({
 Provider 布局有两个环境相关默认：
 
 - `local`：`eve dev` 期间记录本地 traces
-- `agent-runs`：生产环境导出到 Vercel Agent Runs
+- `agent-runs`：在 preview 与 production 部署导出到 Vercel Agent Runs
 
-省略这些文件会保留默认。从匹配文件导出 `localTraces()` / `agentRuns()` 可重配置；显式禁用：
+省略这些文件会保留默认。从匹配文件导出 `localTraces()` / `agentRuns()` 可重配置；显式禁用。自定义 destination 通过 `otelIntegration()` 接收与本地 tracing / Agent Runs 相同的 **schema v4** agent trace 契约；查 activation / 跨 trace 关联见 [可观测性 · Query exported traces](./instrumentation)。
 
 ```ts title="agent/instrumentation/local.ts"
 import { disableInstrumentation } from "eve/instrumentation";
