@@ -60,6 +60,16 @@ export default defineInstrumentation({
 
 第三个 configurable surface 是 runtime context，它会把每次 model call 的值附加到这些 spans 上。详见官方 [Observability](https://eve.dev/docs/guides/instrumentation) 与本站 [Instrumentation Providers](./instrumentation-providers)。
 
+## Agent trace contract（摘要，schema v4）
+
+provider 布局与零配置本地 tracing 发出的主 span 包括：`invoke_agent <agent>`（一次 activation，自有 trace）、`agent.step` / `chat <model>`、`agent.action`（含 dispatch 与 waiting）、`execute_tool`、`agent.approval`，以及可选的 `agent.channel.request`。
+
+对后台工具与子智能体：AI SDK 的 `execute_tool` 在模型收到 task receipt 时结束；外层 `agent.action` 一直开到后台任务完成 / 失败 / 取消，其时长与 outcome 描述的是后台任务本身。发起 turn 可以先结束，action 仍可开着。
+
+schema v4 去掉了跨 session 的 `agent.session` 根与重复的 session / lineage 属性。每个 eve span 带 `agent.trace.schema.version=4` 与 `gen_ai.conversation.id`；Vercel 部署另带 `vercel.session_id`。只有 activation 用 `invoke_agent`；dispatch 生命周期用 `agent.action` 且 `agent.invocation.role=caller`。查一次 activation 用 trace；用 conversation / session 属性找同对话其它 activations——导出到 OTel **不会**把整段对话拼成一条连续 waterfall。
+
+Agent Runs activation 元数据还带有限的 principal 摘要（`agent.principal.current.*` / `agent.principal.initiator.*`）。类型总是可发；principal ID 需要 content-visible audience，且 trace 决策同时允许 `recordInputs` 与 `recordOutputs`。公开 turn，以及 `eve dev` 下的 unknown turn，可以带 ID；private / hosted-unknown 省略。详情与查询表见官方 [Observability](https://eve.dev/docs/guides/instrumentation#agent-trace-contract)。
+
 ## Workflow run tags（Workflow run tags）
 
 和 OpenTelemetry 分开，Eve 会给每个 workflow run 打上 reserved `$eve.*` attributes。这些 tags 位于 Vercel Workflow run 上，可在 Workflow dashboard 查询。它们是 framework-owned，会在每个 session、turn 和 subagent run 上自动发出。
