@@ -40,7 +40,7 @@ export default slackChannel({
 
 这个选项不会创建或安装 Slack 应用。请在 [Slack app settings](https://api.slack.com/apps) 中配置：
 
-1. 添加 `app_mentions:read` 和 `chat:write` bot scopes。DM 需要 `im:history`，入站附件需要 `files:read`，Agent 上传文件时需要 `files:write`。
+1. 添加 `app_mentions:read` 和 `chat:write` bot scopes。DM 需要 `im:history`，入站附件需要 `files:read`，显式上传以及**自动长回复 snippet** 需要 `files:write`。
 2. 安装或重装应用，把它的 Bot User OAuth Token 复制到 `SLACK_BOT_TOKEN`，把 **Basic Information** 里的 signing secret 复制到 `SLACK_SIGNING_SECRET`。
 3. 在 `.env.local`（本地开发）或目标运行环境里设置这两个值，然后在一个公开 URL 上启动或部署 Agent。
 4. 在 **Event Subscriptions** 下，把 Request URL 设为 `https://your-agent.example/eve/v1/slack`。订阅 `app_mention`，DM 还要订阅 `message.im`。
@@ -120,6 +120,7 @@ vercel connect attach slack/your-agent \
 | 设置提示无法移除已有 trigger destination | 在 Connect dashboard 检查 connector 的 destinations。`vercel connect detach` 移除项目 token 访问，不移除 trigger destinations | 在 dashboard 编辑或移除过期的 destination，然后用 `vercel connect attach` 注册 `/eve/v1/slack` |
 | 提及从未到达部署 | 确认 connector trigger destination 使用预期的项目和分支、启用了 triggers、并指向 `/eve/v1/slack` | 在 Connect dashboard 编辑或移除过期 destinations，然后用 `vercel connect attach` 注册预期的 destination |
 | 提及正常但 DM 或线程回复不行 | 检查 Slack 应用的 Event Subscriptions 和 OAuth scopes。DM 需要 `message.im` 和 `im:history`；频道回复需要匹配的 message 事件和 history scope | 添加缺失的事件或 scopes，如果 Slack 要求则重装 Slack 应用 |
+| 长回复无法上传为 snippet | 检查已安装 Slack 应用是否有 `files:write` bot scope | 添加 `files:write`，然后重装应用使新 scope 生效 |
 | preview 请求收到认证页或保护错误 | 检查分支域名是否已豁免，或直接 Slack 请求 URL 是否带 `x-vercel-protection-bypass`。Slack 无法完成交互式 Vercel Authentication 挑战 | 为分支域名添加 Deployment Protection Exception，或给使用环境变量凭证的 Slack 应用加上 automation bypass 查询参数 |
 | webhook 到达部署但 Agent 不回复 | 打开项目的 Vercel runtime 日志，然后在 **Agent Runs** 中检查 session（当你的团队有权限时） | 用第一个缺失或失败的阶段把问题收窄到 channel dispatch、Agent run 或 Slack 出站投递 |
 
@@ -374,11 +375,13 @@ if (!response.ok) throw new Error(String(response.error));
 
 默认 handler 在线程内回复并显示进度。输入状态指示器会自动发布：入站时是 `Thinking…`，`turn.started` 时是 `Working…`，`reasoning.appended` 时是截断的推理片段，`actions.requested` 时是动作标签——工具名加上它最有信息量的参数（`grep useEveAgent`、`read_file agent/agent.ts`）、dispatch 调用时的子智能体或远程 Agent 名，模型一次请求多个动作时还有 `+N more`。模型自己的工具前叙述（如果存在）优先于派生标签。推理片段渐进构建：至少四个字符的扩展会立即出现，而较小的流式增量使用五秒刷新间隔，避免每个 token 发一次 Slack 请求。如果你更喜欢通用措辞，可以覆盖 `events["reasoning.appended"]`。覆盖入站 handler 或 `events` handlers 来做定制。
 
+内置 `message.completed` handler 会把不超过约 **12,000** 字符的回复直接发到线程；更长的回复会原样上传为名为 `eve-response.md` 的 Markdown snippet，并在线程里留一句短提示（需要 `files:write`）。上传失败由 channel dispatcher 记日志，**不会**触发模型重试。自己写的 `events["message.completed"]` 会整段替换该行为，并自行负责长度限制。
+
 出站文本把裸 `@` token 保留为字面文本。要提及用户，直接嵌入 Slack 的 `<@USER_ID>` 语法，或用 `channel.thread.mentionUser(userId)`。
 
 当 session 在没有 `threadTs` 的情况下启动（比如 schedule 的 `to(slack, target).send(...)`），eve 会给它一个唯一的临时 continuation token。Agent 的第一条帖子会把 session 锚定到 Slack 消息时间戳，之后的帖子和提及恢复同一个 session。想先落地一个结构化锚点，可以带 `Card` 传 `initialMessage`。`threadTs` 和 `initialMessage` 互斥。
 
-下面的例子覆盖 `onAppMention`，以作者消息为门禁，并把完成的回复发布到线程。事件 handlers 接收 `(eventData, channel, ctx)`，Slack 平台 handle 在 `channel.thread` 和 `channel.slack` 上：
+下面的例子只覆盖 `onAppMention` 做门禁；内置 completion handler 仍会发回复，并把长回复上传为 snippet。事件 handlers 接收 `(eventData, channel, ctx)`，Slack 平台 handle 在 `channel.thread` 和 `channel.slack` 上：
 
 ```ts
 import { defaultSlackAuth, slackChannel } from "eve/channels/slack";
@@ -388,12 +391,6 @@ export default slackChannel({
   credentials: connectSlackCredentials("slack/my-agent"),
   onAppMention: (ctx, message) =>
     message.author ? { auth: defaultSlackAuth(message, ctx) } : null,
-  events: {
-    "message.completed"(eventData, channel, ctx) {
-      if (eventData.finishReason === "tool-calls") return;
-      if (eventData.message) channel.thread.post(eventData.message);
-    },
-  },
 });
 ```
 
