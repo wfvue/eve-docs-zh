@@ -237,7 +237,7 @@ Durable eve session 仍然活跃。下一次 `ctx.getSandbox()` 会按当前 san
 
 Session sandbox 按 durable session 键控，不按部署，所以重新部署应用本身不会丢弃它们。编写的 sandbox source、workspace seed 内容或 `revalidationKey` 的定义变化会在下一个 turn 替换 sandbox 并再次运行 `onSession`。
 
-重新挂载仍取决于后端保留物理 sandbox state。如果持久 Vercel sandbox 不再可用，eve 创建替代品，配置了模板时使用当前模板。原始 sandbox 创建后做出的文件和其他更改不会自动恢复。因为 durable session 仍有相同的 sandbox key，这个替代品不会再次运行 `onSession`。把重要 artifacts 持久化在 sandbox 之外，不要依赖 `onSession` 作为应用安全关键配置的唯一位置。
+重新挂载仍取决于后端保留物理 sandbox state。如果持久 Vercel sandbox **缺失**，或其已保存的 filesystem snapshot **不再可用**，eve 会删除不可用记录，并在配置了模板时从当前模板创建替代品。原始 sandbox 创建后做出的文件和其他更改不会自动恢复。因为 durable session 仍有相同的 sandbox key，这个替代品不会再次运行 `onSession`。把重要 artifacts 持久化在 sandbox 之外，不要依赖 `onSession` 作为应用安全关键配置的唯一位置。
 
 eve server 停止时，没有 sandbox compute 会活得比它长。`eve dev` 在 dev server 关闭时停止它启动的 sandbox，自托管生产 server 在关闭（`SIGTERM`/`SIGINT`）时停止每个打开的 sandbox。Session state 跨停止持久——下次 server 启动从它停止的容器、VM 或快照重新挂载每个 durable session。自定义 `SandboxBackend` adapters 为编写的 runtime 调用实现 `stop()`，为 server teardown 实现 `shutdown()`。两者都停止底层 compute，同时在后端支持时从持久 state 保持 session 可重新挂载；编写的 `stop()` 失败会 reject，而进程级 shutdown 收集并记录失败而不阻塞 teardown。
 
