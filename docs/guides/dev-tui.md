@@ -66,13 +66,13 @@ Provider 行会打开三类菜单：通过 project 使用 AI Gateway、通过 `A
 
 ## 键盘快捷键（Keyboard shortcuts）
 
-Chat 和 freeform `ask_question` 输入像 shell line editor 一样工作。
+Chat 和 freeform `ask_question` 输入像 shell line editor 一样工作。turn 进行中按 `Enter` 会排队后续消息；`Esc` 或 `Ctrl+C` 取消当前 turn（有排队时用最旧一条作为下一 turn）。直接取消若卡住，可用 `Ctrl+C` 中断等待。
 
 | Key | Action |
 | --- | --- |
 | `Enter` | 提交消息或 question response。 |
 | `Shift+Enter` | 插入换行，不发送。需要终端支持 modified keys。 |
-| `Ctrl+C` | 中断正在运行的 turn；在输入框有内容时清空；空输入时退出。 |
+| `Ctrl+C` | turn 进行中：取消或用最旧排队消息 steer；若 `/cancel` / `Ctrl+C` 的取消一直未 settle，再按一次可停止等待并回到 prompt，随后再按一次退出；空闲 prompt 连按两次退出。 |
 | `↑` / `↓` | 在输入行之间移动；到达 chat buffer 边缘时，浏览本 session 中发过的消息。 |
 | `←` / `→`, `Home` / `End`, `Ctrl+A` / `Ctrl+E` | 移动光标；Home/End 保持在当前行内。 |
 | `Ctrl+U` / `Ctrl+K` / `Ctrl+W` | 删除到行首、行尾或前一个词。 |
