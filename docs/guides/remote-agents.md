@@ -68,6 +68,10 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 
 启动失败会在返回 receipt 前拒绝 admit。启动后终端失败 callback 会使任务失败并用远程错误（或 `REMOTE_AGENT_FAILED`）通知父级。Terminal callback delivery 作为 durable step；POST 失败会重抛以便 engine 重试。
 
+## 追踪与 conversation 关联
+
+远程 tracing 走普通 `traceparent` 传播；trace context **不是**授权凭证，不能断言 eve parent lineage、改 `rootSessionId` 或取消根 session token 上限。eve 还会把原始 `gen_ai.conversation.id` 放进 `eve.conversation.id` baggage，方便跨本地 / 远程查相关 traces——这不要求 principal forwarding，也不共享执行 lineage。在 provider trace 契约里，每个 child activation 开独立 trace；首次 activation 用入站 `traceparent` 作为 `agent.dispatch` span link，而不是沿用 caller 的 trace ID。
+
 ## 项目建议
 
 - 远程与本地子智能体对模型暴露同一形状；优先把差异放在鉴权与运维边界。
