@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-11，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`9381078c9d4ec40f8105b1009c7781b5dcea8609`（相对上次 `a24b68c`：workflow checkpoint batching / retention、Slack 长回复 snippet、trace schema v4 / principals、Agent Runs preview、`ctx.agent(target, input)`）。llms.txt fingerprint：sha256 `be2f43bd4730671fc87abd72a14ffe9a48a0415ad4edf39bd3e0ea9db991eb2c`（未变）。
+对照日期：2026-09-14，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`7fa514bceadd6f680f3e9407756b827fd0e9a837`（相对上次 `9381078`：`defineWorkspaceAgent`、`ctx.model` effective model、`withEve`/`eve/vercel`、memory/`invoke_workflow` traces、`tracestate` caller、just-secrets ChatGPT 凭据、去掉 `task_update`、content-filter 失败语义、`eve init` self-modification）。llms.txt fingerprint：sha256 `be2f43bd4730671fc87abd72a14ffe9a48a0415ad4edf39bd3e0ea9db991eb2c`（未变）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -30,6 +30,25 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 | 搜索 / LLM 入口 | 已接入，需持续验证 | 构建时从 `docs/` 生成 `llms.txt` / `llms-full.txt`。 |
 | 链接质量 | 进行中 | 已补上 Channels overview 里指向 Chat SDK / Photon 的断链。 |
 
+
+
+## 2026-09-14 上游同步
+
+对照 `vercel/eve` docs tip `7fa514bceadd6f680f3e9407756b827fd0e9a837`（相对上次 `9381078c9d4ec40f8105b1009c7781b5dcea8609`）。llms.txt fingerprint 未变：sha256 `be2f43bd4730671fc87abd72a14ffe9a48a0415ad4edf39bd3e0ea9db991eb2c`。
+
+已更新：
+
+- [x] `subagents`：`defineWorkspaceAgent`（Vercel workspace peers）；去掉子级 `task_update`；completion batching
+- [x] `guides/dynamic-capabilities`：动态子智能体可用父级 `ctx.model`（effective model）
+- [x] `guides/deployment/vercel`：根 `vercel.ts` + `withEve`（`eve/vercel`）组合其它服务
+- [x] `guides/instrumentation`：memory spans、`invoke_workflow`、recalled-as-input、`legacy.unknown`、远程 `tracestate` caller
+- [x] `guides/remote-agents`：W3C `tracestate` 保留 dispatching caller
+- [x] `reference/typescript-api`：ChatGPT 凭据改存 OS credential store（just-secrets）
+- [x] `concepts/built-in-tools`：移除 `task_update`
+- [x] `concepts/sessions-runs-and-streaming`：`content-filter` → `MODEL_CALL_FAILED`
+- [x] `reference/cli`：`eve init` 可启用 self-modification 子智能体
+
+跳过：官方 Integrations / Templates gallery（按路线图）。
 
 ## 2026-09-11 上游同步
 
@@ -130,7 +149,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 - [x] `tools/workflows.md` + `tools/overview.md`：Durable Tools → Workflows as Tools；后台工具无需根实验开关
 - [x] `sessions-runs-and-streaming` / `channels/eve` / `guides/client/streaming`：`tasks: true` 取消后台任务
 - [x] `concepts/built-in-tools.md`：`sleep` 作为 durable tool workflow、并发并行
-- [x] `memory/overview.md`：顶层 `agents/` workspace 分 namespace
+- [x] `memory/overview.md`：顶层 `agents/` workspace 分命名空间
 - [x] `sandbox.md`：默认镜像 / `EVE_SANDBOX_IMAGE_TAG` / `vercel()` image·source 优先级与 `vercel-sandbox` 用户
 
 仍跳过：
