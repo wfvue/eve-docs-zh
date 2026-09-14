@@ -11,6 +11,10 @@ eve 支持两种委派：仅根可用的内置 `agent` 工具（启动或续跑�
 
 > **官方说明（2026-09-03）：** 声明式本地 / 远程子智能体，以及内置 `agent`，都作为 **durable background task** 运行：调用立刻返回 `{ status: "working", taskId, agentId }`，后续用 task notifications 唤醒父级。面向模型的实验性 `Workflow` 编排工具叙事已收敛到 [Workflows as Tools](./tools/workflows) 与本页的任务模型。
 
+## 完成批处理（Completion batching）
+
+同一 session 拥有的重叠后台工作会组成 cohort。后续用户 turn 里启动的任务，在更早工作仍 pending、或其成功结果尚未投递时，会加入未关闭的 cohort。eve 会把成功完成的通知攒到 cohort 内每个任务都完成 / 失败 / 取消之后，再在一次父 turn 里一起送达；部分完成不会唤起父模型。cohort 结算后新开的工作形成新 cohort。无需配置或 debounce。用户消息、输入请求、鉴权、失败与取消不等待 cohort。
+
 ## 内置 `agent` 工具
 
 根 session 默认收到 `agent`。模型可委派给根 Agent 的新副本，或续跑已有副本：
@@ -54,9 +58,23 @@ export default defineAgent({
 
 `description` 必填；父级靠它决定是否委派。每个声明式本地或远程子智能体作为 durable background task 运行：立刻返回 receipt，再用 notifications 报告更新、完成、失败或取消。人类输入请求会单独浮现在父 session。
 
-后台运行的 child 收到框架 `task_update` 工具，用来向父级报告进度。拥有后台任务的 session（包括启动了嵌套后台工作的 child）可用 `task_cancel`。
+拥有后台任务的 session（包括启动了嵌套后台工作的 child）可用 `task_cancel`。进度不再经子级 `task_update` 回调上报；父级通过 child session stream / task notifications 跟进。
 
 挂载的 extension 也可从 `extension/subagents/` 贡献子智能体；mount 命名空间会前缀到可见名（如 `crm__reviewer`）。见 [Extensions](./extensions)。
+
+### Vercel workspace 同伴（defineWorkspaceAgent）
+
+在 Vercel agent workspace 里，可用 `defineWorkspaceAgent` 把另一个 workspace 成员暴露为远程子智能体。文件放在调用方的 `agent/subagents/` 下：文件名是模型可见工具名，`name` 指向 `agents/` 下的同伴目录名。
+
+```ts title="agents/foreman/agent/subagents/research.ts"
+import { defineWorkspaceAgent } from "eve";
+
+export default defineWorkspaceAgent({
+  name: "research",
+});
+```
+
+默认用同伴根 `defineAgent({ description })` 作为工具描述；也可传 `description` 覆盖。省略 `transport` 时，eve 按运行环境选内置传输：Vercel 部署走当前 deployment，并用调用方 Vercel OIDC；在 Vercel 之外要显式提供 `url` 与可选 `auth` / `headers`。显式 transport 会完全替换环境默认值。需要转发用户身份时设 `forwardPrincipal: true`（见 [远程 Agent](./guides/remote-agents)）。`eve dev` 不提供本地 workspace 路由——要对着单独跑着的同伴，配置显式 transport。
 
 ### 条件可用
 
@@ -97,7 +115,7 @@ agent/subagents/researcher/
 
 ## 父级看到什么
 
-eve 把当前 Agent 可见的每个子智能体（内置副本、声明式或 [远程](./guides/remote-agents)）降成同一形状的模型可见工具：`{ message, agentId?, outputSchema? }`。父级必须在 `message` 里带齐上下文。
+ eve 把当前 Agent 可见的每个子智能体（内置副本、声明式或 [远程](./guides/remote-agents)）降成同一形状的模型可见工具：`{ message, agentId?, outputSchema? }`。父级必须在 `message` 里带齐上下文。
 
 声明式子智能体可调用自己目录下的嵌套子智能体；没有单独的深度限制，嵌套止于目录树。内置 `agent` 仍遵循仅根规则；`limits.maxSubagentDepth` 已不存在。
 

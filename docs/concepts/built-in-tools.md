@@ -174,14 +174,6 @@ export default disableTool();
 eve add tool/task_cancel
 ```
 
-### `task_update`
-
-让后台任务向父级报告进度；只出现在被委派的 task session。框架行为不可覆盖。
-
-```sh
-eve add tool/task_update
-```
-
 ### `load_skill`
 
 把按需 [skill](../skills) 的 instructions 拉进当前 turn。只在 Agent 声明 skills 时出现；本身不增加执行面。
