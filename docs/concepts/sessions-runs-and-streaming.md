@@ -78,6 +78,8 @@ curl http://127.0.0.1:2000/eve/v1/session/<sessionId>/stream
 
 被委派的子智能体在自己的 child-session stream 上发布进度。父级发出带 `childSessionId` 的 `subagent.called`；`subagent.completed` 在 admit 后携带 working 任务回执；后续更新与结果作为 task 触发的 `message.received` 通知到达。
 
+当 provider 以 `content-filter` 结束响应时，eve 以 `MODEL_CALL_FAILED` 失败，并带 `details.semanticErrorId: "model-response-content-filtered"` 与 `details.finishReason: "content-filter"`（有 Gateway `generationId` 时一并给出）。不会重试被过滤的响应，也不会为部分文本发 `message.completed`；已流式输出的 deltas 仍可见。对话 session 等待下一条用户消息；task-mode 则返回失败结果。
+
 `step.failed` 和 `turn.failed` 携带 `{ code, message, details? }` 对应失败片段或 turn，`session.failed` 是终端的 session 级变体。`turn.cancelled` 不是失败：被取消的 turn 结束时不带任何失败事件，`session.waiting` 随后出现，session 正常接受下一条消息——取消前 turn 流式输出的任何内容都留在流上，而 durable history 只保留已经 settle 的内容。当 turn 请求了输出 schema 时，最终载荷在 turn 边界之前作为 `data.result` 落在 `result.completed` 上。`authorization.required` 携带登录挑战（`data.authorization` 可能包含 `url`、`userCode`、`expiresAt`、`instructions`），`authorization.completed` 携带 `data.outcome`（`"authorized" | "declined" | "failed" | "timed-out"`）。
 
 ## 事件信封（The event envelope）
