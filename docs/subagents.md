@@ -115,7 +115,7 @@ agent/subagents/researcher/
 
 ## 父级看到什么
 
- eve 把当前 Agent 可见的每个子智能体（内置副本、声明式或 [远程](./guides/remote-agents)）降成同一形状的模型可见工具：`{ message, agentId?, outputSchema? }`。父级必须在 `message` 里带齐上下文。
+eve 把当前 Agent 可见的每个子智能体（内置副本、声明式或 [远程](./guides/remote-agents)）降成同一形状的模型可见工具：`{ message, agentId?, outputSchema? }`。父级必须在 `message` 里带齐上下文。
 
 声明式子智能体可调用自己目录下的嵌套子智能体；没有单独的深度限制，嵌套止于目录树。内置 `agent` 仍遵循仅根规则；`limits.maxSubagentDepth` 已不存在。
 
