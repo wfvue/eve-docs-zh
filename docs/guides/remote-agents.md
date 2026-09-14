@@ -70,7 +70,7 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 
 ## 追踪与 conversation 关联
 
-远程 tracing 走普通 `traceparent` 传播；trace context **不是**授权凭证，不能断言 eve parent lineage、改 `rootSessionId` 或取消根 session token 上限。eve 还会把原始 `gen_ai.conversation.id` 放进 `eve.conversation.id` baggage，方便跨本地 / 远程查相关 traces——这不要求 principal forwarding，也不共享执行 lineage。在 provider trace 契约里，每个 child activation 开独立 trace；首次 activation 用入站 `traceparent` 作为 `agent.dispatch` span link，而不是沿用 caller 的 trace ID。
+远程 tracing 使用 [W3C Trace Context](https://www.w3.org/TR/trace-context/)。`traceparent` 标识直接 HTTP 父 span；eve 在 `tracestate` 里用 `eve=<caller-span-id>` 保留真正的 dispatching caller（HTTP 中间层可能把 `traceparent` 推进成自己的 request span）。接收方用 eve 条目做子级 `agent.dispatch` link，用传输上下文做请求关联；旧发送方或缺损条目回退到 `traceparent`。trace context **不是**授权凭证。eve 还会把原始 `gen_ai.conversation.id` 放进 `eve.conversation.id` baggage，方便跨本地 / 远程查相关 traces。在 provider trace 契约里，每个 child activation 开独立 trace；首次 activation 用 `tracestate` 保留的 caller（回退 `traceparent`）作为 `agent.dispatch` span link，而不是沿用 caller 的 trace ID。
 
 ## 项目建议
 

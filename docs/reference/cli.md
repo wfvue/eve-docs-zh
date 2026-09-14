@@ -58,6 +58,8 @@ eve init [target] [--agents <name,...>] [--model <provider/model-id>] [--reasoni
 | `--reasoning <effort>` | enum | provider default | `none`…`xhigh`；`provider-default` 保持未编写 |
 | `--channel-web-nextjs` | flag | off | 新项目加 Web Chat；已有项目用 `eve add channel/web` |
 
+脚手架完成后，人工终端通常会继续进入 `eve dev`。可选择启用 **self-modification** 子智能体，以便在本地 dev session 里直接改 Agent；否则若 `PATH` 上有 coding-agent REPL，也可启动它来改，而不必打开 TUI。
+
 **项目建议：** CI / 非交互脚本在 workspace 中始终传 `--agent`。
 
 ## `eve extension` / `eve set`
