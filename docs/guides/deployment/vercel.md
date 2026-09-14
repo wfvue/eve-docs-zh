@@ -62,11 +62,36 @@ my-project/
         └── agent/
 ```
 
-存在 `agents/` 目录即标记为 workspace。eve 只校验并发现直接子目录 `agents/<name>/agent/`；目录名成为公开身份，暴露在 `/<name>/eve/v1/*`。在子目录运行 Agent 专用命令，或在 workspace 根传入 `--agent <name>`；省略名称时，交互命令会打开 picker。项目级的 build / link / deploy 从 workspace 根运行。Workspace 根拥有项目 package、依赖和构建脚本。
+在 eve workspace 里，eve 发现直接的 `agents/<name>/` 子目录（含嵌套或扁平 agent 文件、且没有自己的 `package.json`）；目录名成为公开身份，暴露在 `/<name>/eve/v1/*`。自带 `package.json` 的子目录是独立包，不算父 workspace 成员。在成员目录运行 Agent 专用命令，或在 workspace 根传入 `--agent <name>`；省略名称时交互命令会打开 picker。项目级的 build / link / deploy 从 workspace 根运行。Workspace 成员共享根 package、依赖和构建脚本。
 
 用 `eve init my-project --agents support,research` 创建该布局，或在已有 workspace 里用 `eve init billing` 再加一个 Agent。
 
-若没有手写 `vercel.json#services`，每次 `eve build` 都会推导完整的 Vercel Services graph。若 `vercel.json` 已声明 `services`，则以手写 graph 为准，并用 `vercel build` 构建与校验整个项目。这样异构项目（前端、私有 API、bindings、其它非 eve 服务）不必依赖生成的配置文件。
+纯 Agent workspace 可跑 `eve build`：eve 拥有 Vercel Build Output，并为每个成员生成独立服务与 `/<name>/eve/v1/*` 传输路由。
+
+### 与其它 Vercel 服务组合（withEve）
+
+workspace 还要部署前端、私有 API 或其它非 eve 服务时，用根目录 `vercel.ts` 替换 `vercel.json`，并通过 `withEve` 组合 authored graph：
+
+```ts title="vercel.ts"
+import { withEve } from "eve/vercel";
+
+export default await withEve({
+  services: {
+    web: {
+      framework: "nextjs",
+      root: "apps/web",
+    },
+  },
+  routes: [
+    {
+      src: "^(.*)$",
+      destination: { type: "service", service: "web" },
+    },
+  ],
+});
+```
+
+`withEve`（来自 `eve/vercel`）会发现直接 workspace 成员，补上它们的 services 与传输路由，再返回普通 Vercel 配置。生成的传输路由插在 filesystem handler 之前（没有则插在 authored routes 之前）。它不会覆盖已 authored、且属于生成 Agent 的 service key 或精确传输路由——冲突时抛错。自定义 channel 端点不会自动发布，需要显式 route 到生成的 service。一个 Vercel 项目只能有一种配置源：采用 `vercel.ts` 时删掉 `vercel.json`。根 package 依赖里要有 `eve`。
 
 ## 部署 Agent
 
