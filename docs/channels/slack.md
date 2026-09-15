@@ -1,1 +1,1 @@
-@/tmp/slack-final.md
+LOADING_FROM_FILE_WILL_REPLACE
