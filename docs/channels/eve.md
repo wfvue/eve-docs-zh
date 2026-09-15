@@ -134,7 +134,7 @@ curl -X POST https://<deployment>/eve/v1/session/wrun_A/reset \
 
 ## CORS
 
-eve channel 默认不碰 CORS。传 `cors: true` 可以启用带 preflight 处理的宽松浏览器 CORS，或传一个 options 对象来收窄 origins、methods 和 headers。路由认证仍会在实际的 session 请求上运行。
+Eve channel 默认不碰 CORS。传 `cors: true` 可以启用带 preflight 处理的宽松浏览器 CORS，或传一个 options 对象来收窄 origins、methods 和 headers。路由认证仍会在实际的 session 请求上运行。
 
 只有浏览器客户端直接调用该 channel 时才启用或收窄 CORS：
 
@@ -164,6 +164,45 @@ export default eveChannel({
 `eve init` 会脚手架出一个带生产占位符的 `agent/channels/eve.ts`，让你在上线前替换它。生成的 channel 先校验 Vercel OIDC，再回退到 localhost 访问，并包含 `placeholderAuth()`——在你换成真实认证之前，它在生产环境返回 setup-focused 401。删除该文件后 eve 回退到 `[vercelOidc(), localDev(), placeholderAuth()]`，这会拒绝所有生产流量。
 
 完整的认证模型和 helper 清单见 [鉴权与路由保护（Auth & route protection）](../guides/auth-and-route-protection)。
+
+## Audience（谁能观察会话）
+
+eve channel 在 **创建 session 时**分类谁能观察该会话：
+
+| Session 创建者 | 默认 audience |
+| --- | --- |
+| 匿名调用方 | `public` |
+| `user` / `service` / `runtime` principal | `private` |
+| 其它 principal 类型 | `unknown` |
+
+匿名 HTTP 面默认公开（谁够得着就能读）；已鉴权的 `user` / `service` / `runtime` 属于单一身份方，故为私有。其它已鉴权类型保持 `unknown`：trace 消费方默认在 preview / production 只记元数据、省略内容。
+
+可用常量或函数覆盖默认：
+
+```ts title="agent/channels/eve.ts"
+import { none, vercelOidc } from "eve/channels/auth";
+import { eveChannel } from "eve/channels/eve";
+
+export default eveChannel({
+  auth: [vercelOidc()],
+  audience: "private",
+});
+```
+
+```ts title="agent/channels/eve.ts"
+import { vercelOidc } from "eve/channels/auth";
+import { eveChannel } from "eve/channels/eve";
+
+export default eveChannel({
+  auth: [vercelOidc(), none()],
+  audience({ auth, environment }) {
+    if (auth === null) return environment === "development" ? "public" : "unknown";
+    return "private";
+  },
+});
+```
+
+函数收到已鉴权 principal、channel、run mode 与部署环境。分类在创建时固定；continuation 不会重分类。另一 eve 部署转发请求且未接受 forwarded trace assertion 时，按**调用方部署**的 principal 分类，会话保持 `private`。自定义 [trace policy](../guides/instrumentation-providers#控制输入与输出) 仍可独立允许或拒绝内容。
 
 ## 定制（Customization）
 
