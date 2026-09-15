@@ -74,7 +74,7 @@ export default defineWorkspaceAgent({
 });
 ```
 
-默认用同伴根 `defineAgent({ description })` 作为工具描述；也可传 `description` 覆盖。省略 `transport` 时，eve 按运行环境选内置传输：Vercel 部署走当前 deployment，并用调用方 Vercel OIDC；在 Vercel 之外要显式提供 `url` 与可选 `auth` / `headers`。显式 transport 会完全替换环境默认值。需要转发用户身份时设 `forwardPrincipal: true`（见 [远程 Agent](./guides/remote-agents)）。`eve dev` 不提供本地 workspace 路由——要对着单独跑着的同伴，配置显式 transport。
+默认用同伴根 `defineAgent({ description })` 作为工具描述；也可传 `description` 覆盖。省略 `transport` 时，eve 按运行环境选内置传输：Vercel 部署走当前 deployment，并用调用方 Vercel OIDC。经 Next.js `withEve()` 托管的 workspace 走 `/eve/agents/<name>` mount；无 host 的 workspace 走 `/<name>`。在 Vercel 之外要显式提供 `url` 与可选 `auth` / `headers`。显式 transport 会完全替换环境默认值。需要转发用户身份时设 `forwardPrincipal: true`（见 [远程 Agent](./guides/remote-agents)）。`eve dev` 不提供本地 workspace 路由——要对着单独跑着的同伴，配置显式 transport。
 
 ### 条件可用
 
@@ -126,6 +126,8 @@ Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不�
 不要把子智能体委派本身当作审批边界；敏感工具仍要 `approval`、connection 审批、路由/session 鉴权等。
 
 每个委派开启自己的 child session 与 stream。父 stream 有 `subagent.called` / `subagent.completed`，以及从后代代理的交互式 `input.requested` / `authorization.*`。跟进子级其它进度：读 `childSessionId` 再订阅 child stream。
+
+带 activity 上报的渠道会把 backing Agent 的工具活动归属到其后台任务：本地与远程子智能体共享该任务的进度项，而不是再开一条独立的 agent 项。用 `agentId` 续跑或 steer child 时，新活动挂到**新**任务上；旧任务保持已完成 / 已取消状态。这适用于内置 `agent` 与声明式子智能体工具，**不**适用于自定义 workflow 工具内部的 child 调用。Activity 上报尽力而为，不改变任务执行或结果投递。
 
 已 admit 的后台任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消会把任务的最终通知投递给仍活跃的父级，即使必须强制停止该任务。父 session 终结会取消剩余 live tasks。
 
