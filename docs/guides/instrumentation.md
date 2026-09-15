@@ -58,6 +58,10 @@ export default defineInstrumentation({
 
 默认只记元数据，不含模型 / 工具 / memory-record 内容。开启任一内容类别前请审查 exporter 与保留路径。
 
+在 provider 布局中，eve 给每个 span 盖上 `gen_ai.conversation.id`（跨本地 / 远程 activation 固定，含独立远程根 workflow）。用它查对话已导出、已保留的 traces；它不授予访问权，也不控制 trace parenting。在 Vercel 上，`vercel.session_id` 标识**已验证的根 session**，`agent.run.id` 标识当前 agent run。跨后端查询见官方 [Query exported traces](https://eve.dev/docs/guides/instrumentation#query-exported-traces)。
+
+渠道用 `audience`（`public` / `private` / `unknown`）分类对话：eve channel 把匿名调用方标为 public，把已鉴权 `user` / `service` / `runtime` 标为 private。Slack 公开频道 handoff 与 Chat SDK 工作区可见线程为 public；直聊与私有对话为 private；证据不足的平台面保持 unknown。入站 Slack webhook 保持 `unknown`；主动 Slack `receive` / `ctx.send` 也保持 `unknown`，除非调用方在 target 上显式传 `audience`（例如 webhook / schedule 已知目标频道公开）。
+
 第三个 configurable surface 是 runtime context，它会把每次 model call 的值附加到这些 spans 上。详见官方 [Observability](https://eve.dev/docs/guides/instrumentation) 与本站 [Instrumentation Providers](./instrumentation-providers)。
 
 ## Agent trace contract（摘要，schema v4）
@@ -70,9 +74,9 @@ provider 布局与零配置本地 tracing 发出的主 span 包括：`invoke_age
 
 **远程 caller：** 首次 child activation 用 `eve.link.type=agent.dispatch` 链到 caller；远程 dispatch 另在 W3C `tracestate` 保留 caller，即使 HTTP 中间层更新了 `traceparent`。
 
-schema v4 去掉了跨 session 的 `agent.session` 根。每个 eve span 带 `agent.trace.schema.version=4` 与 `gen_ai.conversation.id`；Vercel 部署另带 `vercel.session_id`。查一次 activation 用 trace；用 conversation 属性找同对话其它 activations。
+schema v4 去掉了跨 session 的 `agent.session` 根。每个与 run 关联的 eve span 带 `agent.trace.schema.version=4`、`agent.run.id` 与 `gen_ai.conversation.id`（会话前的 `agent.channel.request` 除外）。Vercel 部署另带 `vercel.session_id`，在本地与**受信任**远程子智能体上固定指向根 session。远程 lineage 仅在接收方 `trustedForwarders` 认可已鉴权调用方时接受。Child activation 根带 `agent.parent_run.id` 与 `agent.parent_call.id`。查一次 activation 用 trace；用 conversation 属性找同对话其它 activations；查根 session 用 `vercel.session_id`，查单次 agent run 用 `agent.run.id`。
 
-Agent Runs activation 元数据还带有限的 principal 摘要（`agent.principal.current.*` / `agent.principal.initiator.*`）。详情见官方 [Observability](https://eve.dev/docs/guides/instrumentation#agent-trace-contract)。
+Agent Runs activation 元数据还带有限的 principal 摘要（`agent.principal.current.*` / `agent.principal.initiator.*`）。Principal **ID** 需要内容可见捕获，且已解析的 trace 决策同时允许 `recordInputs` 与 `recordOutputs`：public turn，以及 development 环境下任意 audience，可含 ID；preview / production 下 private 与 unknown 省略 ID。详情见官方 [Observability](https://eve.dev/docs/guides/instrumentation#agent-trace-contract)。
 
 ## Workflow run tags（Workflow run tags）
 
