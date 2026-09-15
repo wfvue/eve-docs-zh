@@ -69,10 +69,10 @@ export default defineInstrumentation({
 import { defineInstrumentation } from "eve/instrumentation";
 
 export default defineInstrumentation({
-  tracePolicy: ({ audience }) => ({
+  tracePolicy: ({ audience, environment }) => ({
     emit: true,
-    recordInputs: audience === "public",
-    recordOutputs: audience === "public",
+    recordInputs: audience === "public" || environment === "development",
+    recordOutputs: audience === "public" || environment === "development",
   }),
   events: {
     "model.call.started": (event) => {
@@ -85,9 +85,11 @@ export default defineInstrumentation({
 });
 ```
 
-策略会收到 `agentName`、`audience`，以及可用时的 `channelType`。`audience` 为 `"public"`、`"private"` 或 `"unknown"`。
+策略会收到 `agentName`、`channel`、`audience`、`mode`、`environment` 与 `principalType`。`audience` 为 `"public"`、`"private"` 或 `"unknown"`；`environment` 为 `"development"`、`"preview"` 或 `"production"`。
 
-默认策略：对所有 audience 发出元数据；仅对 `public` 会话包含 inputs/outputs。也可显式返回：
+`principalType` 是用于分类的 principal：普通渠道报路由 / session principal；转发的 eve 会话报调用方部署的 principal。尚无 durable conversation key 的旧会话报 session initiator。
+
+默认策略：对所有 audience 发出元数据；对 `public` 会话，以及**任意 audience 的 development 环境**，包含 inputs/outputs。Preview 与 production 行为一致：`unknown` 会话只记元数据。也可显式返回：
 
 | 决策 | 结果 |
 | --- | --- |
@@ -152,10 +154,10 @@ import { otel } from "eve/instrumentation/otel";
 
 export default otel({
   resource: { "deployment.environment": process.env.VERCEL_ENV ?? "development" },
-  tracePolicy: ({ audience }) => ({
+  tracePolicy: ({ audience, environment }) => ({
     emit: true,
-    recordInputs: audience === "public",
-    recordOutputs: audience === "public",
+    recordInputs: audience === "public" || environment === "development",
+    recordOutputs: audience === "public" || environment === "development",
   }),
 });
 ```
