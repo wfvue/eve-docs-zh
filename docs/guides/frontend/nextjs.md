@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {};
 export default withEve(nextConfig);
 ```
 
-默认情况下，`withEve()` 会在 Next.js project root 内查找 `agent/` 文件夹。如果 Agent 在其它位置，通过 `eveRoot` 指定：
+默认情况下，`withEve()` 会在 Next.js project root 内查找 `agent/` 文件夹。当项目根本身是带 `agents/<name>/` 成员的 eve workspace 时，它会**自动发现**每个成员，并分别挂到 `/eve/agents/<name>/eve/v1/*`。
+
+单个 Agent 在别处时，用 `eveRoot` 指向它：
 
 ```ts
 export default withEve(nextConfig, {
@@ -32,16 +34,41 @@ export default withEve(nextConfig, {
 });
 ```
 
+要挂载**不属于**项目级 `agents/` workspace 的 Agent，再用 `agents`。字符串值是 Agent root；对象值可覆盖该 Agent 的 build 命令或私有 production service 前缀：
+
+```ts
+export default withEve(nextConfig, {
+  agents: {
+    support: "./agents/support",
+    billing: {
+      root: "./agents/billing",
+      buildCommand: "pnpm build:billing-agent",
+      servicePrefix: "/_eve_internal/billing",
+    },
+  },
+});
+```
+
+命名 Agent 挂在 `/eve/agents/<name>/eve/v1/*`。React 侧用 `agent` 选对应实例：
+
+```tsx
+const support = useEveAgent({ agent: "support" });
+const billing = useEveAgent({ agent: "billing" });
+```
+
+`eveRoot` 与 `agents` 二选一：`eveRoot` 仍是单个未命名 Agent（挂在 `/eve/v1/*`）的简写。生成的 Agent service 会把 `EVE_PUBLIC_ROUTE_PREFIX` 设为该 Agent 的公开 mount（例如 `/eve/agents/support`），以便 OAuth / 远程子智能体回调落到公开路径。
+
 ### `withEve` 选项（`withEve` options）
 
 所有字段都是可选的。
 
 | Option | Type | Default | Purpose |
 | --- | --- | --- | --- |
-| `eveRoot` | `string` | Next.js app root | Eve app root 路径。默认相对 `process.cwd()`，绝对路径也可用。Agent 不在 Next.js 项目内时设置它。 |
-| `eveBuildCommand` | `string` | `"eve build"` | 生成 Eve Vercel service 的构建命令。Agent 需要项目特定 prework，又不想改 Next.js build 时使用。 |
-| `servicePrefix` | `string` | `"/_eve_internal/eve"` | Eve service 的私有 Vercel route namespace。手动设置 Vercel Build Output mount 时必须一致。 |
-| `devServerTimeoutMs` | `number` | `180000` | 等待 Eve development server 可用的最长时间。 |
+| `eveRoot` | `string` | Next.js app root | 单个未命名 Eve app root（相对 `process.cwd()`，也可绝对路径）。不要与 `agents` 同用。 |
+| `agents` | `Record<string, ...>` | workspace 可推断 | 命名 Agent 挂到 `/eve/agents/<name>/eve/v1/*`。未设 `agents` / `eveRoot` 时，`withEve()` 会发现项目级 `agents/<name>/`；否则每个值是 root 字符串或 `{ root, buildCommand?, servicePrefix? }`。 |
+| `eveBuildCommand` | `string` | 生成 | 生成 Eve Vercel service 的默认构建命令；多 Agent 时作为未自带 `buildCommand` 者的默认。 |
+| `servicePrefix` | `string` | `"/_eve_internal/eve"` | 私有 route namespace（遗留手动 Vercel service / 非 Vercel 生产代理）。命名 Agent 会从此前缀派生唯一默认值。 |
+| `devServerTimeoutMs` | `number` | `180000` | 等待每个 Eve development server 可用的最长时间。 |
 
 冷启动很慢时，可以增加 development timeout：
 
@@ -85,7 +112,7 @@ export default eveChannel({ auth: [vercelOidc(), localDev()] });
   });
   ```
 
-- **Local production build**：`next build && next start` 会从构建好的 `.output/server/index.mjs` 在稳定本地端口 `4274` 服务 Eve runtime，并把 Eve routes proxy 过去。先运行 `eve build`，确保 output 存在。可用 `EVE_NEXT_PRODUCTION_PORT` 修改端口：
+- **Local production build**：`next build && next start` 会从构建好的 `.output/server/index.mjs` 在稳定本地端口 `4274` 服务 Eve runtime，并把 Eve routes proxy 过去。先运行 `eve build`，确保 output 存在。在 `agents/` workspace 中，请先在每个 `agents/<name>/` 目录构建成员，再启动 Next.js。可用 `EVE_NEXT_PRODUCTION_PORT` 修改端口：
 
   ```bash
   EVE_NEXT_PRODUCTION_PORT=5000 npm run build && npm start
