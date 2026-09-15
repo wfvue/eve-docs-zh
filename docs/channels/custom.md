@@ -1,1 +1,1 @@
-PLACEHOLDER_DO_NOT_KEEP
+FILE:/workspace/eve-docs-zh/docs/channels/custom.md
