@@ -46,10 +46,14 @@ eve init [target] [--agents <name,...>] [--model <provider/model-id>] [--reasoni
 | 目标 | 发生什么 |
 | --- | --- |
 | `eve init my-agent` | 在 `my-agent/` 创建新 Agent 项目 |
-| `eve init .` | 向已有 `package.json` 添加 `agent/` 与缺失依赖 |
-| `eve init` 无目标 | 同 `.`；coding agents 得到设置指南而非脚手架 |
+| `eve init` 或 `eve init .`（空目录） | 在当前目录创建 Agent 项目 |
+| `eve init` 或 `eve init .`（无 `package.json`，且除环境元数据外已有文件） | **拒绝**覆盖；请传新目录名，如 `eve init my-agent` |
+| `eve init` 或 `eve init .`（已有项目） | 添加 `agent/` 与缺失的 `eve` / `ai` / `zod`；需已有 `package.json` 且尚无 `agent/` |
+| `eve init path/to/app` | 向已有 package 路径添加 Agent（不必再强制写字面量 `.`） |
 | `eve init my-project --agents foreman,researcher` | 创建 `agents/foreman/agent/` 与 `agents/researcher/agent/` workspace |
 | 在 `agents/` workspace 里 `eve init billing` | 只添加 `agents/billing/agent/`，保留 package / 依赖 / TS 配置 |
+
+**官方说明：** 已有 package 不必再走「选目标」交互：在项目目录跑 `eve init`，或 `eve init path/to/app`。非交互环境新建项目时请给新目录名。
 
 | Flag | 类型 | 默认 | 描述 |
 | --- | --- | --- | --- |
