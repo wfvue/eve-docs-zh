@@ -27,7 +27,7 @@ eve 支持两种委派：仅根可用的内置 `agent` 工具（启动或续跑�
 }
 ```
 
-副本使用根的 instructions、connections、auth 和 sandbox；工具集合与根相同，但**没有**仅根的 `agent` 与 `Workflow`；对话历史与 state 全新。文件写入对根立刻可见。内置 `agent` **始终后台运行**，无需额外配置：每次调用返回 receipt，再通过 task notifications 送达更新或最终结果。并行 children 应使用互不重叠的写范围。
+副本使用根的 instructions、connections、auth 和 sandbox；工具集合与根相同，但**没有**仅根的 `agent`；对话历史与 state 全新。文件写入对根立刻可见。内置 `agent` **始终后台运行**，无需额外配置：每次调用返回 receipt，再通过 task notifications 送达更新或最终结果。并行 children 应使用互不重叠的写范围。
 
 `agent` 故意仅根可用。它创建的副本不能再调 `agent`；声明式子智能体也收不到内置 `agent`。若过期或强制递归调用到达执行层，eve 会拒绝而不是再开 child。
 
@@ -119,7 +119,7 @@ eve 把当前 Agent 可见的每个子智能体（内置副本、声明式或 [�
 
 声明式子智能体可调用自己目录下的嵌套子智能体；没有单独的深度限制，嵌套止于目录树。内置 `agent` 仍遵循仅根规则；`limits.maxSubagentDepth` 已不存在。
 
-Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不到 `Workflow` 与内置 `agent`。后台子智能体走模型工具循环，**不能**在模型 authored 的 `Workflow` 程序里用。
+Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不到内置 `agent`。Authored workflow 工具使用与直接委派相同的子智能体可用性与授权检查。
 
 直接声明的工具名是路径派生名，无前缀（`agent/subagents/researcher/` → `researcher`）。Extension 贡献的带 mount 前缀。名称与 authored tools 共享命名空间，冲突会在构建或运行时拒绝。
 
@@ -137,9 +137,9 @@ Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不�
 
 Child 回答后 park 而不是终结，保留 session 与历史。失败 turn 也可能 park。把 park 的 `agentId` 传回同一子智能体工具并带新 `message` 即可续跑。省略 `agentId`（或空 / null）总是新开 child；未知 `agentId` 回退为新开而不是失败。已知 `agentId` 走错子智能体工具 → `AGENT_MISMATCH`。
 
-要 **steer** 正在运行的后台 child：用同一子智能体工具，带上它的 `agentId` 和更新后的 `message`。eve 会先取消旧任务，再在同一 child session 里开新任务。child 保留对话历史；receipt 里是同一个 `agentId` 与新的 `taskId`。被取消的任务不能再发布后续成功结果。Steering **不会**撤销已经发生的工具副作用。
+要 **steer** 正在运行的后台 child：用同一子智能体工具，带上它的 `agentId` 和更新后的 `message`。child 先完成当前 Workflow step，再在**同一 turn** 的下一次模型调用前应用更新。receipt 保留同一 `agentId` 与 `taskId`；steering **不会**取消任务、替换其 completion callback，也不会撤销已发生的工具副作用。
 
-仍在 starting、或归属于阻塞中的 workflow 调用（而不是已 admit 的后台任务）的 child，继续返回 `AGENT_BUSY`。取消或投递失败会报告给调用方；eve 不会另开替换 child 来掩盖失败。
+仍在 starting、或归属于阻塞中的 workflow 调用（而不是已 admit 的后台任务）的 child，继续返回 `AGENT_BUSY`。投递失败会报告给调用方；eve 不会另开替换 child 来掩盖失败。
 
 parked children 集合变化时，eve 注入带 `<agents>` 的 `[Agents]` 笔记；仅在列表变化时追加（利于 prompt cache）。父 session 结束时，eve 终结本地 children，并对远程 children 发已鉴权 reset（尽力而为）。
 
