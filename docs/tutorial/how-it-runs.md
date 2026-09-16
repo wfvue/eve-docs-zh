@@ -13,7 +13,7 @@ description: "Build an Agent 教程第 2 步：session、turn 和 durable steps�
 | **turn** | 你发送的一条消息和它触发的工作。 |
 | **step** | turn 内的一个 durable checkpoint。 |
 
-每个 turn 都作为 durable workflow 运行，eve 在每个 step 保存进度。已完成的 step 从不重跑；eve 重放记录的结果。中途被打断的 step 会重跑，所以要让扣费、邮件等非幂等副作用幂等，或用审批门禁。一个在等你的 turn（审批、提问）无论你多晚回答都会恢复。
+session 作为一条 durable workflow 运行，eve 在每个 step 保存该 turn 的进度。已完成的 step 从不重跑；eve 重放记录的结果。中途被打断的 step 会重跑，所以要让扣费、邮件等非幂等副作用幂等，或用审批门禁。一个在等你的 turn（审批、提问）无论你多晚回答都会恢复。
 
 这就是本教程其余特性如此工作的原因：
 
