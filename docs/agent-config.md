@@ -89,7 +89,7 @@ export default defineAgent({
 });
 ```
 
-`sessionTimeoutMs` 是每个 session（含委派 session）的绝对寿命，默认 30 天，从创建起算，跨重启与重新部署仍有效。到期时 eve 会让进行中的 turn settle，再发 `session.completed` 并释放 continuation；下一条合格 channel 消息会开新 session。设为 `false` 可关闭超时。过期**不会**删除已存 session 数据。
+`sessionTimeoutMs` 是每个 session（含委派 session）的寿命，默认 30 天，从创建起算。每次成功的部署 handoff 或旧版 session import 会重启原先配置的时长；进程重启、普通消息、失败或跳过的 handoff 保留现有截止。到期时 eve 会让进行中的 turn settle，再发 `session.completed` 并释放所有 continuation 地址；下一条合格 channel 消息会开新 session。设为 `false` 可关闭超时。过期**不会**删除已存 session 数据。
 
 输入 token、输出 token 与模型 token 费用**各自独立**检查。越过限额的那次模型调用仍会跑完（精确用量要等调用结束后才有）。下一次模型调用前，eve 会暂停 session，并给出确定性 continuation 提示：**Approve** 按各项配置重新开一扇预算窗；**Stop** 走标准取消路径（`turn.cancelled` → `session.waiting`）——这是用户决定，不是错误。session 仍可恢复；因仍超预算，下一条消息会再次弹出提示。
 
@@ -147,7 +147,7 @@ export default defineAgent({
 
 `experimental.workflow.modelCallsPerStep` 是正整数上限，默认 `1`，对根 Agent 与声明的子智能体各自独立生效。调高可减少顺序 tool loop 里的 checkpoint 开销，但会**扩大 replay 单元**：step 被打断时，同批更早的模型调用与内联工具可能再跑一遍（重复费用、事件与副作用）。非幂等工具请自备稳定幂等键。
 
-eve 在等待输入 / 授权 / 阻塞协调，或确认后台任务之前会结束当前 batch；turn 结束也可能低于上限提前收束。Steering 会取消当前模型-工具周期，提交批内已完成的周期，并从该状态开替代 turn——不会把 session 滚回整批开头。此选项 experimental，任意版本可能变更或移除。重试语义见 [执行模型与持久性](./concepts/execution-model-and-durability)。
+eve 在等待输入 / 授权 / 阻塞协调，或确认后台任务之前会结束当前 batch；turn 结束也可能低于上限提前收束。Steering 会等待批次提交，然后在同一 turn 内应用已接受的输入。更大的批次会拉长 steering 边界之间的间隔。此选项 experimental，任意版本可能变更或移除。重试语义见 [执行模型与持久性](./concepts/execution-model-and-durability)。
 
 ## Run data retention（实验）
 
@@ -193,7 +193,7 @@ export default defineAgent({
 | 每个工具的审批（HITL） | `agent/tools/*.ts`，[Tools](./tools) |
 | 入站鉴权和网络策略 | channel 层，[Auth & route protection](./guides/auth-and-route-protection) |
 | Sandbox / workspace | `agent/sandbox/`，[Sandbox](./sandbox) |
-| Telemetry 和调试 | `agent/instrumentation.ts`，[Instrumentation](./guides/instrumentation) |
+| Telemetry 和调试 | `agent/instrumentation.ts`，[Instrumentation](./guides/instrumentation/overview) |
 
 ## 接下来读什么
 
