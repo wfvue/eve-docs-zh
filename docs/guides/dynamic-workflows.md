@@ -5,23 +5,23 @@ description: "实验性的 Workflow 工具：让模型用自己生成的 JavaScr
 
 # 动态工作流（Dynamic Workflows）
 
-实验性的 `Workflow` 工具允许模型编写 JavaScript，把当前 Agent 自己的子智能体作为一个 durable step 协调起来。程序可以按顺序运行子智能体，把一个结果传给下一个，对一个列表 fan out，并合并结果。你启用这个能力后，由模型决定是否以及如何执行编排。
+运行时生成的 `workflow` 工具允许模型编写 JavaScript，把当前 Agent 自己的子智能体作为一个 durable step 协调起来。程序可以按顺序运行子智能体，把一个结果传给下一个，对一个列表 fan out，并合并结果。你启用这个能力后，由模型决定是否以及如何执行编排。
 
 一个 turn 本来就可以调用多个子智能体，parallel tool calls 也会并发 dispatch。Workflow 增加的是 **程序化协调（programmatic coordination）**：程序可以根据前一个结果决定要运行多少个子智能体、哪个输出喂给哪个调用、以及如何汇总结果。这类逻辑很难用几个一次性 tool calls 表达。
 
-> 官方目录现在把 Workflow 写在 [内置工具（Built-in Tools）](../concepts/built-in-tools)。本页是中文站保留的补充入口。启用 API 已从 `ExperimentalWorkflow` 改为 `experimental_workflow()`。
+> 官方目录现在把 Workflow 写在 [内置工具（Built-in Tools）](../concepts/built-in-tools)。本页是中文站保留的补充入口。启用 API 现为小写 `workflow()`（`experimental_workflow` / 大写 `Workflow` 已移除）。权威说明见 [Workflows as Tools](../tools/workflows)。
 
 ## 启用 Workflow 工具（Enable the Workflow tool）
 
-从 `agent/tools/workflow.ts` 导出实验性定义。Helper 名带 experimental 警告，但模型实际看到的工具名是 `Workflow`：
+从 `agent/tools/workflow.ts` 导出 factory。模型看到的工具名是 `workflow`：
 
 ```ts title="agent/tools/workflow.ts"
-import { experimental_workflow } from "eve/tools/workflow";
+import { workflow } from "eve/tools/workflow";
 
-export default experimental_workflow();
+export default workflow({ maxSubagents: 20 });
 ```
 
-没有这个文件时，`Workflow` 工具保持关闭。它只有在 Agent 有值得协调的子智能体，例如 built-in `agent` 或声明式 subagents 时，才有价值：
+没有这个文件时，该工具保持关闭。它只有在 Agent 有值得协调的子智能体，例如 built-in `agent` 或声明式 subagents 时，才有价值：
 
 ```ts title="agent/subagents/analyst/agent.ts"
 import { defineAgent } from "eve";
@@ -42,7 +42,7 @@ const findings = await Promise.all(
 return findings.join("\n\n");
 ```
 
-每次 `tools.analyst(...)` 调用都会 dispatch 一个 child subagent。因此 parent stream 会记录每个 metric 的 `subagent.called`，以及每个完成时的 `subagent.completed`。
+每次 `tools.analyst(...)` 调用都会 dispatch 一个 child subagent。因此 parent stream 会看到每个 metric 的 `subagent.called`，以及每个完成时的 `subagent.completed`。
 
 一个 Workflow 程序总共最多 dispatch `maxSubagents` 次子智能体调用（默认 100）。超出预算的调用不会启动子 session。只有根 session 收到 `Workflow`；它启动的 children 既收不到 `Workflow` 也收不到内置 `agent`。
 
