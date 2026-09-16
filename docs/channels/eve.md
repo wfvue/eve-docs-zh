@@ -57,7 +57,7 @@ curl -X POST https://<deployment>/eve/v1/session/wrun_A \
   -d '{"inputResponses":[{"requestId":"req_A","optionId":"approve"}]}'
 ```
 
-后续消息默认使用 `turnPolicy: "steer"`。如果 turn 正在进行，eve 会先缓冲消息，再协作式地取消该 turn，然后把后续消息作为带新 turn ID 的替代 turn 启动。当后续消息应该等待当前 turn 结束时，在 `eveChannel(...)` 上设置 `turnPolicy: "queue"`。`inputResponses` 永远不会 steer。
+后续消息默认使用 `turnPolicy: "steer"`。如果 turn 正在进行，eve 会缓冲消息，并在下一个已提交的 workflow 边界应用到**同一 turn**（保留 turn ID）。当后续消息应该等待当前 turn 结束时，在 `eveChannel(...)` 上设置 `turnPolicy: "queue"`。`inputResponses` 回答被寻址的请求。
 
 向未知或已终结的 session ID 发送消息会返回 `409` 与：
 
@@ -165,44 +165,34 @@ export default eveChannel({
 
 完整的认证模型和 helper 清单见 [鉴权与路由保护（Auth & route protection）](../guides/auth-and-route-protection)。
 
-## Audience（谁能观察会话）
+## Audience
 
-eve channel 在 **创建 session 时**分类谁能观察该会话：
+eve channel 在创建 session 时指定**可观测性 audience**。audience 控制 instrumentation 是否可捕获 session 内容，**不**改变谁可以调用端点（访问仍由 `auth` 控制）：
 
 | Session 创建者 | 默认 audience |
 | --- | --- |
-| 匿名调用方 | `public` |
-| `user` / `service` / `runtime` principal | `private` |
+| 匿名调用方 | `unknown` |
+| `user`、`service` 或 `runtime` principal | `private` |
 | 其它 principal 类型 | `unknown` |
 
-匿名 HTTP 面默认公开（谁够得着就能读）；已鉴权的 `user` / `service` / `runtime` 属于单一身份方，故为私有。其它已鉴权类型保持 `unknown`：trace 消费方默认在 preview / production 只记元数据、省略内容。
+匿名 HTTP 面默认为 `unknown`：仅“够得着”并不等于内容可以安全记录。已鉴权的 `user` / `service` / `runtime` 属于单一身份方，故为私有。其它已鉴权类型也保持 `unknown`：trace 消费方在 preview / production 默认只记元数据。只对**刻意公开**的流量设显式 `audience: "public"`。
 
-可用常量或函数覆盖默认：
-
-```ts title="agent/channels/eve.ts"
-import { none, vercelOidc } from "eve/channels/auth";
-import { eveChannel } from "eve/channels/eve";
-
-export default eveChannel({
-  auth: [vercelOidc()],
-  audience: "private",
-});
-```
+对生产端点上所有对话都刻意公开时，可设常量：
 
 ```ts title="agent/channels/eve.ts"
 import { vercelOidc } from "eve/channels/auth";
 import { eveChannel } from "eve/channels/eve";
 
 export default eveChannel({
-  auth: [vercelOidc(), none()],
-  audience({ auth, environment }) {
-    if (auth === null) return environment === "development" ? "public" : "unknown";
-    return "private";
-  },
+  auth: [vercelOidc()],
+  audience: "public",
 });
 ```
 
-函数收到已鉴权 principal、channel、run mode 与部署环境。分类在创建时固定；continuation 不会重分类。另一 eve 部署转发请求且未接受 forwarded trace assertion 时，按**调用方部署**的 principal 分类，会话保持 `private`。自定义 [trace policy](../guides/instrumentation-providers#控制输入与输出) 仍可独立允许或拒绝内容。
+也可传函数，收到 `caller`、channel、run mode 与部署环境。分类在创建时固定；后续不同调用方的 continuation 不会重分类。
+
+远程 Agent：受信任的 dispatch 可转发原始 audience 及其 trace-content 上限。见 [保留 trace 内容](../guides/remote-agents#preserving-trace-content)。
+
 
 ## 定制（Customization）
 
