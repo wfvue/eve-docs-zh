@@ -134,7 +134,7 @@ on conflict (id) do nothing;
 - **Id 标识事件，不是意图。** 两个负载完全相同的事件——`step.failed` → `turn.failed` → `session.failed` 级联，或一个 step 里两个相同的文本增量——是带不同 id 的不同事件。只在 `meta.id` 上去重；按内容匹配会丢真实数据。
 - **子智能体的事件是重新发出的，不是共享的。** 当父级把子级的事件转发到自己流上时，父级的副本是带自己 id 的独立事件。通过 `subagent.called.data.childSessionId` 关联两条流。
 
-Authored [hooks](../guides/hooks) 接收同一个信封，但按发出时而不是读取时观察每个事件——所以 hook 把重试看成新事件，`meta.id` 是存储行的键而不是重试守卫。hook 不需要防御两件事：为人类输入 park 的 turn 恢复时不重新发出任何它已发送的内容，重试的 turn dispatch 无法双流一个 turn，因为只有一个 turn run 能认领 session 的 turn inbox。
+Authored [hooks](../guides/hooks) 接收同一个信封，但按发出时而不是读取时观察每个事件——所以 hook 把重试看成新事件，`meta.id` 是存储行的键而不是重试守卫。hook 不需要防御两件事：为人类输入 park 的 turn 恢复时不重新发出任何它已发送的内容，重试的 turn dispatch 无法双流一个 turn，因为由一个 session owner 执行它。
 
 ## 发送后续消息
 
@@ -146,7 +146,7 @@ curl -X POST http://127.0.0.1:2000/eve/v1/session/<sessionId> \
   -d '{"message":"Now send the short version."}'
 ```
 
-后续消息复用同一个 durable session：同样的 history、同样的 state。消息发送默认基于取消的 `"steer"`；如果 turn 活跃，eve 缓冲后续消息、取消那个 turn，并在新 turn ID 下启动消息。当活跃工作应该先完成时，Channels 和 TypeScript `Session.send(...)` 调用可以选择 `turnPolicy: "queue"`。结构化 `inputResponses` 从不 steer。
+后续消息复用同一个 durable session：同样的 history、同样的 state。消息发送默认 `"steer"`；如果 turn 活跃，eve 缓冲后续消息，并在下一个已提交的 workflow 边界以**同一 turn ID** 应用。当前模型与工具工作会安全完成。当活跃 turn 应先完成时，Channels 和 TypeScript `Session.send(...)` 可选择 `turnPolicy: "queue"`。结构化 `inputResponses` 回答被寻址的请求。
 
 如果一个挂起的批次在等待 human-in-the-loop 审批，匹配的文本回复（如 `approve` 或 `cancel`）会回答它。无关文本立即启动普通 turn，不会拒绝工具调用；审批保持挂起且可回答。之后按它的 `requestId` 键控的结构化 `inputResponses` 答案仍然恢复原始工具调用，即使中间有 turn。
 
@@ -156,7 +156,7 @@ curl -X POST http://127.0.0.1:2000/eve/v1/session/<sessionId> \
 
 一次投递可以回答几个批次的请求。eve 按 durable 顺序恢复带审批的批次，并携带后来的答案前进，直到每个批次都能恢复。
 
-多条替代消息保留它们 durable 的到达顺序，并且当它们在取消 settle 之前到达时可能被折叠进同一个替代 turn。当前 runtime 契约见 [message delivery and steering](./execution-model-and-durability#message-delivery-and-steering)。
+多条 steering 消息保留 durable 到达顺序，并可能在下一边界折叠为一次输入。turn settle 之后接受的消息启动下一 turn。见 [message delivery and steering](./execution-model-and-durability#message-delivery-and-steering)。
 
 ## 取消进行中的 turn
 
