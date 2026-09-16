@@ -131,7 +131,7 @@ Authorization: Bearer <token>
 | User | 每个最终用户使用自己的第三方账号授权。 | 需要当前 session 已经有用户身份。 |
 | User from a job | 后台任务沿用触发任务的用户授权。 | 需要通过已鉴权 channel 创建或继续 session。 |
 
-`principalType: "user"` 的意思不是“稍后随便找个人确认”，而是“这个凭据绑定到当前 Eve session 里已经认证过的用户”。如果一个 schedule、内部 runtime 调用或 localDev session 没有用户身份，user-scoped connection 会失败，并返回类似 `principal_required` 的原因。
+`credentialOwner: "user"` 的意思不是“稍后随便找个人确认”，而是“这个凭据绑定到当前 Eve session 里已经认证过的用户”。如果一个 schedule、内部 runtime 调用或 localDev session 没有用户身份，user-scoped connection 会失败，并返回类似 `principal_required` 的原因。
 
 ## 无鉴权连接
 
@@ -177,7 +177,7 @@ export default defineOpenAPIConnection({
   spec: "https://warehouse.example.com/openapi.json",
   description: "The caller's tenant-scoped warehouse.",
   auth: (ctx) => ({
-    principalType: "user",
+    credentialOwner: "user",
     getToken: async () => ({
       token: await tenantToken(ctx.session.auth.current),
     }),
@@ -201,7 +201,10 @@ import { once } from "eve/tools/approval";
 export default defineMcpClientConnection({
   url: "https://mcp.linear.app/mcp",
   description: "Linear workspace.",
-  auth: { getToken: async () => ({ token: process.env.LINEAR_API_TOKEN! }) },
+  auth: {
+    credentialOwner: "app",
+    getToken: async () => ({ token: process.env.LINEAR_API_TOKEN! }),
+  },
   approval: once(),
 });
 ```
