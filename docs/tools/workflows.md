@@ -56,7 +56,50 @@ export default defineWorkflowTool({
 
 Workflow 导入会解析应用 `tsconfig.json` / `jsconfig.json` 里的 `paths` 别名，即使应用是 workspace package 也可以。eve 只打包从 Agent runtime 模块可达的 workflow 与 step 模块；宿主应用里无关的 workflow 留在 Agent bundle 之外。未解析的 workflow 导入会让构建失败，并在错误中指出缺失导入。
 
-### 从旧 workflow tool 迁移
+
+### 添加运行时生成的 workflow 工具
+
+当模型应在运行时提供 JavaScript 程序时，创建 `agent/tools/workflow.ts` 并导出提供的 `workflow` factory：
+
+```ts title="agent/tools/workflow.ts"
+import { workflow } from "eve/tools/workflow";
+
+export default workflow({ maxSubagents: 20 });
+```
+
+模型通过工具的 `js` 输入提供 async 函数体。宿主能力只有 `ctx.agent(name, { message, agentId?, outputSchema? })`。例如：
+
+```js
+const [triage, review] = await Promise.all([
+  ctx.agent("ticket-triage", { message: JSON.stringify(tickets) }),
+  ctx.agent("ticket-review", { message: JSON.stringify(tickets) }),
+]);
+return { triage, review };
+```
+
+`maxSubagents` 默认 `100`，须为 `1`–`128` 的整数。生成程序不能访问 workflow context、session state、凭据、imports 或普通工具。Agent 授权、提问、审批、取消与 `agentId` 续跑，与直接 `ctx.agent` 调用相同、由 owner 管理。
+
+sandbox 在当前批的每个 pending call settle 后恢复。`Promise.all` 支持 fan-out 再 fan-in；`Promise.race` **不会**在第一个 child settle 后就恢复。child 失败在对应 `ctx.agent` 调用处抛出，生成代码可 catch。程序必须返回 JSON 可序列化值。
+
+### 从 `experimental_workflow` 迁移
+
+实验性大写 `Workflow` 框架工具及其导出已移除。把旧 sentinel：
+
+```ts
+import { experimental_workflow } from "eve/tools/workflow";
+export default experimental_workflow({ maxSubagents: 20 });
+```
+
+换成小写 factory：
+
+```ts
+import { workflow } from "eve/tools/workflow";
+export default workflow({ maxSubagents: 20 });
+```
+
+路径把 authored 工具的面向模型名定为 `workflow`。eve 不会发现或注入 agent catalog。调用使用与其它 authored workflow 工具里 `ctx.agent` 相同的目标解析、可用性与授权检查。
+
+### 从 authored workflow tool 迁移
 
 把 `defineTool` 换成 `defineWorkflowTool`，保留 `"use workflow"`，把 `agent(ctx, input)` / `ask(ctx, request)` 换成 `ctx.agent(target, input)` / `ctx.ask(request)`。需要显式类型时从 `eve/tools` 导入 `WorkflowToolContext` 等。
 
@@ -109,7 +152,7 @@ export default defineWorkflowTool({
 
 ## 取消：`ctx.abortSignal`
 
-run 被取消时（等待工具的 steered turn；后台工具的 `task_cancel` / session 结束）`abortSignal` 会 abort，且 durable——能跨 replay。信号发出后，run 最多再等 30 秒让 body 收尾，然后无论是否收尾都按取消结束。停在 hook / `sleep` 上的 body 观察不到信号，宽限期结束即放弃。
+run 被取消时（等待工具的显式 turn 取消；后台工具的 `task_cancel` / session 结束）`abortSignal` 会 abort，且 durable——能跨 replay。信号发出后，run 最多再等 30 秒让 body 收尾，然后无论是否收尾都按取消结束。停在 hook / `sleep` 上的 body 观察不到信号，宽限期结束即放弃。
 
 ## 项目建议
 
