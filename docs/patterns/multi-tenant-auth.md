@@ -195,7 +195,6 @@ export default defineMcpClientConnection({
 
 ```ts title="agent/connections/support.ts"
 import { defineMcpClientConnection } from "eve/connections";
-
 import { tenantCredentials } from "../lib/tenant-credentials";
 import { requireTenantCaller } from "../lib/tenant";
 
@@ -213,6 +212,8 @@ export default defineMcpClientConnection({
   },
 });
 ```
+
+对 OpenAPI connections 使用同样的形状。在 `headers` 中解析的 API keys 只在出站请求上发送；它们不是模型输入或工具结果。
 
 ## 提供凭证 provider
 
