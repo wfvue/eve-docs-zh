@@ -12,10 +12,14 @@ Linear channel 使用 Linear 的 Agent Session 表面，而不是普通评论。
 从 Agent 目录运行 registry 设置：
 
 ```sh
-eve add linear
+eve add channel/linear
 ```
 
-在组件清单中选择 **Linear Channel**。如果你想让 Agent 通过 MCP 搜索和更新 Linear，**Linear MCP** 也默认选中。只安装 channel 本身，运行 `eve add channel/linear-agent`。
+若希望 Agent 通过 MCP 搜索和更新 Linear，请另装连接：
+
+```bash
+eve add connection/linear
+```
 
 流程会在需要时登录 Vercel、创建或关联 Vercel 项目、在可用时复用兼容的现有 connector 或配置 app-scoped Linear Connect client，并把 `/eve/v1/linear` 注册为 trigger destination。然后安装 `@vercel/connect` 并写入带 connector UID 的 `agent/channels/linear.ts`。
 
