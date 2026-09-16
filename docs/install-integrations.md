@@ -13,7 +13,7 @@ description: "从 eve 官方目录或第三方源发现并安装 extensions 和�
 
 ```bash
 eve add extension/agent-browser
-eve add linear
+eve add channel/linear
 eve add instrumentation/braintrust
 eve add memory/file
 ```
@@ -26,7 +26,7 @@ Web Chat 会安装项目级 Next.js 应用，目前**不能**加到顶层 `agent
 
 Extensions 可能在 `agent/extensions/` 下创建 mount。Connections 会把初始定义写到 `agent/connections/`，并在需要时安装 `@vercel/connect`。Instrumentation providers 会写 `agent/instrumentation.ts`；一个 Agent 只有一个 instrumentation 文件，多个 exporters 需要你自己在那里组合。运行 Agent 前，先配置生成文件和所需环境变量。
 
-有些 integrations 打包了几个可独立安装的组件。例如 `eve add linear` 让你选择 Linear Channel、Linear MCP 或两者；默认两者都选。也可以用更具体的 `eve add channel/linear-agent` 和 `eve add connection/linear`。
+有些 integrations 打包了几个可独立安装的组件。例如 `eve add channel/linear` 让你选择 Linear Channel、Linear MCP 或两者；默认两者都选。也可以用更具体的 `eve add channel/linear-agent` 和 `eve add connection/linear`。
 
 当官方条目声明了交互式 setup flow 时，eve 会在安装后询问是否运行它们，并按声明顺序执行多个 flow。跳过或取消后，运行打印出来的 `eve add --skip-install` 可以稍后从开头重跑所选组件的 declared flows。
 
