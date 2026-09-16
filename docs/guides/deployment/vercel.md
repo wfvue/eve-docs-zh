@@ -131,10 +131,10 @@ eve dev https://your_agent.vercel.app/support
 
 Vercel 检测到 eve 后，可以在项目 **Observability** 视图下加一个 **Agent Runs** tab，用来浏览 sessions 并检查每段对话的 trace。
 
-Agent Runs tab 需要为你的 Vercel team 开启。看不到时联系 Vercel 代表。第三方 tracing backend 配置见 [可观测性](../instrumentation)。
+Agent Runs tab 需要为你的 Vercel team 开启。看不到时联系 Vercel 代表。第三方 tracing backend 配置见 [可观测性](../instrumentation/overview)。
 
 ## 继续配置生产
 
 - [鉴权与路由保护](../auth-and-route-protection)：配置谁能调用已部署的 Agent
-- [可观测性](../instrumentation)：导出 traces 并诊断 runtime 失败
+- [可观测性](../instrumentation/overview)：导出 traces 并诊断 runtime 失败
 - [沙盒（Sandbox）](../../sandbox)：配置资源、隔离和网络访问

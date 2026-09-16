@@ -102,7 +102,7 @@ agent/subagents/researcher/
 
 ## 为什么 eve 没有发现我的文件？
 
-运行 `eve info`。它列出发现的 surface 并打印发现诊断。eve 也会在 `.eve/` 下写出可检查的 artifacts。见 [Observability](../guides/instrumentation) 和 [CLI](./cli)。
+运行 `eve info`。它列出发现的 surface 并打印发现诊断。eve 也会在 `.eve/` 下写出可检查的 artifacts。见 [Observability](../guides/instrumentation/overview) 和 [CLI](./cli)。
 
 ## 接下来读什么
 
