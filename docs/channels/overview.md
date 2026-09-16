@@ -15,9 +15,15 @@ eve 内置一个基础 HTTP channel 和一批一等平台渠道，你也可以�
 
 channel 把输入规范化之后，无论消息来自哪里，eve 都运行同一个 Agent runtime。Tool 和 instructions 不需要为 channel 写特殊逻辑。
 
+## Audience
+
+Channel 创建 session 时会指定可观测性 audience：`public` / `private` / `unknown`。audience 控制 **trace 内容捕获**，不是谁可以调用 channel。各 channel 用自己掌握的可见性信息；无法分类时安全默认是 `unknown`。
+
+路由 auth 控制访问并提供 session principal。见 [Auth 与路由保护](../guides/auth-and-route-protection)。默认 eve HTTP channel 的映射见 [eve#audience](./eve#audience)；自定义分类见 [自定义 channel](./custom#对话-audienceconversation-audience)。
+
 ## 重叠消息（Overlapping messages）
 
-Channel 默认 `turnPolicy: "steer"`。当一条已接受的消息在 turn 进行中到达时，eve 会先把消息 durable 缓冲，然后协作式地取消当前 turn 并启动一个替代 turn。被取消的 turn 会发出 `turn.cancelled` 后跟 `session.waiting`；替代 turn 使用新的 turn ID。已经流式输出和完成的副作用不会回滚。
+Channel 默认 `turnPolicy: "steer"`。当一条已接受的消息在 turn 进行中到达时，eve 会缓冲它，并在下一个已提交的 workflow 边界应用。当前模型调用与工具会安全完成；消息继续**同一 turn**，保留 turn ID。
 
 当每个 turn 必须结束后才能开始下一条消息时，在任何内置或自定义 channel 上设置 `turnPolicy: "queue"`：
 
