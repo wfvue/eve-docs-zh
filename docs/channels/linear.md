@@ -21,6 +21,7 @@ eve add channel/linear
 eve add connection/linear
 ```
 
+
 流程会在需要时登录 Vercel、创建或关联 Vercel 项目、在可用时复用兼容的现有 connector 或配置 app-scoped Linear Connect client，并把 `/eve/v1/linear` 注册为 trigger destination。然后安装 `@vercel/connect` 并写入带 connector UID 的 `agent/channels/linear.ts`。
 
 Vercel Connect 以 Agent Sessions 所需的 `app:assignable` 和 `app:mentionable` scopes 创建 Linear app，接收并校验 `AgentSessionEvent` webhooks，并把它们转发给已部署的 Agent。部署后，在 Connect dashboard 打开 Linear app，并在你想委派工作的 workspace 中安装。然后委派一个 issue，或在 Linear Agent Session 中提及 Agent。
