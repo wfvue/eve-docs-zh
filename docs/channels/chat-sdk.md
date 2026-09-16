@@ -81,6 +81,12 @@ export const { bot, channel, send } = chatSdkChannel({
 
 提供商要求固定 URL，或迁移已有端点又不想改提供商设置时，用 `routes`。
 
+
+## Audience
+
+工作区可见线程为 `public`。DM 与私有 / 外部线程为 `private`；可见性未知的线程为 `unknown`。audience 控制可观测性内容捕获，不是对线程的访问权。共享模型见 [Audience](./overview#audience)。
+
+
 ## 渠道如何处理消息
 
 ### Dispatch
@@ -95,9 +101,9 @@ export const { bot, channel, send } = chatSdkChannel({
 
 ### Steering
 
-消息默认 `turnPolicy: "steer"`：eve turn 进行中发来的消息会被 durable 缓冲，然后取消该 turn 并作为替代启动。想让当前 turn 先完成时设 `turnPolicy: "queue"`。
+消息默认 `turnPolicy: "steer"`：eve turn 进行中发来的消息会被缓冲，并在下一个已提交的 workflow 边界应用到**同一 turn**。想让当前 turn 先完成时设 `turnPolicy: "queue"`。
 
-基于取消的 steering 会发出 `turn.cancelled`，替代消息用新的 turn ID 启动新 turn。被中断 turn 的部分输出和已完成副作用不会回滚。没有活跃 turn 时，消息正常发送。可以在 `chatSdkChannel({ turnPolicy })` 上设一次，或按 `send(...)` 覆盖。
+Steering 保留 turn ID，并让当前模型调用与工具完成。没有活跃 turn 时，消息正常启动 turn。可以在 `chatSdkChannel({ turnPolicy })` 上设一次，或按 `send(...)` 覆盖。
 
 这个策略控制重叠的 eve turns。Chat SDK 单独的 `concurrency` 选项控制重叠的 webhook handlers；每个入站消息都应立刻到达 steering 路径时用 `concurrency: "concurrent"`。
 
