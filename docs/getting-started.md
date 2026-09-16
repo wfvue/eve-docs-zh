@@ -104,6 +104,7 @@ curl http://127.0.0.1:3000/eve/v1/session/<sessionId>/stream
 
 ## 接下来读什么
 
+- [Instrumentation](./guides/instrumentation/overview)：discovery 产物与 traces
 - [项目布局](./reference/project-layout) 和 [教程](./tutorial/first-agent)
 - [Instructions](./instructions) 和 [Tools](./tools)
 - [记忆（Memory）](./memory) 与 [内置工具](./concepts/built-in-tools)

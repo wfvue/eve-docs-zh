@@ -11,7 +11,7 @@ description: "使用 defineDynamic 在运行时解析 models、subagents、conne
 
 动态子智能体解析器拿到的 `ctx.model` 是父级当时的 **effective model**。示例可写成 `model: ctx.model ? ctx.model.id : "openai/gpt-5.5-mini"`：有父模型就跟父模型，否则回退。返回的子配置会快照 model ID，之后父模型再变也不会自动改靶。本地返回配置必须用静态 model，不能再嵌一层 `defineDynamic` model；运行时选中的模型要用字符串 model ID。
 
-解析后的集合适用于本地与远程的直接委派。后台子智能体不会暴露在模型编写的 `Workflow` 工具内部；durable 编排见 [Workflows as Tools](../../tools/workflows)。eve 在启动子级前还会再检查可用性，过期或手工构造的调用会以 `SUBAGENT_UNAVAILABLE` 失败。把条件可用性当作能力组合，而不是唯一授权边界。
+解析后的集合适用于本地与远程的直接委派。authored workflow 工具也可通过 `ctx.agent` 调用所选子智能体；生成的程序可通过提供的 `workflow` 工具调用。eve 在启动子级前还会再检查可用性，过期或手工构造的调用会以 `SUBAGENT_UNAVAILABLE` 失败。把条件可用性当作能力组合，而不是唯一授权边界。
 
 ## 动态连接 / 工具 / 技能 / 指令
 
