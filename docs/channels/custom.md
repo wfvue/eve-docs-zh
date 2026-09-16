@@ -63,9 +63,9 @@ export default defineChannel({
 - `to(channel, target).send(message, options)` 把工作交给另一个自写渠道。
 - `params`、`waitUntil` 和 `requestIp` 提供请求元数据和生命周期控制。
 
-事件 handlers 接收 `(eventData, channel, ctx)`。`ctx.session.id` 标识确切 session，而 `channel.continuation` 暴露当前地址，以及当该 channel 需要移动地址时的 `rekey()`。`session.failed` 只接收 `(eventData, channel)`，因为它在 session 上下文之外运行；它的事件数据直接包含 `sessionId`。
+事件 handlers 接收 `(eventData, channel, ctx)`。`ctx.session.id` 标识确切 session，而 `channel.continuation` 暴露当前地址，以及当该 channel 需要**追加**另一地址时的 `alias()`。`session.failed` 只接收 `(eventData, channel)`，因为它在 session 上下文之外运行；它的事件数据直接包含 `sessionId`。
 
-`channel.continuation.token` 始终是 `from()`、`resolveSession()` 和 `rekey()` 接受的 channel 本地地址。框架命名空间前缀不属于自写渠道 API。
+`channel.continuation.token` 始终是 `from()`、`resolveSession()` 和 `alias()` 接受的 channel 本地地址。框架命名空间前缀不属于自写渠道 API。
 
 ## Channel 操作与 session handles
 
@@ -95,7 +95,7 @@ await session.reset({ reason: "Retire this session" });
 await session.getEventStream({ startIndex: 12 });
 ```
 
-消息发送使用 channel 的 `turnPolicy`，默认 `"steer"`。活跃 turn 期间到达的已接受消息会先被 durable 缓冲，然后 eve 取消该 turn 并把消息作为替代 turn 启动。当活跃 turn 应该按顺序结束时，在 `defineChannel(...)` 上配置 `turnPolicy: "queue"`，或覆盖单次发送：
+消息发送使用 channel 的 `turnPolicy`，默认 `"steer"`。活跃 turn 期间到达的已接受消息会被缓冲，并在下一个已提交的 workflow 边界应用。当前模型调用与工具会安全完成；消息加入**同一 turn** 并保留 turn ID。当消息应等待活跃 turn 结束时，在 `defineChannel(...)` 上配置 `turnPolicy: "queue"`，或覆盖单次发送：
 
 ```ts
 export default defineChannel({
@@ -258,27 +258,33 @@ export default defineChannel({
 
 ### 对话 audience（Conversation audience）
 
-用 `audience(input)` 声明「谁能观察这段对话」。钩子在路由鉴权之后、创建 session 之前运行：
+用 `audience(input)` 指定可观测性 audience。audience 控制 instrumentation 是否可捕获对话内容。钩子在路由鉴权之后、创建 session 之前运行：
 
 ```ts
 import { defineChannel, POST } from "eve/channels";
 
 export default defineChannel({
   state: { visibility: "workspace" as "workspace" | "private" | "unknown" },
-  audience({ state, auth }) {
+  audience({ state, caller }) {
     if (state.visibility === "workspace") return "public";
-    if (auth?.principalType === "user") return "private";
+    if (caller.type === "principal" && caller.principal.kind === "user") return "private";
     return "unknown";
   },
   routes: [POST("/webhook", async () => new Response("ok"))],
 });
 ```
 
-输入含 channel 的 `state`、已鉴权 `auth`、`channel`、`mode` 与 `environment`。返回 `"public"`、`"private"` 或 `"unknown"`。证据不足时返回 `"unknown"`；消费方按非公开处理。缺失、抛错、异步或畸形分类器也会 fail-closed 到 `"unknown"`。
+输入含 channel 的 `state`、`caller`、`channel`、`mode`、`environment`。principal caller 会省略 `principalId` / `issuer` / `subject`，但其 `attributes` 仍可能含识别信息。返回 `"public"` / `"private"` / `"unknown"`；证据不足时返回 `"unknown"`（消费方按非公开处理）。缺失、抛错、异步或畸形的分类器也会 **fail-closed** 到 `"unknown"`。
+
+显式标注回调类型时用 `AudienceContext<TState>`；迁移期间仍可用 `AudienceInput<TState>`。旧回调可继续用 `auth?.principalType`：
+
+```ts
+audience({ auth }) {
+  return auth?.principalType === "user" ? "private" : "unknown";
+}
+```
 
 分类在 **session 创建时固定**；后续不同调用方的 continuation 不会重新分类。父级 dispatch 本地子智能体时，child **继承**父级 audience；框架另把父级自定义 channel metadata 转发给子级。
-
-`metadata(state)` 仍是 channel 自有的可观测字段投影，**不再**承载保留的 `audience` 键。channel epoch 20 之前的 extension 仍可用该键（弃用回退，会警告一次）；作者应迁到 `audience(input)`。
 
 ## Continuation tokens
 
@@ -294,9 +300,9 @@ twilioContinuationToken("+15551234567", "+15557654321"); // "+15551234567:+15557
 
 自定义渠道自己编写连接身份字段的函数。框架不会替你派生任何东西；channel 拥有自己的 token 格式。
 
-当应该寻址 session 的身份到后来才得知时，用 `channel.continuation?.rekey(rawToken)` 重新设置活跃地址。Runtime 保留当前 channel 命名空间。
+当另一身份也应寻址同一 session 时，用 `channel.continuation?.alias(rawToken)` 追加地址。Runtime 保留当前 channel 命名空间，并把新 token 暴露为 `channel.continuation.token` 供后续 handlers。
 
-Rekeying 改变当前 session 的地址。`reset` 不同：它终结性地退役当前 session，并让它的既有地址可供后续 `send()` 使用。`cancel` 更窄：它只停止活跃 turn，保留 session、history 和 continuation-token 所有权不变。
+Aliasing 给当前 session **追加**地址；更早认领的地址继续解析到同一 session，并接受相同 payload。`reset` 终结性地退役当前 session，并让它的**所有**地址可供后续 `send()` 使用。`cancel` 更窄：只停止活跃 turn，保留 session、history 与 continuation-token 所有权。
 
 `context(state, session)` 配置选项构建每个 step 传给每个事件 handler 的 `channel` 参数。它接收 channel 的活跃 adapter `state` 和 `SessionHandle`，返回 channel 拥有的上下文（线程 handles、API 客户端、late-bound 回调）。框架注入 [`ChannelContinuationOps`](#define-a-channel)，并把结果作为第二个位置参数传给每个 handler。闭包捕获 `session` 让工厂可以注册稍后重新设置地址的回调。通过返回的上下文做出的 state 修改会写回 adapter state。
 
@@ -311,7 +317,7 @@ defineChannel<{ ref: string | null }>({
       state,
       registerAnchor(ref: string) {
         state.ref = ref;
-        session.continuation?.rekey(ref);
+        session.continuation?.alias(ref);
       },
     };
   },
@@ -324,7 +330,7 @@ defineChannel<{ ref: string | null }>({
 });
 ```
 
-在下一个 workflow boundary，runtime 会在释放旧 token 之前认领新的 park hook。如果另一个活跃 session 已经拥有新 token，re-keying session 会失败而不是接管它。成功 re-key 之后，仍寻址到旧 token 的入站投递会被丢弃，所以请与发送方协调使用新 token。
+在下一个 workflow 边界，runtime 把新地址加入 session 的合并 inbox。如果另一活跃 session 已拥有新 token，aliasing session 会失败而不是接管。session 认领过的每个地址在 session 结束或 reset 前都保持有效。带 continuation 地址的 session 会留在当前部署，直到 Workflow 支持原子所有权转移。Token 必须非空；一个 session 最多 256 个地址（含稳定 inbox）；重复已有 alias 不占新名额。
 
 ## 文件上传（File uploads）
 
