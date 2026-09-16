@@ -76,7 +76,7 @@ eve init [target] [--agents <name,...>] [--model <provider/model-id>] [--reasoni
 
 ```sh
 eve add extension/agent-browser
-eve add linear
+eve add channel/linear
 eve add memory/file
 eve integration setup file-memory
 eve add channel/slack --skip-install
@@ -110,7 +110,7 @@ eve invoke "Summarize station telemetry"
 
 `eve dev` 启动本地 server + TUI；裸 URL / `--url` 只连远程。常用渲染 flag：`--tools`、`--reasoning`、`--subagents`、`--logs`。`eve acp` 走 stdio JSON-RPC。`eve invoke` 无 TUI 提交 turn，可 `--resume`。
 
-本地会记录 ready URL、runtime 快照；无编写 `instrumentation.ts` 时写入 `.eve/traces/`。`eve logs` 读 `.eve/logs/` JSONL；`eve traces` 读 OTLP segments。`EVE_TRACES_CONTENT=on` 才捕获 prompt/工具负载。保留：`EVE_TRACES*`（年龄 / 总字节 / retain count）。
+本地会记录 ready URL、runtime 快照；无编写 `instrumentation.ts` 时写入 `.eve/traces/`。`eve logs` 读 `.eve/logs/` JSONL；`eve traces` 读 OTLP segments。本地 spans **默认保留**内容；设 `EVE_TRACES_CONTENT=off` 可省略 prompt/工具负载。保留：`EVE_TRACES*`（年龄 / 总字节 / retain count）。
 
 ## `eve link` / `eve deploy` / `eve eval` / channels
 
@@ -130,7 +130,7 @@ eve invoke "Summarize station telemetry"
 
 - [Project layout](./project-layout)
 - [CLI 遥测](./telemetry)
-- [instrumentation.ts](../guides/instrumentation)
+- [instrumentation.ts](../guides/instrumentation/overview)
 - [Deploy to Vercel](../guides/deployment/vercel)
 - [File Memory](../memory/file)
 - [部署（Deployment）](../guides/deployment/overview)
