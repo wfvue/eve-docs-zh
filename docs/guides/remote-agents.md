@@ -62,7 +62,7 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 
 已 admit 的任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消时 eve 会重新解析 `headers` / `auth`。
 
-也可以用同一 `agentId` 与更新后的 `message` **steer** 正在运行的远程后台 child：eve 会取消旧任务并请求取消远程 turn，再在同一远程 session 上以新 `taskId` 续跑。远程端需支持标准 eve 取消与 session-message 路由。共享契约见 [Agent messaging](../../subagents#agent-messaging)。
+也可以用同一 `agentId` 与更新后的 `message` **steer** 正在运行的远程后台 child：child 先完成当前 Workflow step，再在同一 turn 的下一次模型调用前应用更新；receipt 保留同一 `agentId` / `taskId`。共享契约见 [Agent messaging](../../subagents#agent-messaging)。
 
 父 session 结束时，eve 对每个远程 child 发已鉴权 `reset`（尽力而为）。
 
@@ -70,9 +70,11 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 
 ## 追踪与 conversation 关联
 
-远程 tracing 使用 [W3C Trace Context](https://www.w3.org/TR/trace-context/)。`traceparent` 标识直接 HTTP 父 span；eve 在 `tracestate` 里用 `eve=<caller-span-id>` 保留真正的 dispatching caller（HTTP 中间层可能把 `traceparent` 推进成自己的 request span）。接收方用 eve 条目做子级 `agent.dispatch` link，用传输上下文做请求关联；旧发送方或缺损条目回退到 `traceparent`。trace context **不是**授权凭证。eve 还会把原始 `gen_ai.conversation.id` 放进 `eve.conversation.id` baggage，方便跨本地 / 远程查相关 traces。在 provider trace 契约里，每个 child activation 开独立 trace；首次 activation 用 `tracestate` 保留的 caller（回退 `traceparent`）作为 `agent.dispatch` span link，而不是沿用 caller 的 trace ID。
+## Trace 传播（Trace propagation）
 
-接收方会把入站 content ceiling 与自身 trace policy 合并：每跳只能收窄，不能恢复更早去掉的 inputs/outputs；原始 audience 跨远程 / 本地子智能体保持不变。Public 源默认可带内容；private / unknown 在 preview 与 production 默认只记元数据（除非两端显式允许）；**development 上的接收方仍套用 development 的内容默认**。
+每次远程 turn 开新 trace。eve 把子级 trace 链到分派 turn，并携带 `gen_ai.conversation.id`，便于查找同一对话的 traces。Trace context 是可观测性元数据，**不是**授权凭证。拓扑见 [OpenTelemetry](./instrumentation/otel#trace-拓扑trace-topology)。
+
+请求须含 callback 与有效的采样 `traceparent`。`trustedForwarders` 是授权边界。断言被接受后，接收方使用**转发的 audience**，而不是用本地 channel 重新分类子 session。接收方把转发的 ceiling 与自身 trace policy 合并：每跳只能收窄，不能恢复更早去掉的 inputs/outputs。缺失、畸形、未采样或不受信任的断言不会放宽捕获，只做元数据 tracing。
 
 ## 项目建议
 
