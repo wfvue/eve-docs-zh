@@ -137,5 +137,5 @@ eve dev https://<your-app>
 
 ## 接下来读什么（What to read next）
 
-- [可观测性（Instrumentation）](../instrumentation)：OpenTelemetry、run tags 和常见失败
+- [可观测性（Instrumentation）](../instrumentation/overview)：OpenTelemetry、run tags 和常见失败
 - [CLI](../../reference/cli)：所有命令和参数
