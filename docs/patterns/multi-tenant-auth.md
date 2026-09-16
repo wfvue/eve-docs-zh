@@ -52,7 +52,7 @@ function tenantAppAuth(): AuthFn<Request> {
       authenticator: "app",
       issuer: "https://app.example.com",
       principalId: caller.userId,
-      principalType: "user",
+      credentialOwner: "user",
       subject: caller.userId,
       attributes: {
         tenantId: caller.tenantId,
@@ -75,10 +75,10 @@ export default eveChannel({
 
 ## 构建租户 connection auth
 
-对 Bearer tokens 或租户 scope 的 JWTs，写一个非交互 auth helper 并在 OpenAPI 和 MCP connections 之间复用。`principalType: "user"` 告诉 eve 要求路由 auth 里的已认证用户、按该用户键控 step 本地 token 缓存，并把投影的 principal 传进 `getToken`：
+对 Bearer tokens 或租户 scope 的 JWTs，写一个非交互 auth helper 并在 OpenAPI 和 MCP connections 之间复用。`credentialOwner: "user"` 告诉 eve 要求路由 auth 里的已认证用户、按该用户键控 step 本地 token 缓存，并把投影的 principal 传进 `getToken`：
 
 ```ts title="agent/lib/tenant-connection-auth.ts"
-import type { ConnectionPrincipal, NonInteractiveAuthorizationDefinition } from "eve/connections";
+import type { ConnectionPrincipal, ConnectionAuthProvider } from "eve/connections";
 import { tenantCredentials, type TenantService } from "./tenant-credentials";
 
 function requireTenantPrincipal(principal: ConnectionPrincipal): {
@@ -92,9 +92,9 @@ function requireTenantPrincipal(principal: ConnectionPrincipal): {
   return { tenantId, userId: principal.id };
 }
 
-export function tenantBearerAuth(service: TenantService): NonInteractiveAuthorizationDefinition {
+export function tenantBearerAuth(service: TenantService): ConnectionAuthProvider {
   return {
-    principalType: "user",
+    credentialOwner: "user",
     async getToken({ principal }) {
       const { tenantId, userId } = requireTenantPrincipal(principal);
       const credential = await tenantCredentials.getBearer(tenantId, service, { userId });
@@ -195,6 +195,7 @@ export default defineMcpClientConnection({
 
 ```ts title="agent/connections/support.ts"
 import { defineMcpClientConnection } from "eve/connections";
+
 import { tenantCredentials } from "../lib/tenant-credentials";
 import { requireTenantCaller } from "../lib/tenant";
 
@@ -212,8 +213,6 @@ export default defineMcpClientConnection({
   },
 });
 ```
-
-对 OpenAPI connections 使用同样的形状。在 `headers` 中解析的 API keys 只在出站请求上发送；它们不是模型输入或工具结果。
 
 ## 提供凭证 provider
 
