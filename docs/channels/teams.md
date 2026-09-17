@@ -15,6 +15,31 @@ import { teamsChannel } from "eve/channels/teams";
 export default teamsChannel();
 ```
 
+### Vercel Connect
+
+在 Vercel 上用托管 Teams bot 时：
+
+```bash
+eve add channel/teams
+```
+
+引导流程会跑 Vercel Connect CLI，完成托管的 Microsoft Teams 应用创建与安装。已校验的 Activities 路由到 `/eve/v1/teams`，并写入：
+
+```ts title="agent/channels/teams.ts"
+import { connectTeamsCredentials } from "@vercel/connect/eve";
+import { teamsChannel } from "eve/channels/teams";
+
+export default teamsChannel({
+  credentials: connectTeamsCredentials("microsoft-teams/my-agent"),
+});
+```
+
+Vercel Connect 负责 Microsoft 管理员同意与应用安装流程。部署后，在频道里 @bot 或给它发个人消息即可。
+
+### 可移植凭据（Portable credentials）
+
+若要自己管理 bot 注册与凭据，配置：
+
 ```sh
 MICROSOFT_APP_ID=...
 MICROSOFT_APP_PASSWORD=...
