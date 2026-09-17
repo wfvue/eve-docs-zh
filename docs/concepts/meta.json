@@ -1,6 +1,7 @@
 {
   "title": "概念（Concepts）",
   "pages": [
+    "project-structure",
     "execution-model-and-durability",
     "sessions-runs-and-streaming",
     "state",
