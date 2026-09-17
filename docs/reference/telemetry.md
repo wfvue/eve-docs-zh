@@ -16,7 +16,7 @@ eve 会收集 CLI 使用数据，用来改进命令与开发体验。你可以�
 eve 会向 Vercel 发送：
 
 - eve 版本、操作系统、CPU 架构，以及 stdin 是否为终端。
-- 你运行的命令及其结果，以及适用时的 setup / onboarding 步骤。setup 或 onboarding 失败时，eve 只发送有界的失败类别（例如 target resolution、scaffolding、package-manager startup、workspace probing、dependency installation、Git initialization、handoff、onboarding），**不**发送底层错误本身。
+- 你运行的命令及其结果，以及适用时的 setup / onboarding 步骤（含 connection-ready 与 first-response 计时）。setup 或 onboarding 失败时，eve 只发送有界的失败类别（例如 target resolution、scaffolding、package-manager startup、workspace probing、dependency installation、Git initialization、handoff、onboarding），**不**发送底层错误本身。
 - 对 `eve dev`：连到本地还是远程 Agent，以及 UI 是交互还是 headless。
 - CLI session、安装与项目的随机标识符，以及安装 / 项目标识符是 ephemeral 还是 persistent。
 

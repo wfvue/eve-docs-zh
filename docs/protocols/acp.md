@@ -17,7 +17,7 @@ eve acp
 eve acp https://agent.example.com
 ```
 
-对可识别的 Vercel 部署，eve 会校验精确 origin，并从本地 Vercel session 解析短时、项目范围的 OIDC token。如果需要登录或 Trusted Sources 变更，先运行 `eve dev` 并完成 `/vc:login`，再启动 ACP。部署配置了 Protection Bypass for Automation token 时，仍可使用 `VERCEL_AUTOMATION_BYPASS_SECRET`。
+对可识别的 Vercel 部署，eve 会校验精确 origin，并从本地 Vercel session 解析短时、项目范围的 OIDC token。远程访问需要**已有**已授权的 Vercel session；账户登录发生在本地部署流程中。启动 ACP 前，请在目标项目配置好所需的 Trusted Sources 访问。部署配置了 Protection Bypass for Automation token 时，仍可使用 `VERCEL_AUTOMATION_BYPASS_SECRET`。
 
 ## 配置 Zed
 
