@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-16，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`3c2edaedc40ef91f57f990f0d30be0e39fada000`（相对上次 `bef74fe8`：可观测性目录重组、匿名 audience fail-closed、单 owner 部署 handoff / steering、动态 `workflow` factory、去掉 registry 打包组件、channel audiences 澄清）。llms.txt fingerprint：sha256 `8a01fbbe744f886467be0d9f511fb38f09d696d3ffc646c365700288e23df969`（已更新）。
+对照日期：2026-09-17，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`910bb45d299c916af572b5aa6449777a268c434c`（相对上次 `3c2edaed`：init→chat / `/login`、Project Structure + Agent Files、Teams Connect、withEve `/eve/<name>` 路由、trusted forwarder lineage、workspace services）。llms.txt fingerprint：sha256 `88e15479e8b9ed7b3641abcba9cbcb6c42cee874ad3ef3d9bcdf200186ac9ec4`（已更新）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -33,7 +33,24 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 
 
+## 2026-09-17 上游同步
+
+对照 `vercel/eve` docs tip `910bb45d299c916af572b5aa6449777a268c434c`（相对上次 `3c2edaedc40ef91f57f990f0d30be0e39fada000`）。llms.txt fingerprint 更新为 sha256 `88e15479e8b9ed7b3641abcba9cbcb6c42cee874ad3ef3d9bcdf200186ac9ec4`。
+
+已更新：
+
+- [x] **新页** `concepts/project-structure`、`reference/agent-files`；getting-started 精简并指向二者；保留实践页 `reference/project-layout`
+- [x] init→chat：`/login` 凭据流；agent-config 的 `eve/models/openai|anthropic` helpers；dev-tui / cli / acp / telemetry 对齐
+- [x] Teams Connect 引导（`channels/teams`）；Web Chat / workspace 边界（install-integrations、nextjs）
+- [x] withEve 公开路由改为 `/eve/<name>/v1/*`（vercel、nextjs、schedules、subagents）；自托管 `Run workspace members`
+- [x] trustedForwarders 覆盖 lineage + trace 内容约束（auth、remote-agents、otel）；providers audience 链到 channels overview
+- [x] 动态 resolvers 在 `turn.started` 收到 `ctx.messages`；steering 可在答案前打断模型生成
+- [x] sandbox 镜像 tag 去掉 build metadata；typescript-api 直接 provider 模型与 chatgpt 默认 luna-fast
+
+跳过：官方 Integrations / Templates gallery（按路线图）。
+
 ## 2026-09-16 上游同步
+
 
 对照 `vercel/eve` docs tip `3c2edaedc40ef91f57f990f0d30be0e39fada000`（相对上次 `bef74fe8f2817beba060a0f12fbf0a782efd2299`）。llms.txt fingerprint 更新为 sha256 `8a01fbbe744f886467be0d9f511fb38f09d696d3ffc646c365700288e23df969`。
 
