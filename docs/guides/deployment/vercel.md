@@ -11,7 +11,7 @@ description: "用 Vercel Workflow、Sandbox、Cron 和项目凭据部署 eve Age
 
 ## 准备 Vercel 项目
 
-把 Agent 目录关联到 Vercel 项目：
+从**项目根**关联到 Vercel 项目。eve agent workspace 请用 workspace 根，不要进成员目录：
 
 ```bash
 eve link
@@ -48,29 +48,19 @@ export default defineSandbox({
 
 **官方说明：** Vercel 构建期间，如果 sandbox 有 `bootstrap()` 或 seed files，eve 会自动创建或复用 sandbox template。构建需要创建 Vercel Sandbox templates 的权限，预热失败会阻断部署。模板与 session 设置见 [sandbox 生命周期](../../sandbox#生命周期lifecycle)。
 
-## 声明式 Agent 工作区
+## 部署 Agent
 
-只包含多个可独立寻址根 Agent 的项目，可用 eve 的 hostless workspace 布局：
+无前端的单 Agent 项目用 `eve build`。纯 Agent workspace 从 workspace 根跑：eve 为每个成员生成独立构建的 service，以及 `/<name>/eve/v1/*` 传输路由；所有成员部署在**同一个** Vercel 项目。Workspace 成员身份与布局规则见[项目结构](../../concepts/project-structure)。
 
-```text
-my-project/
-├── package.json
-└── agents/
-    ├── support/
-    │   └── agent/
-    └── research/
-        └── agent/
-```
-
-在 eve workspace 里，eve 发现直接的 `agents/<name>/` 子目录（含嵌套或扁平 agent 文件、且没有自己的 `package.json`）；目录名成为公开身份，暴露在 `/<name>/eve/v1/*`。自带 `package.json` 的子目录是独立包，不算父 workspace 成员。在成员目录运行 Agent 专用命令，或在 workspace 根传入 `--agent <name>`；省略名称时交互命令会打开 picker。项目级的 build / link / deploy 从 workspace 根运行。Workspace 成员共享根 package、依赖和构建脚本。
-
-用 `eve init my-project --agents support,research` 创建该布局，或在已有 workspace 里用 `eve init billing` 再加一个 Agent。
-
-纯 Agent workspace 可跑 `eve build`：eve 拥有 Vercel Build Output，并为每个成员生成独立服务与 `/<name>/eve/v1/*` 传输路由。
+以 Next.js 为中心的项目用 [`next.config.ts` 里的 `withEve`](../frontend/nextjs) 与 Next 构建命令。若在 `vercel.ts` 里编写更广的 service graph，用下面的配置。
 
 ### 与其它 Vercel 服务组合（withEve）
 
-workspace 还要部署前端、私有 API 或其它非 eve 服务时，用根目录 `vercel.ts` 替换 `vercel.json`，并通过 `withEve` 组合 authored graph：
+Agent 与其它应用是对等服务时，用 `eve/vercel` 的 `withEve`。它把 workspace Agent 贡献进 Vercel service graph，**不**管理或要求特定前端框架。与 `eve/next` 不同，项目生命周期与 Next.js 分离。两种集成都把 Agent service **一起**部署进同一个 Vercel 项目。
+
+`eve/vercel` 目前要求 `agents/` workspace（即使只有一个成员），**不**支持独立的根 `agent/`。
+
+workspace 里若有对等 Next.js 前端（例如 `apps/web/`），用根 `vercel.ts` 替换 `vercel.json`。前端用普通 Next.js 配置，**不要** `eve/next`：
 
 ```ts title="vercel.ts"
 import { withEve } from "eve/vercel";
@@ -91,11 +81,21 @@ export default await withEve({
 });
 ```
 
-`withEve`（来自 `eve/vercel`）会发现直接 workspace 成员，补上它们的 services 与传输路由，再返回普通 Vercel 配置。生成的传输路由插在 filesystem handler 之前（没有则插在 authored routes 之前）。它不会覆盖已 authored、且属于生成 Agent 的 service key 或精确传输路由——冲突时抛错。自定义 channel 端点不会自动发布，需要显式 route 到生成的 service。一个 Vercel 项目只能有一种配置源：采用 `vercel.ts` 时删掉 `vercel.json`。根 package 依赖里要有 `eve`。
+Vercel 在解析 service graph 前评估 `vercel.ts`。`withEve` 把根 Agent、或每个直接 workspace 成员，加成独立构建的 service，并返回普通 Vercel 配置。命名 workspace Agent 挂在 `/eve/<name>/v1/*`；根 Agent 挂在 `/eve/v1/*`。随后 Vercel 分别构建前端与各 eve Agent。前端不需要在框架配置里再写 `withEve`，也不需要构建 Agent 的 build script。
 
-## 部署 Agent
+Web Chat 安装器不支持 agent workspace。前端请用 [React 聊天示例](../frontend/overview#basic-chat-react) 自建，并为每个对外暴露的 Agent 配置鉴权。同一源码布局自托管时，用自己的[进程与代理配置](./self-hosting#run-workspace-members)替换 Vercel 组合。
 
-把已链接项目部署到生产：
+本地跑完整 service graph：Vercel CLI **59.16.0+**，`vercel dev --local`。命名 Agent 在开发里同样用 `/eve/<name>/v1/*`；默认 `defineWorkspaceAgent` transport 可在无部署凭据时调用同伴。只需要单个 Agent 与 eve 终端 UI 时，改用 `eve dev`。
+
+生成的传输路由插在 filesystem handler 之前（没有则插在 authored routes 之前）。`withEve` 不会覆盖已 authored、且属于生成 Agent 的 service key 或精确传输路由——冲突时抛错：删掉 authored 路由，并移除或重命名 authored service。`services` 数组形式的名字也必须唯一。其它 service 名、路由、bindings、Cron Jobs 仍写在 `vercel.ts`。
+
+一个 Vercel 项目只能有一种配置源：采用 `vercel.ts` 时删掉 `vercel.json`。根 package 依赖里要有 `eve`，以便评估配置时能 `import eve/vercel`。`withEve` 会发现其评估目录所在的 workspace（含 Vercel 临时 `.vercel` 配置目录）。只有需要指定特定 workspace 根时，才把 `{ root: "/absolute/workspace/path" }` 作为第二参数传入。
+
+已 authored、路由在 `/eve/v1` 的 eve service 已使用协议路径；callback 仍在 `/eve/v1/callback/*`。命名挂载如 `/eve/support` 会把该挂载加在协议路径前，得到 `/eve/support/v1/callback/*`。
+
+### 部署项目
+
+从项目根把已链接项目部署到生产：
 
 ```bash
 eve deploy
@@ -118,11 +118,18 @@ Vercel 用生成的 output 配置这些服务：
 
 ## 验证部署
 
-检查 health 路由并连接开发 TUI。Workspace 布局下路径带上 Agent 名：
+单个未命名 Agent：检查 health 并连接开发 TUI：
 
 ```bash
-curl https://your_agent.vercel.app/support/eve/v1/health
-eve dev https://your_agent.vercel.app/support
+curl https://your_agent.vercel.app/eve/v1/health
+eve dev https://your_agent.vercel.app
+```
+
+Workspace Agent 带上公开 `/eve/<name>` 挂载，例如：
+
+```bash
+curl https://your_agent.vercel.app/eve/support/v1/health
+eve dev https://your_agent.vercel.app/eve/support
 ```
 
 如果部署开了 Deployment Protection，连接前先在本地设置 `VERCEL_AUTOMATION_BYPASS_SECRET`。
