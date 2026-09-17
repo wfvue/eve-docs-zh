@@ -1,141 +1,115 @@
 ---
 title: "开发终端界面（Dev TUI）"
-description: "在交互式终端 UI 中驱动 Eve Agent：聊天、流式输出、审批工具、回答问题、调整展示，并连接部署环境。"
+description: "在交互式终端 UI 中驱动 Eve Agent：聊天、流式输出、审批工具、回答问题，并连接部署环境。"
 ---
 
 # 开发终端界面（Dev TUI）
 
 `eve dev` 会启动本地 runtime，并进入交互式终端 UI。你可以和 Agent 聊天，观察流式输出，审批工具调用，也可以回答 Agent 反问的问题。
 
+官方原文：[Terminal UI](https://eve.dev/docs/guides/dev-tui)。
+
 ```bash
 eve dev
 ```
 
-启动时，TUI 会打印 Agent 名称和一条轮换 tip。本地 session 示例：
+页脚用圆点分隔显示当前模型与连接。Vercel 账户连接在 team slug 解析后显示；本地 server 端口不再出现在页脚。
+
+退出后 transcript 仍留在终端 scrollback。当前 session 可用命令见 `/help`。
+
+## 命令（Commands）
+
+| Command | 说明 |
+| --- | --- |
+| `/login` | 连接 ChatGPT 订阅、Vercel 账户或 provider API key |
+| `/model` | 选择模型与设置；也可 `/model provider/model-id` 直接设定 |
+| `/add` | 搜索并安装 channels、MCP connections、extensions、可观测性集成；也可 `/add channel/slack` 直接装 |
+| `/deploy` | 部署到 Vercel production；需要时会安装 Vercel CLI、登录并 link |
+| `/info` | 显示解析后的应用、编译产物、discovery diagnostics、messaging routes |
+| `/loglevel` | 选择 transcript 显示哪些 server / agent logs |
+| `/traces` | 打开本地 trace 查看器；可传 trace ID 前缀 |
+| `/reset` | 开始全新 session |
+| `/cancel` | 取消当前 turn，不丢弃已结算上下文 |
+| `/clear` | 清空 session 的模型消息历史；`/new` 是别名 |
+| `/compact` | 压缩当前 session 上下文 |
+| `/exit` | 退出 UI |
+| `/help` | 列出可用命令 |
+
+`/login`、`/model`、`/add`、`/deploy`、`/info`、`/traces` 仅在本地 `eve dev` 时可用；用 `--url` 连远程 server 时不可用。
+
+## 设置新 Agent（Set up a new agent）
+
+交互式 `eve init` 之后，TUI **直接打开**。eve 会保留项目已选连接。新连接时依次检查：显式环境凭据 → 已保存的机器默认 → Vercel CLI 当前 team。已有项目 OIDC 连接仍支持。自动复用 Vercel 时只校验账户访问，**不会**创建或 link 项目。
+
+启动时 composer 保持可见，进度指示会点名正在检查的连接，并显示何时准备好聊天。可先打字按 `Enter` 排队；需要选择或 API key 时 picker 临时接管输入，草稿之后会回来。取消或失败时，排队消息回到草稿。
+
+没有就绪连接时，`/login` 提供：
+
+1. Vercel Account
+2. Vercel AI Gateway API Key
+3. ChatGPT Subscription
+4. OpenAI API Key
+5. Anthropic API Key
+
+Vercel 账户登录会开浏览器。多个 team 时出现可搜索 team picker（高亮当前 project / CLI team）；只有一个 team 则自动选。自动启动复用已选连接时不会打开该 picker。账户 token 访问 Gateway 取决于账户与 team 可用性；不可用时请选 API key 或其它连接。
+
+输入可过滤菜单，`Enter` 选择，`Esc` 回聊天。关掉设置菜单不会往 transcript 加取消消息；已完成的工作与失败仍会显示。也可用方向键。取消 login 会保留草稿。连接失败请再试 `/login`；eve **不会**静默换 provider。
+
+### 凭据与部署
+
+API key 与 eve 自有的 OAuth refresh 凭据经 just-secrets 存在 OS secret store。上次成功登录会存为机器默认；项目的连接与 team 作为非密钥元数据记在 `.eve/provider.json`。新输入的 key **不会**写入项目文件。经 `/login` 显式选中的 key 优先于 shell 里同 provider 的其它 key；用环境凭据连上的项目继续用环境。Vercel CLI 仍拥有自己的凭据与 refresh token。
+
+本地 discovery 只在开发环境运行。部署需要显式配置 `AI_GATEWAY_API_KEY`、`OPENAI_API_KEY`、`ANTHROPIC_API_KEY` 或受支持的 project OIDC。ChatGPT 订阅模型仅本地。`/login` **不会** link 部署或给远程 server 鉴权；需要时由 `/deploy` 处理 Vercel CLI 安装与账户登录。
+
+### 模型与设置
+
+`/model` 打开模型选择与设置。每次完成选择立即生效并回聊天，没有最终 Done 步。成功的 login 或模型变更在下一条 prompt 生效。
+
+OpenAI / ChatGPT / Gateway 默认 `gpt-5.6-luna-fast`；Anthropic 默认 `claude-sonnet-5`。已显式编写且兼容的模型会保留。新默认不可用时，eve 提供该连接上可用的模型。动态或自定义 model 表达式须在 `agent.ts` 里改。
+
+## 添加集成（Add an integration）
+
+`/add` 打开 channels、connections、extensions、integrations 的统一可搜索目录。输入过滤，`Enter` 安装一项并跑其必要设置，然后回聊天。
+
+也可直接传地址：
 
 ```text
- eve weather-agent
- Use /channels to add more ways to reach your agent.
+/add channel/slack
+/add @acme/analytics
 ```
 
-如果 discovery 报告了问题，错误和警告数量会显示在这两行之间。Instructions、tools、skills 和 subagents 都可以通过 `eve info` 查看，`/help` 会列出所有命令。TUI 也会执行 startup check。新鲜的 `eve init` 项目在本地 `eve dev` 时会预填 `/model`，引导你安装 Vercel CLI、登录并配置模型。其它 `eve dev` sessions 会把缺失配置显示为 attention line，并把每个命令的结果挂在 `⎿` 下。
+所选条目仍会跑必要的授权或部署设置。`Esc` 取消设置；已写入项目的文件会保留。
 
-## 阅读 transcript（Reading the transcript）
+## 与 Agent 协作（Work with the agent）
 
-对话会直接流入终端原生 scrollback，所以你可以使用终端自己的滚动、复制粘贴，并在退出后保留 transcript。Scrollback 会包含 prompts、Agent 回复、reasoning、tool calls、嵌套 subagents、connection authorization prompts，以及捕获到的 `stdout`、`stderr` 和 sandbox lifecycle lines。
+打字后 `Enter` 发送。Agent 提问或请求工具审批时，在 UI 提示里回答。连接授权可能开浏览器；保持本地 `eve dev` 运行直到浏览器返回。
 
-每个 turn 不会用 box 包起来。彩色 gutter glyph 表示说话方，tool calls 会折叠成一行 summary，例如 `✓ get_weather  city="SF" → 73°F`。Subagent 的工作会缩进到 `◆` header 下方。当可以输入时，prompt 保持裸露；Agent 等待响应时会显示绿色圆点脉冲，reasoning 或 answer 内容开始后消失。
+turn 进行中，`Enter` 会立刻把消息作为 **steering** 发送。助手输出开始前，runtime 打断待进行的模型生成，并在同一 turn 用你的校正继续。正在执行的 tools 会安全收尾。输出开始后，steering 在下一 workflow 边界应用，并保留已流式文本。
 
-Prompt 或 status 下方的持久行会显示 model、session token flow、已链接的 Vercel project，以及 channel 添加后还未 `/deploy` 时的黄色 `/deploy pending`。本地 session 显示灰色 `:port` badge，远程 session 显示 `↗ project (environment)` 或 host。错误会紧凑显示，并高亮 docs links；Agent 自身代码抛出的 bug 会把 stack trace 以 dim 样式显示在错误标题下方。
+除 `/cancel`（直接取消）外，斜杠命令会等到 turn 结束。session 不支持 steering 时，消息排到下一 turn。无排队时，`Esc` / `Ctrl+C` 取消 turn；有排队时选最旧一条做 steering（或不支持时作下一 turn）。直接取消若未 settle，再按 `Ctrl+C` 停止等待；随后回到 prompt，再按一次退出。空闲 prompt 连按两次 `Ctrl+C` 退出。
 
-## Slash commands（Slash commands）
-
-每个 slash command 会以 invocation line 回显，通过临时 panel 提问，然后以一行 `⎿` 结果结束。Loading states 会放在 ephemeral status line 上，而不是反复堆到 transcript 中。
-
-| Command | 作用 |
+| Key | 作用 |
 | --- | --- |
-| `/model` | 打开模型和 provider 配置菜单。见 [配置模型和 provider](#配置模型和-providerconfigure-the-model-and-provider)。 |
-| `/channels` | 展示 Agent channel 列表，并添加所选 channel。见 [添加 channel](#添加-channeladd-a-channel)。 |
-| `/connect` | 展示 Vercel Connect MCP catalog，并配置所选 server。见 [添加 connection](#添加-connectionadd-a-connection)。 |
-| `/deploy` | 把 Agent 发布到 Vercel production，未链接目录时会先链接。 |
-| `/info` | 显示解析后的应用、编译产物、discovery diagnostics 和 messaging routes。 |
-| `/vc:install` | 安装 Vercel CLI。本地和远程 session 都可用。 |
-| `/vc:login` | 本地登录 Vercel。远程 session 中会解析部署项目、刷新 OIDC token，并确认 Trusted Sources 规则。 |
-| `/loglevel` | 切换 transcript 显示哪些 logs。见 [控制日志显示](#控制日志显示control-what-logs-show)。 |
-| `/new` | 开始一个新 session。 |
-| `/exit` | 退出 TUI。 |
-| `/help` | 列出当前本地或远程 session 可用命令。 |
+| `Enter` | 发送消息；turn 进行中则 steer（或排队） |
+| `Esc` / `Ctrl+C` | 取消 / 选择排队消息；见上文 |
+| `Shift+Enter` | 换行（需终端支持 modified keys） |
 
-`/model`、`/channels`、`/connect`、`/deploy` 和 `/info` 用来管理本地 Agent 或其已链接项目。它们只在 `eve dev` 本地启动 server 时可用；连接远程 server（`--url`）时不可用。
+更多键盘与 transcript 阅读习惯见官方页；本地也可继续用 `Ctrl+L` 循环日志模式（若当前构建仍暴露）。
 
-### 配置模型和 provider（Configure the model and provider）
-
-裸 `/model` 会打开配置菜单。未配置 provider 时，会直接打开 provider picker，Esc 回到配置菜单。“Change model” 会打开可搜索 model picker，使用 Vercel AI Gateway catalog，并预选 runtime 当前服务的 model。模型变更会写入 Agent authored source，只有 Eve 确认新 id 后命令才报告成功。完成模型或 provider 变更后，菜单关闭并把结果写回 transcript。Done 或 Esc 不做变更直接关闭。`/model <provider/model-id>` 可以跳过菜单直接应用。
-
-Provider 行会打开三类菜单：通过 project 使用 AI Gateway、通过 `AI_GATEWAY_API_KEY` 使用 AI Gateway，或 **Other providers**。Key 选项高亮时会变成 masked input。输入会被验证，失败时显示 `Invalid key`，成功后保存到 `.env.local`。Project 选项会选择 Vercel team、打开该 team 最近 projects，并支持搜索较旧项目。Vercel 会链接所选 project，Eve 验证 project ID，然后把环境写入 `.env.local`。Dev server 会自动重新加载 env files 和刷新 status bar，不需要重启。
-
-### 添加 channel（Add a channel）
-
-`/channels` 会展示 Agent 的 channel 列表。已注册 channels 会显示为 checked，并带有 “Already installed” 提示。选择某个 channel 会添加它，包括 Slack Connect provisioning，并安装 scaffold 新增的依赖，让 dev server 立刻能加载新 channel。每次添加后列表会重新渲染，直到 Done 或 Esc 退出流程。
-
-### 添加 connection（Add a connection）
-
-`/connect` 会展示 Vercel Connect 可用的 MCP servers 搜索列表。已 authored connections 会保持 checked。未登录用户会被引导到 `/vc:login`。目录未链接时，选择 server 会打开和 `/model` 相同的 team / project 流程，可以创建 project 或链接已有项目。
-
-对于所选 server，Eve 会先尝试附加 provider canonical connector。如果失败，可以从搜索列表中选择已有 connector，或使用指定名称创建一个。成功后会写入 `agent/connections/<name>.ts`，记录 attached connector UID，并安装新依赖，让 dev server 能加载它，然后返回主 prompt。
-
-## 键盘快捷键（Keyboard shortcuts）
-
-Chat 和 freeform `ask_question` 输入像 shell line editor 一样工作。turn 进行中按 `Enter` 会排队后续消息；`Esc` 或 `Ctrl+C` 取消当前 turn（有排队时用最旧一条作为下一 turn）。直接取消若卡住，可用 `Ctrl+C` 中断等待。
-
-| Key | Action |
-| --- | --- |
-| `Enter` | 提交消息或 question response。 |
-| `Shift+Enter` | 插入换行，不发送。需要终端支持 modified keys。 |
-| `Ctrl+C` | turn 进行中：取消或用最旧排队消息 steer；若 `/cancel` / `Ctrl+C` 的取消一直未 settle，再按一次可停止等待并回到 prompt，随后再按一次退出；空闲 prompt 连按两次退出。 |
-| `↑` / `↓` | 在输入行之间移动；到达 chat buffer 边缘时，浏览本 session 中发过的消息。 |
-| `←` / `→`, `Home` / `End`, `Ctrl+A` / `Ctrl+E` | 移动光标；Home/End 保持在当前行内。 |
-| `Ctrl+U` / `Ctrl+K` / `Ctrl+W` | 删除到行首、行尾或前一个词。 |
-| `Ctrl+L` | 循环日志展示模式：`none → all → stderr → sandbox → none`，并短暂显示当前模式。 |
-| `Ctrl+R` | 重绘屏幕。 |
-
-支持 bracketed paste 的终端中，粘贴多行文本会保持多行插入，不会在第一行自动提交。`Shift+Enter` 可以手动添加换行。输入框会向下增长直到可用终端高度，然后滚动保持光标可见。
-
-如果某个 turn terminally failed，例如 server session 死亡或连接断开，TUI 会开始一个新 session，并在行内提示你可以继续。旧 session 的 server-side context 会重置。
-
-## 内联回答 Agent（Answer the agent inline）
-
-当 Agent 需要你补充信息时，TUI 会在内联位置提问：
-
-- Tool approvals 使用 `y` 或 `n`。
-- Option questions 可以用 `↑` / `↓` 和 `Enter` 选择，也可以写多行 freeform answer。
-- 如果某个 tool 需要授权 [连接（Connections）](../../connections)，URL 会直接显示在 transcript 中。你完成浏览器授权后，turn 会继续。这个回调 route 由本地 `eve dev` server 持有，所以授权期间保持命令运行。`eve dev --url` 连接已有 server，不会启动本地 callback host。
-
-## 控制日志显示（Control what logs show）
-
-默认情况下，`eve dev` 显示 `stderr`，并缓冲但隐藏 stdout 和 sandbox lines。捕获的 server `stdout` / `stderr` 会以 dim、缩进的 log runs 显示，sandbox lifecycle lines 使用自己的 label。
-
-- `/loglevel <all|stderr|sandbox|none>` 会切换 transcript 显示内容，并 retroactively 生效。裸 `/loglevel` 显示当前模式。
-- `--logs <all|stderr|sandbox|none>` 设置启动时模式，默认 `stderr`。
-- `Ctrl+L` 在 idle prompt 下循环 `none → all → stderr → sandbox → none`。
-
-## 展示参数（Display flags）
-
-Density flags 控制每个 section 渲染多少内容。可选值是 `full`、`collapsed`、`auto-collapsed` 或 `hidden`。
+## 连接远程部署
 
 ```bash
-eve dev --tools full --assistant-response-stats tokens --context-size 200000
+eve dev https://your-app.example.com
+eve dev https://your-app.example.com -H 'Authorization: Bearer your_token_here'
 ```
 
-| Flag | Values | Effect |
-| --- | --- | --- |
-| `--tools <mode>` | `full` / `collapsed` / `auto-collapsed` / `hidden` | tool calls 如何渲染，默认 `auto-collapsed`。 |
-| `--reasoning <mode>` | `full` / `collapsed` / `auto-collapsed` / `hidden` | reasoning 如何渲染，默认 `full`。 |
-| `--subagents <mode>` | `full` / `collapsed` / `auto-collapsed` / `hidden` | subagent sections 如何渲染。 |
-| `--connection-auth <mode>` | `full` / `collapsed` / `auto-collapsed` / `hidden` | connection authorization 如何渲染。 |
-| `--assistant-response-stats <mode>` | `tokens` / `tokensPerSecond` | assistant header 展示哪种统计。 |
-| `--context-size <tokens>` | token count | 模型上下文窗口大小，以 usage percentage 展示。 |
-| `--logs <mode>` | `all` / `stderr` / `sandbox` / `none` | 展示哪些 server 和 agent logs，默认 `stderr`。 |
+远程 Vercel session 复用**已有**已授权 CLI session，不会打开账户登录流，也不会改本地项目的 Vercel link 或 `.env.local`。
 
-Connection flags：`--host` 和 `--port` 用来绑定本地 server，`--no-ui` 以 headless 方式运行。当 stdout 不是 TTY 时，也会自动 fallback 到 headless。完整参数见 [CLI](../../reference/cli)。
+若 Deployment Protection 挡住启动，eve 会校验目标项目，并在征得同意后为该部署环境加 Trusted Sources 开发访问规则；批准后应用规则并再次检查访问，再回聊天。取消会保留草稿；重试请再跑 `eve dev <url>`。若无法改项目策略，提供 `VERCEL_AUTOMATION_BYPASS_SECRET`，或请项目管理员在 Deployment Protection 里配置访问。
 
-## 远程模式：`eve dev <url>`（Remote: `eve dev <url>`）
+## 接下来读什么
 
-传入 URL 后，TUI 会和正在运行的部署通信，而不是启动本地 server。这适合 Vercel preview 或 production smoke test。
-
-```bash
-eve dev https://<your-app>
-```
-
-裸 URL 是 `--url` 的简写，不能和 `--host`、`--port` 或 `--no-ui` 组合。
-
-启动时，TUI 会请求 Vercel 在当前 scope 下解析远程 origin。解析成功后，可以获取 project-scoped OIDC token，或使用 automation-bypass secret。无法解析的 host 会匿名 probe。随后 TUI 请求 `/eve/v1/info`，超时 10 秒。成功响应表示 remote ready。Eve OIDC challenge、Vercel Deployment Protection challenge 或 `TRUSTED_SOURCES_ENVIRONMENT_MISMATCH` 会自动打开 `/vc:login`；普通网络失败和 server errors 仍然是 remote availability errors，不会启动 auth flow。Esc 或 Ctrl-C 会取消鉴权流程。
-
-远程 session 中的 `/vc:login` 会先从 URL 解析部署所属 Vercel project。如果当前 scope 无法解析，会询问另一个 team，并在该 team scope 中重新查找。CLI 未登录时，会先走浏览器登录。该流程会在添加所需 Trusted Sources rule 前询问你，并通过 `@vercel/oidc` 获取 project-scoped token；不会重新链接目录，也不会修改 `.env.local`。最后会重试 `/eve/v1/info`，证明凭据可用。
-
-`VERCEL_AUTOMATION_BYPASS_SECRET` 仍可用于 Protection Bypass for Automation token。Smoke test 流程见 [部署（Deployment）](../deployment)。
-
-## 接下来读什么（What to read next）
-
-- [可观测性（Instrumentation）](../instrumentation/overview)：OpenTelemetry、run tags 和常见失败
-- [CLI](../../reference/cli)：所有命令和参数
+- [快速开始](../getting-started)
+- [Agent Files](../reference/agent-files)
+- [CLI](../reference/cli)
+- [部署到 Vercel](./deployment/vercel)
