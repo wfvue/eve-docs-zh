@@ -33,7 +33,7 @@ export default otel({
 });
 ```
 
-OpenTelemetry 的 `tracePolicy` 是所有 OTel destinations 共享的捕获上限；destination **不能**恢复被该策略排除的内容。它不影响用 `defineInstrumentation()` 写的 lifecycle-event providers。
+OpenTelemetry 的 `tracePolicy` 是所有 OTel destinations 共享的捕获上限；destination **不能**恢复被该策略排除的内容。它不影响用 `defineInstrumentation()` 写的 lifecycle-event providers。Channel 如何把对话分类并交给该策略，见 [Audience](../../channels/overview#audience)。
 
 ## 添加 destination（Add an OpenTelemetry destination）
 
@@ -62,7 +62,7 @@ invoke_agent <agent>
               └── execute_tool <tool>
 ```
 
-每个 turn 开新 trace。首次子智能体 trace 用 `eve.link.type=agent.dispatch` 链到 caller。用 `gen_ai.conversation.id` 在 destination 的 span 搜索里找同对话的 traces。
+每个 turn 开新 trace。首次子智能体 trace 用 `eve.link.type=agent.dispatch` 链到 caller；该 link **不是**授权许可。远程 Agent 上，`trustedForwarders` 让接收方接受发送方的 session lineage 与 trace 内容策略。见[远程 Agent](../remote-agents#preserving-trace-content)。用 `gen_ai.conversation.id` 在 destination 的 span 搜索里找同对话的 traces。
 
 ## 管理内置 destinations（Manage built-in destinations）
 

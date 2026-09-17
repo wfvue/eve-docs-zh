@@ -97,7 +97,7 @@ export default defineInstrumentation({
 
 返回 `{ emit: false }` 跳过采样；返回 `{ emit: true, recordInputs, recordOutputs }` 显式选择两个方向。省略的内容字段对 handler 不可用。
 
-Channel 在创建 session 时一次性指定 audience；它控制**内容捕获**，不是访问权。配置见 [默认 eve HTTP channel](../../channels/eve#audience) 或 [自定义 channel](../../channels/custom#对话-audienceconversation-audience)。
+Channel 在创建 session 时一次性指定 audience；它控制**内容捕获**，不是访问权。`public` / `private` / `unknown` 如何派生见 [Audience](../../channels/overview#audience)。
 
 ## 在自定义 provider 里脱敏（Redact）
 
