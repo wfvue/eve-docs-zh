@@ -46,7 +46,7 @@ Vercel 上 Agent 调另一个 Vercel Agent 时，常用 `vercelOidc()`。跨项�
 
 ## 转发调用方身份
 
-默认远程 session 以**你的调用应用**身份运行，而不是终端用户。需要远程侧按用户工作（例如 per-user Vercel Connect）时，设 `forwardPrincipal: true`。线上只传 principal 元数据，不传 token；接收方用自己的 connections 解析凭据。接收方必须用 `eveChannel({ trustedForwarders })` 显式信任转发者，否则 403。
+默认远程 session 以**你的调用应用**身份运行，而不是终端用户。需要远程侧按用户工作（例如 per-user Vercel Connect）时，设 `forwardPrincipal: true`。线上只传 principal 元数据，不传 token；接收方用自己的 connections 解析凭据。转发身份须两端显式：接收方用 `eveChannel({ trustedForwarders })` 点名信任哪些部署，拒绝转发者会以 403 拒绝转发的 principal。同一信任裁决也覆盖父 session lineage，以及（在转发 principal 时）trace 内容约束。
 
 > ⚠️ **官方说明：** 在依赖较新的续跑 / reset 行为前，先升级两端部署。带 continuation forwarding 的发送方会在已鉴权 follow-up 上带 `forwardedPrincipal`；只支持创建时转发的旧接收方会以 HTTP 400 拒绝——eve 不会去掉该字段重试，以免静默改成 service principal。
 
@@ -62,7 +62,7 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 
 已 admit 的任务在发起 turn 取消后仍存活；尚未 admit 的随取消 step 拒绝。用 `task_cancel` 停已 admit 的任务。取消时 eve 会重新解析 `headers` / `auth`。
 
-也可以用同一 `agentId` 与更新后的 `message` **steer** 正在运行的远程后台 child：child 先完成当前 Workflow step，再在同一 turn 的下一次模型调用前应用更新；receipt 保留同一 `agentId` / `taskId`。共享契约见 [Agent messaging](../../subagents#agent-messaging)。
+也可以用同一 `agentId` 与更新后的 `message` **steer** 正在运行的远程后台 child：答案输出或本地工具执行开始前会打断待进行的模型生成并在同一 turn 应用更新；正在执行的 tools 先收尾；答案开始后等到下一 Workflow 边界。receipt 保留同一 `agentId` / `taskId`。共享契约见 [Agent messaging](../../subagents#agent-messaging)。
 
 父 session 结束时，eve 对每个远程 child 发已鉴权 `reset`（尽力而为）。
 
@@ -73,6 +73,8 @@ Parent stream 带有与本地委派相同的 `subagent.called`、`action.result`
 ## Trace 传播（Trace propagation）
 
 每次远程 turn 开新 trace。eve 把子级 trace 链到分派 turn，并携带 `gen_ai.conversation.id`，便于查找同一对话的 traces。Trace context 是可观测性元数据，**不是**授权凭证。拓扑见 [OpenTelemetry](./instrumentation/otel#trace-拓扑trace-topology)。
+
+eve 另行携带父 session lineage。仅当 `trustedForwarders` 批准已认证调用方时，接收方才接受它；否则仍做 trace 关联，但不带 lineage。
 
 请求须含 callback 与有效的采样 `traceparent`。`trustedForwarders` 是授权边界。断言被接受后，接收方使用**转发的 audience**，而不是用本地 channel 重新分类子 session。接收方把转发的 ceiling 与自身 trace policy 合并：每跳只能收窄，不能恢复更早去掉的 inputs/outputs。缺失、畸形、未采样或不受信任的断言不会放宽捕获，只做元数据 tracing。
 
