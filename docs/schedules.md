@@ -99,7 +99,7 @@ curl -X POST http://localhost:2000/eve/v1/dev/schedules/heartbeat
 
 ## 在 Vercel 上（On Vercel）
 
-托管的 Vercel 构建把每个 `defineSchedule(...)` 变成 Vercel Cron Job，每个 `cron` 写成 `.vercel/output/config.json` 里的一条。当 [`withEve`](../guides/frontend/nextjs) 把 Agent 嵌入 Next.js 部署时也是如此：Vercel 会把每个生成的 eve service 的 schedules 汇编进项目 Build Output config，同时保留已有项目 cron 条目。命名 Agent 自动使用它们的公开 `/eve/agents/<name>` 路由前缀。
+托管的 Vercel 构建把每个 `defineSchedule(...)` 变成 Vercel Cron Job，每个 `cron` 写成 `.vercel/output/config.json` 里的一条。当 [`withEve`](../guides/frontend/nextjs) 把 Agent 嵌入 Next.js 部署时也是如此：Vercel 会把每个生成的 eve service 的 schedules 汇编进项目 Build Output config，同时保留已有项目 cron 条目。命名 Agent 自动使用它们的公开 `/eve/<name>` 路由前缀。
 
 在本地运行 `vercel build` 时，使用 Vercel CLI 56.4.0 或更高版本，让生成的 service cron 条目包含在项目输出中。
 
