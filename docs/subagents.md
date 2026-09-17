@@ -74,7 +74,7 @@ export default defineWorkspaceAgent({
 });
 ```
 
-默认用同伴根 `defineAgent({ description })` 作为工具描述；也可传 `description` 覆盖。省略 `transport` 时，eve 按运行环境选内置传输：Vercel 部署走当前 deployment，并用调用方 Vercel OIDC。经 Next.js `withEve()` 托管的 workspace 走 `/eve/agents/<name>` mount；无 host 的 workspace 走 `/<name>`。在 Vercel 之外要显式提供 `url` 与可选 `auth` / `headers`。显式 transport 会完全替换环境默认值。需要转发用户身份时设 `forwardPrincipal: true`（见 [远程 Agent](./guides/remote-agents)）。`eve dev` 不提供本地 workspace 路由——要对着单独跑着的同伴，配置显式 transport。
+默认用同伴根 `defineAgent({ description })` 作为工具描述；也可传 `description` 覆盖。省略 `transport` 时，eve 为 **Vercel 运行环境**选择内置传输。本地 `vercel dev` 可在无部署凭据时路由 workspace 调用；Vercel 部署走当前 deployment，并用调用方 Vercel OIDC。命名同伴使用 `/eve/<name>` mount。在这些环境之外要显式提供 `url` 与可选 `auth` / `headers`。显式 transport 会完全替换环境默认值。需要转发用户身份时设 `forwardPrincipal: true`（见 [远程 Agent](./guides/remote-agents)）。用根 `vercel.ts` 经 `withEve` 组合后跑 `vercel dev --local`，可启动全部成员并启用默认本地 workspace transport。`eve dev` 只启动选定 Agent；要对着单独跑着的同伴调用，配置显式 transport。
 
 ### 条件可用
 
@@ -137,7 +137,7 @@ Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不�
 
 Child 回答后 park 而不是终结，保留 session 与历史。失败 turn 也可能 park。把 park 的 `agentId` 传回同一子智能体工具并带新 `message` 即可续跑。省略 `agentId`（或空 / null）总是新开 child；未知 `agentId` 回退为新开而不是失败。已知 `agentId` 走错子智能体工具 → `AGENT_MISMATCH`。
 
-要 **steer** 正在运行的后台 child：用同一子智能体工具，带上它的 `agentId` 和更新后的 `message`。child 先完成当前 Workflow step，再在**同一 turn** 的下一次模型调用前应用更新。receipt 保留同一 `agentId` 与 `taskId`；steering **不会**取消任务、替换其 completion callback，也不会撤销已发生的工具副作用。
+要 **steer** 正在运行的后台 child：用同一子智能体工具，带上它的 `agentId` 和更新后的 `message`。在答案输出或本地工具执行开始前，steering 会打断 child 待进行的模型生成，并在同一 turn 应用更新。正在执行的 tools 先收尾并 checkpoint；答案输出开始后，steering 等到下一个已提交的 Workflow 边界。receipt 保留同一 `agentId` 与 `taskId`；steering **不会**取消任务、替换其 completion callback，也不会撤销已发生的工具副作用。
 
 仍在 starting、或归属于阻塞中的 workflow 调用（而不是已 admit 的后台任务）的 child，继续返回 `AGENT_BUSY`。投递失败会报告给调用方；eve 不会另开替换 child 来掩盖失败。
 
