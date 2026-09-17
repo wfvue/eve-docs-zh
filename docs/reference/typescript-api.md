@@ -93,7 +93,8 @@ export default defineTool({
 | `eve/context` | `defineState`、session 和 state 类型 |
 | `eve/sandbox` | `defineSandbox`、backends |
 | `eve/instrumentation` | `defineInstrumentation`、`isChannel` |
-| `eve/models/openai` | `chatgpt`（`experimental_chatgpt` 为弃用别名） |
+| `eve/models/openai` | `openai`、`chatgpt`（`experimental_chatgpt` 为弃用别名） |
+| `eve/models/anthropic` | `anthropic` |
 | `eve/evals` | `defineEval`、`defineEvalConfig`、`mockModel`、eval 类型 |
 | `eve/evals/expect` | `includes`、`equals`、`matches`、`similarity` |
 | `eve/evals/reporters` | `Braintrust`、`Datadog`、`JUnit`、`EvalReporter` |
@@ -104,9 +105,15 @@ export default defineTool({
 
 导出类型从它们描述的 helper 所在的同一 entrypoint 发货（例如 `ToolDefinition` 和 `ToolContext` 来自 `eve/tools`）。详尽清单读 `packages/eve/src/public/index.ts`。
 
+## 直接 provider 模型
+
+`eve/models/openai` 的 `openai(model?)` 与 `eve/models/anthropic` 的 `anthropic(model?)` 返回 eve 自有的模型实例（vendored providers），只接受可选 model ID。默认分别为 `gpt-5.6-luna-fast` 与 `claude-sonnet-5`。
+
+本地用 `/login`，或设置 `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`。部署环境禁用本地 secret-store 发现，须显式配置服务端凭据。示例见[设置模型](../agent-config#设置模型)。
+
 ## ChatGPT 订阅模型
 
-`eve/models/openai` 的 `chatgpt()` 通过本地 ChatGPT 登录服务 OpenAI 模型，并记到 ChatGPT 订阅账上。不带参数时选择 `gpt-5.6-sol`：
+`eve/models/openai` 的 `chatgpt()` 通过本地 ChatGPT 登录服务 OpenAI 模型，并记到 ChatGPT 订阅账上。不带参数时选择 `gpt-5.6-luna-fast`：
 
 ```ts title="agent/agent.ts"
 import { defineAgent } from "eve";
@@ -123,7 +130,7 @@ export default defineAgent({
 
 eve 走**一条**本地鉴权路径，但有两种凭据所有者：
 
-1. 运行 `eve dev`，打开 `/model`，选择 **Provider** → **ChatGPT subscription**。
+1. 运行 `eve dev`，打开 `/login`，选择 **ChatGPT subscription**。
 2. 若 `PATH` 上有 `codex`，eve 优先用 `codex app-server`；需要登录时启动 `codex login`。此时由 **Codex** 拥有凭据存储与刷新。
 3. 找不到 Codex 二进制时，回退到直接浏览器登录，由 **eve** 拥有已保存 session 与刷新。浏览器未打开时用终端打印的 URL。
 
@@ -139,9 +146,9 @@ ChatGPT 订阅凭证是本地用户凭证。`eve deploy` 会阻止活跃模型�
 
 排障：
 
-- **`chatgpt-sub login`**：打开 `/model`，再选 **Provider** → **ChatGPT subscription** 重新登录。有 Codex 时 eve 会启动 `codex login`；否则走直接登录。
+- **`chatgpt-sub login`**：打开 `/login`，再选 **ChatGPT subscription** 重新登录。有 Codex 时 eve 会启动 `codex login`；否则走直接登录。
 - **`chatgpt-sub unavailable`（已装 Codex）**：更新或重启 Codex 后重试。eve **不会**用另一份已存 session 掩盖 app-server 失败。
-- **`chatgpt-sub unavailable`（无 Codex）**：按提示排查 OS 凭据库，或在 token 刷新失败时检查网络，再从 `/model` 重试。若报告无效 session，重新登录覆盖。
+- **`chatgpt-sub unavailable`（无 Codex）**：按提示排查 OS 凭据库，或在 token 刷新失败时检查网络，再从 `/login` 重试。若报告无效 session，重新登录覆盖。
 - **后端拒绝模型**：可用性取决于已登录的 ChatGPT 账户。换一个受支持的 OpenAI 模型。
 - **无法使用 device 登录**：在 ChatGPT 安全设置启用 device code authorization，或在本机终端且 1455 端口可用时登录。
 
@@ -149,4 +156,4 @@ ChatGPT 订阅凭证是本地用户凭证。`eve deploy` 会阻止活跃模型�
 
 - [`agent.ts`](../agent-config)：这些 helpers 配置的 agent config
 - [工具（Tools）](../tools)：`defineTool`，最常用的 helper
-- [项目布局（Project layout）](./project-layout)：每个 define\* 在磁盘上的位置
+- [Agent Files](./agent-files)：每个 define\* 在磁盘上的位置
