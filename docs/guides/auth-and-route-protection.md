@@ -124,6 +124,36 @@ export default eveChannel({
 
 Route-auth 的敏感值应放在环境变量里，不会进入 compiled artifacts。Runtime 会在启动时从 authored channel definition 重新 materialize。
 
+## 接受来自另一部署的转发身份（Accepting forwarded identity）
+
+`defineRemoteAgent({ forwardPrincipal: true })` 的调用方（见[远程 Agent](./remote-agents#转发调用方身份)）会在 create / continuation 请求体里以 `forwardedPrincipal` 断言终端用户身份。默认一律 `403`——要接受别人「自称是谁」的说法，必须用 `eveChannel` 的 `trustedForwarders` **精确点名**信任哪些转发者：
+
+```ts title="agent/channels/eve.ts"
+import { eveChannel } from "eve/channels/eve";
+import { vercelOidc, vercelSubject } from "eve/channels/auth";
+
+export default eveChannel({
+  auth: [vercelOidc()],
+  // 只有 router 部署可以转发 eve 委派上下文
+  trustedForwarders: (forwarder) =>
+    forwarder.subject === vercelSubject({ teamSlug: "acme", projectName: "router" }),
+});
+```
+
+`trustedForwarders` 授权已验证的转发者提供 eve 委派上下文：principal 身份、父 session lineage，以及（在转发 principal 时）trace 内容约束。务必精确匹配：`() => true` 会把该权限交给每个通过 route auth 的调用方，包括被 `vercelOidc()` 接受的 preview 部署。框架默认 channel **拒绝**转发的 principal，并忽略其它上下文。
+
+谓词接受 create 请求时，`ctx.session.auth.current` 与 `.initiator` 会带上转发用户，效果如同用户直接调用本部署。continuation 时只替换 `auth.current`；`auth.initiator` 仍是 session 创建者。因此 user-scoped connections、本地子智能体以及后续 `forwardPrincipal` 跳转看到的是当前 turn 的调用方。
+
+接受的上下文会把转发者记为 `eve:forwarded-by` 属性（接收方总是覆盖，转发者无法伪造）。转发身份拒绝是大声失败：没有配置 `trustedForwarders`、或谓词拒绝该转发者 → `403`；畸形 payload → `400`。只接受 principal 元数据——token 与凭据从不跨跳。
+
+受信任的父 session lineage 会填充 `ctx.session.parent`，并在委派链上保留根 session。不受信任的 lineage 被忽略；接受 lineage **不会**取消正常的根 session token 上限。
+
+对带 callback body、且有有效采样 `traceparent` 的远程委派请求，同一份已接受的 `trustedForwarders` 结果还可接纳来自一个 W3C Baggage 成员的 origin audience 与方向性内容上限。该断言**不是**授权许可：接收方的 trace policy 仍对照不可变的 origin audience 独立裁决，再与二者求交；后续每一跳只转发收窄后的结果。畸形、部分、未采样或混版本断言退化为仅元数据。callback 与 headers 由调用方提供；已验证的传输 principal 与 `trustedForwarders` 才是信任边界。见[保留 trace 内容](./remote-agents#preserving-trace-content)。
+
+W3C `traceparent`、`tracestate` 与转发的 conversation ID 是关联元数据。它们**不**要求 `trustedForwarders`，也不建立 session lineage 或授予 session 访问权。
+
+> ⚠️ 续跑持久远程 session 前，两端都必须支持 continuation forwarding。仅支持 create 的接收方会以 HTTP 400 拒绝转发的 continuation；发送方不会回退到 service 身份。升级行为见[转发调用方身份](./remote-agents#转发调用方身份)。
+
 ## `ctx.session.auth` 会拿到什么（What reaches `ctx.session.auth`）
 
 Runtime code 中，`ctx.session.auth` 会把 channel route auth 的结果作为 caller snapshot 向后传递：
