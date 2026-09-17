@@ -7,7 +7,7 @@ description: "agent/ 下的 authored slots 与路径派生的命名规则。"
 
 eve 通过遍历 `agent/` 下的文件系统来构建 Agent。每个目录都是一个 authored slot，文件落在哪个 slot 决定 eve 如何加载它。
 
-> 官方 live 站点目前把这份内容并进 [Getting Started](https://eve.dev/docs/getting-started)。中文站保留独立参考页。`memory/` 和 `extensions/` 来自官方 [Memory](https://eve.dev/docs/memory) 和 [Extensions](https://eve.dev/docs/extensions) 页面；官方 Getting Started 的推荐布局表暂未列出这两行。
+> **官方说明：** 官方现已拆出 [Project Structure](https://eve.dev/docs/concepts/project-structure) 与 [Agent Files](https://eve.dev/docs/reference/agent-files)。中文站对应页见[项目结构](../concepts/project-structure)与 [Agent Files](./agent-files)。本页保留为中文实践对照，不删除。
 
 ## 命名规则（Naming rule）
 

@@ -65,6 +65,46 @@ export default defineAgent({
 
 只代理 `/eve/` 会让 session 能启动，但 callback 到不了 eve 时 run 会卡住。保留两个前缀，不要改写它们的路径。
 
+## 运行 workspace 成员（Run workspace members）
+
+[Agent workspace](../../concepts/project-structure#several-root-agents) 在运行时不要求 Vercel 或前端。请从各成员自己的目录构建：根目录 `eve build` 产出的是 Vercel workspace 部署，而不是一组自托管 Node 服务。
+
+例如 workspace 含 `support` 与 `research`，在**非** Vercel 构建环境、从 workspace 根执行：
+
+```bash
+(cd agents/support && npx eve build)
+(cd agents/research && npx eve build)
+```
+
+在各自终端启动构建好的 Agent，或写进进程管理器：
+
+```bash
+(cd agents/support && npx eve start --host 127.0.0.1 --port 3001)
+(cd agents/research && npx eve start --host 127.0.0.1 --port 3002)
+```
+
+下面这份 Caddy 示例给每个 Agent 独立 origin，并原样转发 `/eve/` 与 `/.well-known/workflow/`（不要改路径）。把示例主机名指到你的服务器，并在同一台机器上跑 Caddy：
+
+```text
+support.example.com {
+    reverse_proxy 127.0.0.1:3001
+}
+
+research.example.com {
+    reverse_proxy 127.0.0.1:3002
+}
+```
+
+上文的鉴权、持久存储与 sandbox 配置要对每个成员分别应用。默认本地 Workflow world 下，请持久化每个成员自己的 `.eve/.workflow-data`。若 Agent 互相委派，用显式 [workspace 同伴 transport](../../subagents#vercel-workspace-peers) 配上同伴 URL 与凭据；默认 transport 需要 Vercel。确保 callback URL 对调用方可达。
+
+### 增加对等前端
+
+`apps/web/` 下的前端是宿主管理的另一项服务，不是 `eve start` 管理的。用框架自己的命令构建与启动。浏览器客户端可用 `useEveAgent({ host: "https://support.example.com" })`；为该部署配置 [CORS](../../channels/eve#cors) 与浏览器凭据。也可以通过反向代理把每个 Agent 挂到前端同源路径上。
+
+基于路径的挂载：转发到 Agent 前剥掉公开前缀，并在该 Agent 的构建与运行环境设置 `EVE_PUBLIC_ROUTE_PREFIX`。同时转发 workflow callback 与 eve 路由。保持浏览器客户端、callback URL 与同伴 transport 与公开挂载一致。
+
+若希望由 Next.js 启动已构建的 Agent 进程并提供浏览器侧代理路由，可用 [`eve/next`](../frontend/nextjs#dev-vs-deploy-topology)。该集成是可选的；自托管进程管理器不会使用 `eve/vercel` 配置。
+
 ## 运行 schedules
 
 标准 `eve build && eve start` 路径会启动 Nitro 的 schedule runner。如果你把 output 适配成自定义 HTTP-only host 或 preset，就要自己跑 Nitro scheduled tasks，或从调度器调用同样的工作。

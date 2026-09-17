@@ -52,6 +52,13 @@ export function createSearchTool(baseUrl: string) {
 
 用 helper 包住每一个回调属性：labels、approval policies、`approvalKey`、`execute`、`toModelOutput`。`closure` 是回调唯一的 durable 快照；在回调运行时再重建 client 或查找 live runtime state。可以调用稳定的导入函数，但不要捕获 `closure` 之外的 runtime 对象——冷启动后它们会消失。eve 自带工厂（含 [memory provider tools](../../memory)）用的是同一套 durable callback 机制。
 
+
+## Resolver 在 `turn.started` 看到的消息
+
+在 `turn.started` 时，model / tool / skill / 子智能体 resolvers 会在 handler 第二参数的 `ctx.messages` 里拿到可见对话历史与入站消息（最旧在前）。含 request context，且仍应用历史投影。事件本身只有 turn 元数据。Instruction resolvers 使用[动态 instructions](https://eve.dev/docs/guides/dynamic-capabilities#dynamic-instructions) 描述的独立快照。
+
+session-limit prompt 把入站消息排队、以及鉴权完成时，同样适用。没有新输入或排队输入的鉴权回调只收到可见历史。若跑了 memory recall，结果会出现在投影快照里，再轮到入站输入。
+
 ## 接下来读什么
 
 - [子智能体](../../subagents)
