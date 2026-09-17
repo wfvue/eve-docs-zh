@@ -62,7 +62,7 @@ eve init [target] [--agents <name,...>] [--model <provider/model-id>] [--reasoni
 | `--reasoning <effort>` | enum | provider default | `none`…`xhigh`；`provider-default` 保持未编写 |
 | `--channel-web-nextjs` | flag | off | 新项目加 Web Chat；已有项目用 `eve add channel/web` |
 
-脚手架完成后，人工终端通常会继续进入 `eve dev`。可选择启用 **self-modification** 子智能体，以便在本地 dev session 里直接改 Agent；否则若 `PATH` 上有 coding-agent REPL，也可启动它来改，而不必打开 TUI。
+交互式人工终端脚手架完成后，eve 会**直接打开 TUI**。非交互与 coding-agent 调用则返回，不启交互 session。
 
 **项目建议：** CI / 非交互脚本在 workspace 中始终传 `--agent`。
 
@@ -108,7 +108,7 @@ eve dev https://your-app.vercel.app
 eve invoke "Summarize station telemetry"
 ```
 
-`eve dev` 启动本地 server + TUI；裸 URL / `--url` 只连远程。常用渲染 flag：`--tools`、`--reasoning`、`--subagents`、`--logs`。`eve acp` 走 stdio JSON-RPC。`eve invoke` 无 TUI 提交 turn，可 `--resume`。
+`eve dev` 启动本地 server + TUI；裸 URL / `--url` 只连远程。新鲜 `eve init` 打开 TUI 后会复用已有模型连接或打开 `/login`——开始聊天前不要求 Vercel 项目、channels、integrations 或 Review 步骤。改模型用 `/model`，装集成用 `/add`。凭据优先级与登录选项见[终端 UI](../guides/dev-tui)。常用渲染 flag：`--tools`、`--reasoning`、`--subagents`、`--logs`。`eve acp` 走 stdio JSON-RPC。`eve invoke` 无 TUI 提交 turn，可 `--resume`。
 
 本地会记录 ready URL、runtime 快照；无编写 `instrumentation.ts` 时写入 `.eve/traces/`。`eve logs` 读 `.eve/logs/` JSONL；`eve traces` 读 OTLP segments。本地 spans **默认保留**内容；设 `EVE_TRACES_CONTENT=off` 可省略 prompt/工具负载。保留：`EVE_TRACES*`（年龄 / 总字节 / retain count）。
 
@@ -128,7 +128,8 @@ eve invoke "Summarize station telemetry"
 
 ## 接下来读什么
 
-- [Project layout](./project-layout)
+- [Agent Files](./agent-files)：`eve info` 发现什么
+- [项目布局（实践）](./project-layout)
 - [CLI 遥测](./telemetry)
 - [instrumentation.ts](../guides/instrumentation/overview)
 - [Deploy to Vercel](../guides/deployment/vercel)
