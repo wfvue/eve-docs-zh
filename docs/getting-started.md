@@ -1,73 +1,95 @@
 ---
 title: "快速开始"
-description: "安装 eve，生成第一个 Agent，添加一个工具，并在本地运行。"
+description: "创建 eve 项目、配置模型凭据，并运行第一个 Agent。"
 ---
 
 # Getting Started：快速开始
 
-eve 是一个 filesystem-first 的 durable agent 框架。你把能力写在 `agent/` 目录下，eve 负责运行模型循环、持久化每个 session，并通过 HTTP 和平台 channel 对外服务。本文会带你生成一个应用、添加一个工具、本地运行它，然后通过 HTTP 创建、流式读取并继续一个 session。
+官方原文：[Getting Started](https://eve.dev/docs/getting-started)。
 
-官方原文：[Getting Started](https://eve.dev/docs/getting-started)。中文页保留 HTTP 走查；官方 live 页更强调项目布局。
+eve 是 filesystem-first 的 durable agent 框架。先从一个 `agent/` 起步；项目怎么组织、槽位怎么命名，见[项目结构](./concepts/project-structure)与 [Agent Files](./reference/agent-files)。
 
 ## 前置条件
 
-- Node 24 或更高版本。
-- npm，Node 会自带 npm。
-- 一个模型凭据，见下文。
+你需要：
 
-脚手架默认模型是 `openai/gpt-5.6-luna-fast`，通过 Vercel AI Gateway 路由。在运行 Agent 前，需要先设置 `AI_GATEWAY_API_KEY`，或用 `vercel link` 拉取 `VERCEL_OIDC_TOKEN`。直接调用模型提供商时，安装对应 AI SDK provider 包并设置该提供商的 API Key。
+- Node.js 24 或更高版本
+- npm（Node.js 自带）
+- Agent 所用模型的凭据
 
-你需要自行选择适合数据和场景的模型、提供商和 channel，并遵守每个模型提供商的条款以及数据处理要求。
+在终端 UI 里连接 ChatGPT 订阅、Vercel 账户，或 AI Gateway / OpenAI / Anthropic API key。开始聊天**不需要**先有 Vercel 项目。
 
-如果跳过这一步，开发 TUI 会提示缺少凭据，它的 `/model` 命令会引导你粘贴密钥或关联项目。
+请选择符合你数据处理与合规要求的模型、提供商和 channel。
 
-## 快速开始
+## 创建项目
+
+从一个 `agent/` 里的根 Agent 开始。
+
+用项目名运行 `eve init`：
 
 ```bash
 npx eve@latest init my-agent
 ```
 
-这个命令会创建项目、安装依赖并初始化 Git。脚手架完成后，eve 会询问是启动开发服务器，还是（如果安装了受支持的 coding agent）打开该 coding agent。
+该命令会创建项目、安装依赖、初始化 Git，并打开终端 UI。eve 会复用已有模型连接，或打开 `/login`。连上之后直接输入第一条消息。Channel 与集成是可选的；需要时用 `/add`。
 
-如果要把 eve 加进已有项目，在已经有 `package.json` 且还没有 `agent/` 文件的目录里运行：
+在 `/add` 里可按名称或能力搜索，例如 `iMessage` 或 `SMS`。选择器会匹配条目名、地址、标题与描述。选中后安装并完成必要设置。
+
+启动时状态行会显示 eve 在等什么。若选 Vercel 账户，在浏览器完成登录并按提示选 team；eve 会检查该 team 的 AI Gateway 访问，应用连接后再回到 composer。只改账户、team 或 key **不会**重建 Agent。连上之后即可发第一条消息，Agent 信息在后台刷新，无需重启。
+
+要把 eve 加进已有 `package.json` 的项目，在创建任何 `agent/` 文件之前，于项目根运行：
 
 ```bash
 npx eve@latest init .
 ```
 
-eve 会补上缺失的 `eve`、`ai` 和 `zod` 依赖，但不会改动项目里已有的其它内容。
+eve 会补上缺失的 `eve`、`ai`、`zod` 依赖，不改动项目已有文件。
 
 ### 自定义初始化
 
-要用不同的 AI Gateway 模型或 reasoning effort 初始化，传入 `--model` 或 `--reasoning`：
+要用不同的 AI Gateway 模型或 reasoning effort，传 `--model` 或 `--reasoning`：
 
 ```bash
 npx eve@latest init my-agent --model openai/gpt-5.6-terra --reasoning high
 ```
 
-## 运行应用
+## 运行 Agent
 
-脚手架完成后选择 **Start eve dev**，或在项目根目录运行：
+交互式初始化结束后会打开终端 UI。之后再回来时：
 
 ```bash
+cd my-agent
 npm run dev
 ```
 
-这会启动一次交互式 session，你可以给 Agent 发消息。手动安装路径用 `npx eve dev`。其它命令见 [CLI](./reference/cli) 和 [终端 UI](./guides/dev-tui)。
+这会启动交互式 session。改 `agent/instructions.md` 调整行为，改 `agent/agent.ts` 配置模型；eve 会在工作时热重载。
 
-## 项目布局
+<a id="project-layout"></a>
+<a id="agent-directory-layout"></a>
+<a id="naming-from-paths"></a>
+<a id="recommended-layout"></a>
+<a id="nested-layout"></a>
+<a id="agent-files-and-directories"></a>
+<a id="files-available-in-the-sandbox"></a>
+<a id="local-subagents"></a>
+<a id="flat-layout"></a>
+<a id="debug-file-discovery"></a>
 
-eve 通过遍历 `agent/` 下的文件系统构建 Agent。最小 Agent 需要 `instructions.md`；默认配置够用时 `agent.ts` 可选。完整 slot 表见 [项目布局](./reference/project-layout)。
+## 组织项目
 
-跨 session 记忆写在 `agent/memory/`，可复用能力包挂在 `agent/extensions/`。默认工具、覆盖和 opt-in（`glob`、`grep`、`Workflow`、`sleep`）见 [内置工具](./concepts/built-in-tools)。
+要加第二个根 Agent，或决定前端放哪，见[项目结构](./concepts/project-structure)。支持的文件与发现规则见 [Agent Files](./reference/agent-files)。中文实践对照也可看 [项目布局](./reference/project-layout)。
 
 ## 手动安装
+
+不想用脚手架时，安装运行时依赖：
 
 ```bash
 npm install eve@latest ai zod
 ```
 
-在 `package.json` 里声明 Node.js 24，然后创建 `agent/instructions.md`；需要运行时配置时再写 `agent/agent.ts`。添加第一个工具时，文件名会成为模型看到的工具名：
+在 `package.json` 声明 Node.js 24，然后创建 `agent/instructions.md`；需要运行时配置时再写 `agent/agent.ts`。
+
+添加第一个工具时，文件名即模型看到的工具名：
 
 ```ts title="agent/tools/get_weather.ts"
 import { defineTool } from "eve/tools";
@@ -82,11 +104,11 @@ export default defineTool({
 });
 ```
 
-工具运行在应用 runtime，不是 [sandbox](./sandbox)。更多见 [Tools](./tools)。
+工具跑在应用 runtime，不是 [sandbox](./sandbox)。更多见 [Tools](./tools)。
 
-## 发送一条消息
+## 发送一条消息（中文补充）
 
-每个 eve 应用都暴露同一套稳定 HTTP API。先启动一个 durable session：
+每个 eve 应用暴露同一套稳定 HTTP API。先启动 durable session：
 
 ```bash
 curl -X POST http://127.0.0.1:3000/eve/v1/session \
@@ -94,7 +116,7 @@ curl -X POST http://127.0.0.1:3000/eve/v1/session \
   -d '{"message":"What is the weather in Brooklyn?"}'
 ```
 
-响应里有 `continuationToken` 和 `x-eve-session-id`。连接到：
+响应里有 `continuationToken` 和 `x-eve-session-id`。再连到：
 
 ```bash
 curl http://127.0.0.1:3000/eve/v1/session/<sessionId>/stream
@@ -102,12 +124,19 @@ curl http://127.0.0.1:3000/eve/v1/session/<sessionId>/stream
 
 完整事件集合见 [Sessions, runs and streaming](./concepts/sessions-runs-and-streaming)。
 
-## 接下来读什么
+## 继续教程
 
-- [Instrumentation](./guides/instrumentation/overview)：discovery 产物与 traces
-- [项目布局](./reference/project-layout) 和 [教程](./tutorial/first-agent)
-- [Instructions](./instructions) 和 [Tools](./tools)
-- [记忆（Memory）](./memory) 与 [内置工具](./concepts/built-in-tools)
-- [Channels](./channels/overview)、[Extensions](./extensions)、[添加集成](./install-integrations)
-- [Frontend](./guides/frontend/overview) 和 [TypeScript SDK](./guides/client/overview)
-- [部署概览](./guides/deployment/overview) 与 [执行模型与持久性](./concepts/execution-model-and-durability)
+[教程](./tutorial/first-agent) 会逐步做一个数据分析 Agent：tools、state、sandbox 分析、可复用 skills、人工审批，再到部署。
+
+教程之后按任务继续：
+
+| 目标 | 阅读 |
+| --- | --- |
+| 给模型可运行的代码 | [Tools](./tools) |
+| 连接外部 MCP / OpenAPI | [Connections](./connections) |
+| 通过 Slack、Discord 等沟通 | [Channels](./channels/overview) |
+| 做浏览器界面 | [Frontend](./guides/frontend/overview) |
+| 测试 Agent 行为 | [Evals](./evals/overview) |
+| 加固并部署 | [鉴权](./guides/auth-and-route-protection)，再 [部署](./guides/deployment/overview) |
+
+Session、turn、durable step 与 parked work 的心智模型，见[执行模型与持久性](./concepts/execution-model-and-durability)。
