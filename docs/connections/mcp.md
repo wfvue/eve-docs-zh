@@ -235,7 +235,7 @@ export default defineMcpClientConnection({
 ```
 
 - `once()`：每个 session 第一次调用时审批。
-- `always()`：每次调用都审批。
+- `always()`、`auto()`：每次调用都审批。
 - `never()`：不审批。
 
 OAuth 和 approval 可以叠加：Eve 会先记录审批，再进入 OAuth 暂停流程，恢复后不会对同一个已批准调用重复询问。
