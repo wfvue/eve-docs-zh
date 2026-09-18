@@ -34,10 +34,10 @@ import { includes } from "eve/evals/expect";
 export default defineEval({
   description: "Basic message and tool-usage coverage for the weather agent.",
   async test(t) {
-    await t.send("What is the weather in Brooklyn?");
+    const turn = await t.send("What is the weather in Brooklyn?");
     t.succeeded();
     t.calledTool("get_weather");
-    t.check(t.reply, includes("Sunny"));
+    t.check(turn.message, includes("Sunny"));
   },
 });
 ```
@@ -53,7 +53,7 @@ import { defineEvalConfig } from "eve/evals";
 import { Braintrust } from "eve/evals/reporters";
 
 export default defineEvalConfig({
-  judge: { model: "openai/gpt-5.4-mini" },
+  judge: { model: "openai/gpt-5.6-luna" },
   reporters: [Braintrust({ projectName: "my-agent" })],
 });
 ```
@@ -102,7 +102,7 @@ model: mockModel({
 
 `t` 既是驱动器，也是断言入口。这里没有单独的 `input`、`run`、`checks` 或 `scores` 字段。你写普通控制流，一边发送 turn，一边在函数内直接断言。
 
-- **驱动 Agent**：`t.send(...)`、`t.start(...)`、`t.cancel()`、`t.respond(...)`、`t.respondAll(...)`、`t.sendFile(...)`、`t.requireInputRequest(...)`、`t.newSession()`。`start()` 返回的 live turns 可以在取消或 settle 前等待 typed mid-turn events。通过 `t.reply`（最后一条 assistant message）、`t.transcript`（主 session 的 user 和 assistant 消息）、`t.sessionId` 和 `t.events` 读取返回内容。见 [Cases](../cases)。
+- **驱动 Agent**：`t.session()` 创建空 session；`t.send(...)` 一次创建 session 并发送首条消息，返回 turn。续跑走 `turn.session.send(...)`。Session handle 还暴露 `start` / `cancel` / `respond` / `respondAll` / `sendFile` / `requireInputRequest`。从 `turn.message` 读回复，从 `turn.session` 读对话状态。见 [Cases](./cases)。
 - **断言**有三类 surface，下面会介绍。
 
 ## 三种断言 surface
@@ -110,8 +110,8 @@ model: mockModel({
 每种 surface 对应不同类型的判断：
 
 - **Scoped methods** 读取 `t` 上的最终完整 run；在独立 session 上调用时，会 snapshot 该 session；在不可变的 `EveEvalTurn` 上调用时，会检查该 turn。见 [Assertions](../assertions)。
-- **`t.check(value, assertion)`** 用 `eve/evals/expect` 中的确定性 builder 对显式值打分，例如 `t.check(t.reply, includes("sunny"))`。可以检查 `t.reply`、中间草稿、解析后的 JSON 或任何其它值。见 [Assertions](../assertions)。
-- **`t.judge.autoevals.*`** 是 LLM-as-judge surface，例如 `t.judge.autoevals.closedQA("cites a source")`。默认会对 `t.reply` 评分；传入 `{ on: t.transcript }` 可以给多轮对话评分。Judge 使用配置好的 judge model，而不是被测试的 Agent 模型。见 [Judge](../judge)。
+- **`t.check(value, assertion)`** 用 `eve/evals/expect` 中的确定性 builder 对显式值打分，例如 `t.check(turn.message, includes("sunny"))`。可以检查 `turn.message`、中间草稿、解析后的 JSON 或任何其它值。见 [Assertions](./assertions)。
+- **`t.judge.autoevals.*`** 是 LLM-as-judge surface，例如 `t.judge.autoevals.closedQA("cites a source")`。默认对**最近 settle 的 turn** 的 assistant message 评分；传入 `{ on: turn.session.transcript }` 可给多轮对话评分。Judge 使用配置好的 judge model，而不是被测 Agent。见 [Judge](./judge)。
 
 ## Gate 与 soft
 
