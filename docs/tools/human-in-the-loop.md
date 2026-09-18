@@ -7,7 +7,7 @@ description: "让运行过程暂停等待人工参与：审批工具调用，或
 
 Human-in-the-loop，简称 HITL，指 Agent 在运行中持久暂停并等待人的输入。两类触发共用同一套 pause-and-resume 协议：
 
-- **Approvals**：工具执行前（或代替执行）需要人签字。Agent 决定调用工具；人决定它是否执行。
+- **Approvals**：工具策略可以自动允许、拒绝，或暂停等人审。Agent 决定调用工具；**策略**决定是否自动跑还是需要人拍板。
 - **Questions**：Agent 自己在 turn 中途提出澄清问题或选择题，并 park 直到回答。
 
 无论哪一种，run 都会进入 `session.waiting`，可以等待几秒，也可以等待几天。回答到达后，eve 从暂停点继续。Channels 会替你渲染请求。
@@ -16,17 +16,17 @@ Human-in-the-loop，简称 HITL，指 Agent 在运行中持久暂停并等待人
 
 ## Approvals
 
-审批是 [tool](./overview) 的一个属性。用 `approval` 和 `eve/tools/approval` 的 helpers 给工具加门禁：
+审批是 [tool](./overview) 的一个属性：在执行前做门禁。策略可以自动决定，也可以暂停等人。用 `approval` 和 `eve/tools/approval` 的 helpers：
 
 ```ts title="agent/tools/refund_charge.ts"
 import { defineTool } from "eve/tools";
-import { always } from "eve/tools/approval";
+import { auto } from "eve/tools/approval";
 import { z } from "zod";
 
 export default defineTool({
   description: "Refund a charge.",
   inputSchema: z.object({ tenantId: z.string(), chargeId: z.string(), amount: z.number() }),
-  approval: always(), // or once() / never() / a policy
+  approval: auto(), // or always() / once() / never() / a policy
   async execute(input) {
     return refund(input);
   },
@@ -38,10 +38,32 @@ export default defineTool({
 | `never()` | 不要求审批（省略时的默认）。 |
 | `once()` | 每个 session 第一次运行该工具时审批，之后自动允许。 |
 | `always()` | 每次调用前都审批。 |
+| `auto()` | 让评估模型判断：这次调用能否自动跑，还是必须等人审批。 |
 
 默认省略 `approval` 的行为和 `never()` 一样，所以 tool calls 可能不经人工审批就执行。对敏感、不可逆、受监管、金融、医疗、雇佣、住房、法律、安全相关、影响用户或会产生外部副作用的动作，要求人工审批或其他防护。见 [负责任使用](../responsible-use)。
 
-决策取决于输入时，传入自己的 policy 而不是 helper。它收到与 tool execution 相同的 session context，外加 `{ toolName, toolInput, approvedTools, callId }`，同步或作为 promise 返回 AI SDK 7 approval status。用 `ctx.session.auth.current` 按当前 turn 的调用者守卫，用 `ctx.session.auth.initiator` 按创建 session 的调用者守卫。返回 `"user-approval"` 暂停等人，返回 `"not-applicable"` 继续且不提示。`toolInput` 可能是 undefined，访问前要守卫。下面这个 policy 拒绝跨租户调用，只在金额超过阈值时要求审批：
+`auto()` 用 [AI SDK evaluation model](../guides/evaluate) 把每次调用分成 `clear` 或 `caution`，默认 `typesafe-ai/jev`。和 `evaluate` 一样，模型字符串走 Vercel AI Gateway（除非应用配置了全局 AI SDK 默认 provider）：
+
+```ts
+approval: auto({ model: "typesafe-ai/jev" });
+```
+
+评估模型会看工具名和输入是否有危险效果。caution、评审失败或输入不完整时，需要用户审批。**工具输入会发给评估模型的 provider**——勿把秘密塞进会被评审的字段。
+
+可按应用策略覆盖分类文案：
+
+```ts
+approval: auto({
+  model: "typesafe-ai/jev",
+  instructions: "Review whether this refund needs finance approval.",
+  criteria: {
+    clear: "The refund can proceed automatically.",
+    caution: "A person must review the refund.",
+  },
+});
+```
+
+决策取决于输入时，传入自己的 policy 而不是 helper。它收到与 tool execution 相同的 session context，外加 `{ toolName, toolInput, approvedTools, callId, abortSignal }`，同步或作为 promise 返回 AI SDK 7 approval status。异步 policy 请传 `abortSignal`，以便 turn 取消时一并停下。用 `ctx.session.auth.current` 按当前 turn 的调用者守卫，用 `ctx.session.auth.initiator` 按创建 session 的调用者守卫。返回 `"user-approval"` 暂停等人，返回 `"not-applicable"` 继续且不提示。`toolInput` 可能是 undefined，访问前要守卫。下面这个 policy 拒绝跨租户调用，只在金额超过阈值时要求审批：
 
 ```ts
 approval: ({ session, toolInput }) => {
