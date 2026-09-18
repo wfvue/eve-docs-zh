@@ -17,7 +17,7 @@ export default defineEvalConfig({});
 
 ## Single-turn evals
 
-最常见的 eval 是发送一个 turn，然后断言回复。`t.send(input)` 会在这个 turn settle 后 resolve，`t.reply` 是最后一条 assistant message：
+最常见的 eval 是发送一个 turn，然后断言回复。`t.send(input)` 会在这个 turn settle 后 resolve；返回 turn 的 `.message` 就是 assistant 回复：
 
 ```ts title="evals/weather/brooklyn-forecast.eval.ts"
 import { defineEval } from "eve/evals";
@@ -25,9 +25,9 @@ import { includes } from "eve/evals/expect";
 
 export default defineEval({
   async test(t) {
-    await t.send("What is the weather in Brooklyn?");
+    const turn = await t.send("What is the weather in Brooklyn?");
     t.succeeded();
-    t.check(t.reply, includes("Sunny"));
+    t.check(turn.message, includes("Sunny"));
   },
 });
 ```
@@ -74,7 +74,7 @@ export default defineEval({
     t.check(draft.message, includes("Best regards"));
     t.judge.autoevals.closedQA("professional tone", { on: draft.message }).atLeast(0.6);
 
-    await t.send("Now send it.");
+    await draft.session.send("Now send it.");
     t.calledTool("send_email");
   },
 });
@@ -90,7 +90,7 @@ export default defineEval({
   async test(t) {
     const first = await t.send("My favorite word is marigold.");
 
-    const second = await t.send("What is my favorite word?");
+    const second = await first.session.send("What is my favorite word?");
     await t.require(second.sessionId, equals(first.sessionId));
 
     t.succeeded();
@@ -98,7 +98,7 @@ export default defineEval({
 
     t.judge.autoevals
       .closedQA("The assistant remembers the user's favorite word across turns", {
-        on: t.transcript,
+        on: first.session.transcript,
       })
       .atLeast(0.8);
   },
@@ -107,7 +107,7 @@ export default defineEval({
 
 ## Drive API
 
-`t` 会驱动主 session；`t.newSession()` 会返回同一 target 上的独立 `EveEvalSession`，它的事件也会进入同一个 run-level assertions。
+每次 `t.session()` 或 `t.send()` 都会创建**新的独立对话**。要续跑，请通过返回的 session handle。所有 session 的事件都进入同一套 run-level assertions。
 
 - `t.send(message, options?)`：发送一个 turn，并等待它 settle。它匹配 `ClientSession.send()`，resolve 后返回一个 turn，带有 `.message` 和 `.expectOk()`。
 - `t.start(message)`：启动一个文本 turn，但在 server 接受后立刻返回。返回的 live turn 暴露 `.sessionId`、`.waitForEvent(...)`、`.cancel()` 和 `.result()`，用来协调仍在运行的工作。
@@ -116,10 +116,12 @@ export default defineEval({
 - `t.requireInputRequest(filter?)`：记录一个 gate，要求刚好存在一个 pending request，并返回它。Filter 可以匹配工具名、action input、prompt、display 和 option ids。
 - `t.respond(responses, options?)`：回答指定的 pending input requests，并把回答作为下一个 turn 发出去。
 - `t.respondAll(optionId)`：用同一个 option 回答所有 pending input requests，并发送这些 responses 作为下一个 turn。
-- `t.reply`：最后一条 assistant message（或 `null`）；`t.sessionId` 是当前 session id；`t.events` 是目前捕获到的完整 typed event stream。
-- `t.transcript`：按 turn 顺序格式化主 session 观察到的 user 和 assistant 消息。把它作为 judge 的 `on` 值，可以给整段对话评分。`t.newSession()` 返回的独立 session 暴露自己的 `session.transcript`。
+- `session.events`：该 session 捕获的事件；`session.transcript`：按 turn 顺序格式化观察到的 user/assistant 消息。
+- `t.session(options?)`：创建 session 但不启动 turn、不消费 stream；在 `202` 时 resolve 为带 `.sessionId` / `.state` 的 `EveEvalSession`。
+- `t.send(message, options?)`：一次创建 session 并发送首条消息，等 turn settle；返回的 turn 带 `.session` / `.message` / `.expectOk()`。
+- `session.send` / `session.start` / `session.cancel` / `session.respond` / `session.respondAll` / `session.sendFile` / `session.requireInputRequest`：在该 session 上操作。
 
-Transcript 使用 `User:` 和 `Assistant:` 标签，用空行分隔。它排除 reasoning、tool calls、tool results 和其它 session 的消息。每个 turn settle 后更新，所以在 `await t.send(...)`、`await t.respond(...)` 或 `await live.result()` 之后再读。
+Transcript 使用 `User:` 和 `Assistant:` 标签，用空行分隔。它排除 reasoning、tool calls、tool results 和其它 session 的消息。每个 turn settle 后更新，所以在 `await session.send(...)`、`await session.respond(...)` 或 `await live.result()` 之后再读。
 
 每个 `send`（以及 `respond` / `respondAll`）都会 resolve 成一个不可变 turn，包含 `.message`、`.data`、`.events`、`.inputRequests`、`.toolCalls`、`.sessionId`、`.status` 和 `.expectOk()`。使用 `.sessionId` 可以关联 turn，或把后续工作附加到产生该 turn 的 session。`expectOk()` 只会在该 turn 以 failed 结束时抛出；一个 session 保持 open、等待下一条消息，是成功 turn 的正常结束状态。
 
@@ -147,15 +149,42 @@ export default rows.map((row) =>
   defineEval({
     description: row.task,
     async test(t) {
-      await t.send(row.prompt);
+      const turn = await t.send(row.prompt);
       t.succeeded();
-      t.check(t.reply, equals(row.sql));
+      t.check(turn.message, equals(row.sql));
     },
   }),
 );
 ```
 
 这些 loaders 是给 fixture 用的，不建议在运行时 Agent 代码里使用。
+
+
+## 预热 session（Prewarming）
+
+用 `t.session()` 在首条消息前创建 session：
+
+```ts title="evals/prewarm.eval.ts"
+import { defineEval } from "eve/evals";
+import { equals } from "eve/evals/expect";
+
+export default defineEval({
+  async test(t) {
+    const session = await t.session();
+    const turn = await session.send("Greet Alice briefly.");
+    await t.require(turn.sessionId, equals(session.sessionId));
+    turn.event("session.started", { count: 1 });
+    turn.event("turn.started", { count: 1, data: { turnId: "turn_0" } });
+    t.succeeded();
+  },
+});
+```
+
+Acceptance **不是**初始化屏障；首条消息才跑 session 初始化。TypeScript client 会在 workflow inbox 仍在启动时做有界重试。每次调用创建独立 session（含并发）。已接受但未发消息的 session 也会进入 eval 结果与超时清理。
+
+## 迁移现有 evals
+
+把 `t.newSession()` / `t.prewarm()` 换成 `const session = await t.session()`。连续的 `t.send()` 改成 `session.send()`，或从第一次返回的 turn 走 `turn.session.send()`。身份、cursor、events、transcript 从 `session` 读；回复从 `turn.message` 读。`respond` / `requireInputRequest` / `cancel` 也从 `t` 挪到 `session`。
 
 ## 接下来读什么
 
