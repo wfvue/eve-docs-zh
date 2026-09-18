@@ -54,15 +54,15 @@ attached.messageIncludes("Sunny");
 
 ## 用 `t.check` 做 value assertions
 
-`t.check(value, assertion)` 会用 `eve/evals/expect` 里的 builder 对显式 value 评分。这个 value 可以是 `t.reply`、某个 turn 的 `.message`、解析后的 JSON，或你自己计算出的任意本地变量：
+`t.check(value, assertion)` 会用 `eve/evals/expect` 里的 builder 对显式 value 评分。这个 value 可以是某个 turn 的 `.message`、解析后的 JSON，或你自己计算出的任意本地变量：
 
 ```ts
 import { includes, equals, matches, satisfies, similarity } from "eve/evals/expect";
 
-t.check(t.reply, includes(/sunny/i)); // substring 或 RegExp（gate）
+t.check(turn.message, includes(/sunny/i)); // substring 或 RegExp（gate）
 t.check(parsed, equals({ city: "Brooklyn" })); // 深度结构相等（gate）
 t.check(parsed, matches(WeatherSchema)); // Standard Schema，例如 Zod（gate）
-t.check(t.reply, similarity("Sunny, 72F")); // 0–1 Levenshtein 模糊相似度（soft）
+t.check(turn.message, similarity("Sunny, 72F")); // 0–1 Levenshtein 模糊相似度（soft）
 t.check(
   latencyMs,
   satisfies((value) => value < 1_000, "latency under one second"),
@@ -110,7 +110,7 @@ const request = session.requireInputRequest({
 
 ## Run state 和派生 facts
 
-除了原始 `t.events` stream，runner 还会派生 assertion 会读取的 typed facts：tool calls（name、input、output、lifecycle status）、subagent calls 和 HITL input requests。一个 turn 结束后 session 仍然 open、等待下一条消息，是成功 turn 的正常结束状态；因为未回答的 HITL input 而 parked 会被单独跟踪。
+除了原始 `session.events` stream，runner 还会派生 assertion 会读取的 typed facts：tool calls（name、input、output、lifecycle status）、subagent calls 和 HITL input requests。一个 turn 结束后 session 仍然 open、等待下一条消息，是成功 turn 的正常结束状态；因为未回答的 HITL input 而 parked 会被单独跟踪。
 
 Typed event matching 支持 presence、absence、exact counts、partial event data 和 ordering：
 
@@ -161,8 +161,8 @@ const request = session.requireInputRequest({ toolName: "guarded" });
 
 ```ts
 t.calledTool("get_weather").soft(); // 把工具调用作为指标记录，不阻断
-t.check(t.reply, similarity("Sunny")).atLeast(0.8); // --strict 下低于 0.8 失败
-t.check(t.reply, includes("error")).soft(); // 只跟踪，不让构建失败
+t.check(turn.message, similarity("Sunny")).atLeast(0.8); // --strict 下低于 0.8 失败
+t.check(turn.message, includes("error")).soft(); // 只跟踪，不让构建失败
 ```
 
 ## 接下来读什么
