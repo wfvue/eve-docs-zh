@@ -18,7 +18,7 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 ## 当前状态
 
-对照日期：2026-09-17，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`910bb45d299c916af572b5aa6449777a268c434c`（相对上次 `3c2edaed`：init→chat / `/login`、Project Structure + Agent Files、Teams Connect、withEve `/eve/<name>` 路由、trusted forwarder lineage、workspace services）。llms.txt fingerprint：sha256 `88e15479e8b9ed7b3641abcba9cbcb6c42cee874ad3ef3d9bcdf200186ac9ec4`（已更新）。
+对照日期：2026-09-18，上游来源 [eve.dev/llms.txt](https://eve.dev/llms.txt)、[eve.dev/sitemap.md](https://eve.dev/sitemap.md) 与 [vercel/eve docs](https://github.com/vercel/eve/tree/main/docs)。记住的上游 docs tip SHA：`a87ad469a9b99225ebc91012958c92f79b763a3f`（相对上次 `910bb45`：自动模型选择 / evaluate、自动工具审批、工具投影 `tool: false`、session prewarm + 持续流、evals 显式 session、compaction envelope、动态 schema factories）。llms.txt fingerprint：sha256 `88e15479e8b9ed7b3641abcba9cbcb6c42cee874ad3ef3d9bcdf200186ac9ec4`（未变）。
 
 | 模块 | 状态 | 说明 |
 | --- | --- | --- |
@@ -32,6 +32,23 @@ description: "Eve 中文文档项目的阶段目标、当前进度与维护节�
 
 
 
+
+
+## 2026-09-18 上游同步
+
+对照 `vercel/eve` docs tip `a87ad469a9b99225ebc91012958c92f79b763a3f`（相对上次 `910bb45d299c916af572b5aa6449777a268c434c`）。llms.txt fingerprint 未变：sha256 `88e15479e8b9ed7b3641abcba9cbcb6c42cee874ad3ef3d9bcdf200186ac9ec4`。
+
+已更新：
+
+- [x] **新页** `guides/evaluate`：`eve/models` 的 `auto` + `eve/ai` 的 `evaluate`；agent-config / typescript-api 交叉链接
+- [x] 自动工具审批：`approval: auto()`（HITL、tools overview、connections）
+- [x] 控制 agent/subagent 工具投影：`tool: false`（subagents、remote-agents、workflows、agent-config）
+- [x] Session prewarm + 持续流式（sessions-runs、channels/eve、client、frontend hooks；React 的 reactive prewarm）
+- [x] Evals：显式 `t.session()` / `turn.session`；judge 默认提及 `gpt-5.6-luna`
+- [x] Compaction 计入最终请求上下文 / envelope（context-control、agent-config）
+- [x] 动态工具用捕获状态重放 schema factories（dynamic-capabilities、`defineDurableSchema`）
+
+跳过：官方 Integrations / Templates gallery（按路线图）。
 
 ## 2026-09-17 上游同步
 
