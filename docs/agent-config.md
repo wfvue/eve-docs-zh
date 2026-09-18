@@ -44,6 +44,10 @@ export default defineAgent({
 
 模型使用会受到你选择的提供商和路由路径的条款、数据处理承诺、保留策略以及可用控制项约束。通过 Gateway 路由的模型请查看 [AI Gateway model catalog](https://vercel.com/ai-gateway/models)；直接配置 `LanguageModel` 时，请查看对应 provider 的条款。
 
+### 按请求自动选模型（`auto`）
+
+要用评估模型根据入站 prompt 从 allowlist 选模型，见官方指南 [`auto`（`eve/models`）](./guides/evaluate)。这与手写 `defineDynamic` resolver 不同：前者交给 evaluation model，后者由你返回具体模型。
+
 ## Reasoning effort
 
 设置 `reasoning` 可以通过 AI SDK 的跨 provider 选项控制模型 reasoning effort：
@@ -55,11 +59,11 @@ export default defineAgent({
 });
 ```
 
-支持的值包括：`"provider-default"`、`"none"`、`"minimal"`、`"low"`、`"medium"`、`"high"` 和 `"xhigh"`。具体哪些级别可用，以及它们如何映射到 provider 原生设置，由所选模型和 provider 决定。如果需要 provider 专属的 reasoning 控制，请使用 `modelOptions.providerOptions`。
+支持的值包括：`"provider-default"`、`"none"`、`"minimal"`、`"low"`、`"medium"`、`"high"` 和 `"xhigh"`。具体哪些级别可用，以及它们如何映射到 provider 原生设置，由所选模型和 provider 决定。如果需要 provider 专属的 reasoning 控制，请使用 `modelOptions.providerOptions`。动态模型选择可以在返回的 `{ model, reasoning?, ... }` 里带 `reasoning`，覆盖 Agent 级设置；省略则继承；`"provider-default"` 明确使用 provider 默认。
 
 ## Compaction
 
-Compaction 会在接近上下文窗口时总结较早的轮次。它默认开启，所以通常只需要调整触发时机。降低 `thresholdPercent` 可以更早触发压缩：
+Compaction 会在接近上下文窗口时总结较早的轮次。它默认开启，所以通常只需要调整触发时机。eve 会把估计的固定 checkpoint-prompt envelope 计入触发阈值，因此压缩会比「只看对话历史」更早开始。降低 `thresholdPercent` 可以更早触发压缩：
 
 ```ts title="agent/agent.ts"
 export default defineAgent({
@@ -182,6 +186,7 @@ export default defineAgent({
 | `experimental` | `AgentExperimentalDefinition` | 未设置 | 不稳定 opt-in。`workflow.world` 选 Workflow world 包（仅根）；`workflow.modelCallsPerStep` 把顺序模型调用打进更宽的 replay 单元；`workflow.retention` 控制 durable 运行时保留 run 数据多久。 |
 | `outputSchema` | Standard Schema 或 JSON Schema object | 无 | task-mode run 的结构化返回类型，例如 subagent、schedule 或 remote job。交互式对话轮次会忽略它，除非客户端为每条消息提供 schema。 |
 | `build` | `{ externalDependencies?: string[] }` | 无 | hosted build 的打包控制。`externalDependencies` 会让列出的包在运行时保持 external，同时 eve 会编译 tools 和 channels 这类 authored modules，并把这些包 trace 进 hosted output。 |
+| `tool` | `boolean` | `true` | 是否把该 Agent 暴露给父模型作为工具。在根 Agent 上控制内置 `agent` 工具；子智能体设 `tool: false` 时仍可通过 authored workflow 的 `ctx.agent()` 调用。 |
 
 `externalDependencies` 只是打包控制。它让指定包作为 hosted output 的运行时依赖保留下来；它不会授权、配置或审查这些包可能调用的第三方服务。
 
