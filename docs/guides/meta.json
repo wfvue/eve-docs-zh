@@ -9,6 +9,7 @@
     "state",
     "dynamic-capabilities",
     "dynamic-workflows",
+    "evaluate",
     "remote-agents",
     "dev-tui",
     "frontend",
