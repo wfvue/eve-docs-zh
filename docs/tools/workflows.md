@@ -67,7 +67,7 @@ import { workflow } from "eve/tools/workflow";
 export default workflow({ maxSubagents: 20 });
 ```
 
-模型通过工具的 `js` 输入提供 async 函数体。宿主能力只有 `ctx.agent(name, { message, agentId?, outputSchema? })`。例如：
+模型通过工具的 `js` 输入提供 async 函数体。宿主能力只有 `ctx.agent(name, { message, agentId?, outputSchema? })`。这也能调用配置了 `tool: false`、或被同名 `disableTool()` 文件隐藏的子智能体；若模型要写这类程序，请把路径派生名写进 workflow 工具描述或 Agent instructions。例如：
 
 ```js
 const [triage, review] = await Promise.all([
@@ -122,7 +122,7 @@ export default workflow({ maxSubagents: 20 });
 ## `ctx.ask` / `ctx.agent` / `yield`
 
 - **`ctx.ask`**：在 session channel 上发 `input.requested`（渲染方式类似 `ask_question` / 审批），返回可 await 的答案；await 会挂起 run。请求属于 run 而非 turn；后台工具里可远长于发起 turn。结束 run（return / throw / 取消）会撤回 pending 请求。可用 `Promise.race([pending, sleep("4h")])` 加截止。
-- **`ctx.agent(target, input)`**：第一个参数是模型可见子智能体名；eve 为每次调用（含对同一子智能体的重复 / 并行调用）派生 replay-stable 调用身份，作者不必再传 `key`。`agentId` 续跑已有 child；内联 `outputSchema` 既要求结构化输出，也决定返回类型。
+- **`ctx.agent(target, input)`**：第一个参数是子智能体的**路径派生名**，可以是面向模型可见的，也可以是被 `tool: false` / `disableTool()` 隐藏的。eve 为每次调用（含对同一子智能体的重复 / 并行调用）派生 replay-stable 调用身份，作者不必再传 `key`。`agentId` 续跑已有 child；内联 `outputSchema` 既要求结构化输出，也决定返回类型。
 - **`yield`**：两种执行模式都可报告进度。后台下 `yield task.postMessage(message)` 才会请求父 Agent turn；调用 `task.postMessage` 只构造描述符。默认模式下显式 `return null` 也会回退到最后一次 yield——进度与最终结果形状不同时，请显式返回对象。
 
 后台进度示例：
