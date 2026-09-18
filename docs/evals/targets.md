@@ -30,6 +30,8 @@ export default defineEval({
 
 通过这种方式 attach 的 sessions 都是完整的 `EveEvalSession`：你可以继续驱动它们，并直接在该 session 上断言，例如 `session.succeeded()`、`session.calledTool(...)`。`t` 上的聚合断言仍然会读取整个 run，包括所有 attach 进来的 session。
 
+会话创建与消息投递请用 [drive API](./cases#the-drive-api)（中文页见 Cases 页的驱动 API / 预热）。`t.session()` 不带首条消息创建 session；在返回的 handle 上再 `session.send()` / `session.start()`。`t.send()` 则一次创建并发送首条消息。这些 helper 负责协议、重试与事件收集。
+
 ## Authentication
 
 本地 target 不发送 auth：`eve eval` 自己拥有它启动的 dev server。对于远程 `--url`，当 `VERCEL_ORG_ID` 和 `VERCEL_PROJECT_ID` 都存在时，Eve 会从环境变量读取预期的 Vercel owner 和 project；否则会读取 `.vercel/project.json`。随后，Eve 会请求 Vercel 解析精确的 HTTPS origin，并且只有当 project IDs 匹配时才发送 ambient credentials。任意 URL 仍然保持匿名。
