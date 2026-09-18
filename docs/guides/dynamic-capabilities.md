@@ -27,6 +27,13 @@ eve 会为动态工具记录 durable descriptors：`execute`、审批请求/响�
 
 当 provider 包必须**直接**返回动态 `defineTool()` 值时，用 `defineDurableCallback`。eve **无法**变换已安装依赖里的回调代码。把每个 per-tool 值放进 helper 的 `closure`；回调把这份快照当作第一个参数。`closure` 遵循与变换捕获相同的 JSON 可序列化规则。
 
+
+动态工具会保留 authored 的 input/output 校验（含 Zod refine / transform）。给模型看的是 JSON Schema；真正校验仍走 authored validator。eve 会把内联的 `inputSchema` / `outputSchema` 表达式变成 **schema factories**，并快照它们捕获的 JSON 可序列化值（与 callbacks 相同）。
+
+请把 schema **写在 `defineTool()` 内联**，或引用稳定的模块级 schema。放在 resolver 局部变量里的 schema 属于不可序列化捕获——应内联构造。Schema factory 对捕获值必须同步且确定；外部读取放在 resolver 里，再捕获得到的 JSON 数据。导入的函数与模块级值仍是活代码，不要藏 per-session 状态。
+
+Schema factories 与工具 callbacks 共用同一套 session / 作用域 / resolver 条目 / 恢复规则。恢复后的 factory 收到**原始捕获**，即使再跑 resolver 会得到不同值。若缺少必需 factory，校验会显式失败；eve **不会**用 JSON Schema 描述顶替。
+
 ```ts title="provider-package/search.ts"
 import { defineDurableCallback, defineTool } from "eve/tools";
 import { z } from "zod";
@@ -66,3 +73,21 @@ session-limit prompt 把入站消息排队、以及鉴权完成时，同样适�
 - [内置工具](../../concepts/built-in-tools)
 - [记忆（Memory）](../../memory)
 - [TypeScript API](../../reference/typescript-api)
+
+### 在 package 里用 `defineDurableSchema`
+
+provider 包里创建「活的」schema 时，用 `eve/tools` 的 `defineDurableSchema`：per-tool 值放进 `closure`，在 `schema` 里构造：
+
+```ts
+import { defineDurableSchema } from "eve/tools";
+import { z } from "zod";
+
+export function amountSchema(limit: number) {
+  return defineDurableSchema({
+    closure: { limit },
+    schema: ({ limit }) => z.object({ amount: z.number().refine((amount) => amount <= limit) }),
+  });
+}
+```
+
+把结果作为 `inputSchema` / `outputSchema` 传给 `defineTool()`。用当前的 `eve extension build` 重建已有 extensions 以生成 schema factories。缺少 durable factory 的活动态 schema 会在解析时被拒绝。

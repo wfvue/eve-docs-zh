@@ -170,6 +170,8 @@ const agent = useEveAgent({
 
 默认 reducer 会把 events 投影成 `{ messages }`（`EveMessageData`）。要自定义 `data` 形状，可以传实现 `EveAgentReducer<TData>` 的 reducer。`reduce(data, event)` 会收到权威 Eve events 和 client projection events，例如 `client.message.submitted`、`client.message.failed`、`client.input.responded`。
 
+传 `prewarm: true` 可在 mount 与 reset 后准备 owned workflow；默认 `false`。详见 [前端概览](./overview)。
+
 ## 接下来读什么（What to read next）
 
 - [前端概览（Frontend overview）](../overview)
