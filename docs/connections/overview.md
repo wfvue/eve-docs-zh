@@ -214,6 +214,7 @@ export default defineMcpClientConnection({
 - `never()`：不审批。
 - `once()`：每个 session 第一次调用时审批。
 - `always()`：每次调用都审批。
+- `auto()`：用评估模型放行常规调用，对危险或不清晰的效果再问人。
 
 对会创建、修改、删除、发送、购买、访问敏感数据的远端工具，建议配置 approval、allow-list 或其它安全策略。
 
