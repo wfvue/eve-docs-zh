@@ -35,13 +35,18 @@ eve 支持两种委派：仅根可用的内置 `agent` 工具（启动或续跑�
 
 禁用根委派：
 
-```ts title="agent/tools/agent.ts"
-import { disableTool } from "eve/tools";
+在根 Agent 上设 `tool: false`，可禁止根 session 再委派「自己的副本」：
 
-export default disableTool();
+```ts title="agent/agent.ts"
+import { defineAgent } from "eve";
+
+export default defineAgent({
+  model: "anthropic/claude-opus-4.8",
+  tool: false,
+});
 ```
 
-根上 authored 的 `agent/tools/agent.ts` 优先于内置。
+也可以在 `agent/tools/agent.ts` 导出 `disableTool()`。该路径上的 authored 根工具优先于 `tool: false` 与内置。
 
 ## 声明式子智能体
 
@@ -56,7 +61,21 @@ export default defineAgent({
 });
 ```
 
-`description` 必填；父级靠它决定是否委派。每个声明式本地或远程子智能体作为 durable background task 运行：立刻返回 receipt，再用 notifications 报告更新、完成、失败或取消。人类输入请求会单独浮现在父 session。
+`description` 必填；父级靠它决定是否委派。设 `tool: false` 可把子智能体从父模型的工具面拿掉，同时仍允许 authored [workflow 工具](./tools/workflows) 用 `ctx.agent()` 按名调用：
+
+```ts title="agent/subagents/researcher/agent.ts"
+import { defineAgent } from "eve";
+
+export default defineAgent({
+  description: "Investigate ambiguous questions for the routing workflow.",
+  model: "anthropic/claude-opus-4.8",
+  tool: false,
+});
+```
+
+父级也可以在同名工具路径（如 `agent/tools/researcher.ts`）导出 `disableTool()`：压掉派生的模型工具，但不把名字从 workflow 调用注册表拿掉。同名 authored 工具替换面向模型的表面后，workflow 仍可用 `ctx.agent("researcher", ...)` 调底层子智能体。
+
+每个声明式本地或远程子智能体作为 durable background task 运行：立刻返回 receipt，再用 notifications 报告更新、完成、失败或取消。人类输入请求会单独浮现在父 session。
 
 拥有后台任务的 session（包括启动了嵌套后台工作的 child）可用 `task_cancel`。进度不再经子级 `task_update` 回调上报；父级通过 child session stream / task notifications 跟进。
 
@@ -115,13 +134,13 @@ agent/subagents/researcher/
 
 ## 父级看到什么
 
-eve 把当前 Agent 可见的每个子智能体（内置副本、声明式或 [远程](./guides/remote-agents)）降成同一形状的模型可见工具：`{ message, agentId?, outputSchema? }`。父级必须在 `message` 里带齐上下文。
+eve 把当前 Agent **启用了工具投影**的每个子智能体（内置副本、声明式或 [远程](./guides/remote-agents)）降成同一形状的模型可见工具：`{ message, agentId?, outputSchema? }`。父级必须在 `message` 里带齐上下文。
 
 声明式子智能体可调用自己目录下的嵌套子智能体；没有单独的深度限制，嵌套止于目录树。内置 `agent` 仍遵循仅根规则；`limits.maxSubagentDepth` 已不存在。
 
 Child sessions 仍可调用自己的声明式 / 远程子智能体，但收不到内置 `agent`。Authored workflow 工具使用与直接委派相同的子智能体可用性与授权检查。
 
-直接声明的工具名是路径派生名，无前缀（`agent/subagents/researcher/` → `researcher`）。Extension 贡献的带 mount 前缀。名称与 authored tools 共享命名空间，冲突会在构建或运行时拒绝。
+直接声明的工具名是路径派生名，无前缀（`agent/subagents/researcher/` → `researcher`）。Extension 贡献的带 mount 前缀。默认情况下，子智能体名 `researcher` 会与同名 authored 工具冲突。若 authored 工具故意包装该子智能体，把子智能体的 `tool` 设为 `false`：authored 工具成为面向模型的能力，`ctx.agent("researcher", ...)` 仍指向 child。同名 `disableTool()` 会完全移除面向模型的能力。其它静态 / 活跃动态冲突仍是错误。
 
 不要把子智能体委派本身当作审批边界；敏感工具仍要 `approval`、connection 审批、路由/session 鉴权等。
 
