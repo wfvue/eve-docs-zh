@@ -84,6 +84,19 @@ workspace 和 sandbox 模型见 [Sandbox](../sandbox)。
 - 当任务需要不同的专家表面时用子智能体；只在真正的专业化边界使用它。
 - 当模型应该检查文件或运行命令，而不是依赖粘贴的 instructions 时，用 workspace 或 sandbox。
 
+
+## Compaction 与 clear
+
+模型调用前，eve 会把投影后的历史与**有效 system instructions、已宣告的 tool schemas** 一起检查。检查发生在 `step.started` 解析完动态能力之后。当 provider 回报 input usage 时，eve 会把新消息以及 instructions / 工具目录的增长估计加到该计数上；未变的 schemas 不会重复计入。
+
+Compaction 在压缩对话历史时会为这些 instructions 与 tools **预留空间**。它本身缩不了 instructions 或工具目录，所以请把它们控制在所选模型的上下文窗口内。
+
+User-role instructions 走普通历史生命周期：compaction 可以摘要它们，clear 会移除它们且不重跑静态定义或动态 resolvers。System-role instructions 在历史之外，两种操作后仍继续生效。
+
+召回的 memory 也用 user-role 消息，但 eve 单独保留归属：compaction 把它们排除在摘要外、保留规范记录，并在 checkpoint 后再召回。Clear 移除这些 session 记录，但不删除 provider 外部存储里的数据。
+
+更多调节见 [agent.ts · Compaction](../agent-config#compaction) 与 [Default harness](./default-harness#压缩compaction)。
+
 ## 接下来读什么（What to read next）
 
 - [工具（Tools）](../tools)：暴露模型可以调用的类型化集成。

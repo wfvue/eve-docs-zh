@@ -31,6 +31,7 @@ export default defineRemoteAgent({
 | `headers` | `HeadersValue` | No | none | 静态或懒解析的请求 headers。 |
 | `path` | `string` | No | `/eve/v1/session` | create-session 请求拼到 `url` 后的路径。 |
 | `outputSchema` | `StandardSchema \| JSON Schema` | No | none | 每个新远程 session 首 turn 的结构化返回类型；续跑可另带 per-call schema。 |
+| `tool` | `boolean` | No | `true` | 是否把远程 Agent 暴露给父模型作为工具。设 `false` 时仅允许 authored workflow 通过 `ctx.agent()` 调用。 |
 
 ## 动态远程 Agent
 
@@ -38,7 +39,7 @@ export default defineRemoteAgent({
 
 ## 调用方式
 
-对模型而言，远程 Agent 就是另一个子智能体工具：传 `message`，可选 `outputSchema`。`message` 必须带齐任务与上下文，因为远程端看不到父级历史。结构化结果出现在任务的 completion notification 里，远程 child 仍可续聊。续跑行为见 [子智能体](../../subagents)。
+默认情况下，远程 Agent 对模型就是另一个子智能体工具：传 `message`，可选 `outputSchema`。设 `tool: false` 时，只有 authored workflow 工具作为面向模型的路由面；workflow 仍可通过路径派生名用 `ctx.agent()` 调用远程 Agent。`message` 必须带齐任务与上下文，因为远程端看不到父级历史。结构化结果出现在任务的 completion notification 里，远程 child 仍可续聊。续跑行为见 [子智能体](../../subagents)。
 
 ## 出站鉴权
 
