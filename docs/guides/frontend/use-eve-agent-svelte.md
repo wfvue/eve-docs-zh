@@ -31,9 +31,7 @@ description: "用于从浏览器驱动 Eve Agent session 的 Svelte binding。"
 - `error`：最近错误。
 - `events`：当前 session 的原始 events。
 - `session`：当前 session cursor。
-- `send`：发送文本或完整 turn。
-- `stop`：中止当前请求。
-- `reset`：清空状态并开始新 session。
+- `send` / `respond` / `prewarm` / `resume` / `cancel` / `reset`：会话命令。
 
 ## 发送消息（Send a message）
 
@@ -56,7 +54,9 @@ description: "用于从浏览器驱动 Eve Agent session 的 Svelte binding。"
 
 ## 停止、重置和恢复（Stop, reset, and resume）
 
-`stop()` 会中止 in-flight stream。`reset()` 会清空本地状态并开始 fresh session。要在 reload 后恢复，请保存 `session` cursor 和 events，然后作为 `initialSession`、`initialEvents` 传回。
+传 `prewarm: true` 可在 mount 与 reset 后准备 owned workflow（默认 `false`，第一次 send 才创建）。binding 会等 create acceptance、在 inbox 启动期间重试，并跨 turns 保持 session stream 打开。创建 / 失败 / 连接行为见 [前端概览 · Prewarm](./overview#prewarm-与持续流式)。
+
+`cancel()` 会停止服务端 durable turn，binding 仍挂接到 settle。销毁组件只断开本地 stream，不会取消服务端执行。`reset()` 清空本地状态并开始新 session。传 `initialSession`、`initialEvents` 和 `resume: true` 可恢复已保存对话。详见 [前端概览](./overview)。
 
 ## 自定义 host 和 headers（Custom host and headers）
 
