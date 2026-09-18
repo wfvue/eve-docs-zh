@@ -21,7 +21,7 @@ export default defineEval({
 
 ## Graders
 
-Judges 位于 `t.judge.autoevals` 下。这个 namespace 来自 [Braintrust autoevals](https://github.com/braintrustdata/autoevals) grader family，因此 factuality 和 closedQA 的语义来自 autoevals，而不是 Eve 自己发明的。每个 grader 默认对 `t.reply` 评分，并且默认是 soft（跟踪但不 gate）：
+Judges 位于 `t.judge.autoevals` 下。这个 namespace 来自 [Braintrust autoevals](https://github.com/braintrustdata/autoevals) grader family，因此 factuality 和 closedQA 的语义来自 autoevals，而不是 Eve 自己发明的。每个 grader 默认对**最近 settle 的 turn** 的 assistant message 评分，并且默认是 soft（跟踪但不 gate）：
 
 | Grader | 评分内容 |
 | --- | --- |
@@ -32,7 +32,7 @@ Judges 位于 `t.judge.autoevals` 下。这个 namespace 来自 [Braintrust auto
 
 Reference 或 criteria 是第一个位置参数。后面可以跟一个 options object：
 
-- `on` 是要评分的值，默认是 `t.reply`。也可以传入中间草稿或解析后的值。
+- `on` 是要评分的值，默认是最近 settle 的 turn 的 assistant message。也可以传入中间草稿或解析后的值。Judges 从「最近 settle 的那次 turn 所属 session」取最新消息文本作为 input prompt；审批响应与 stream reads 会刷新该 prompt。
 - `model` 和 `modelOptions` 是单次 judge 调用的覆盖配置，见下文。
 
 ```ts
@@ -40,7 +40,7 @@ const draft = await t.send("Draft the welcome email.");
 t.judge.autoevals.closedQA("professional tone", { on: draft.message }).atLeast(0.6);
 ```
 
-对多轮 eval，传入 `t.transcript` 可以给主 session 完整观察到的对话评分，而不是只看最后一条回复：
+对多轮 eval，传入 `session.transcript` 可以给主 session 完整观察到的对话评分，而不是只看最后一条回复：
 
 ```ts
 await t.send("My favorite word is marigold. Remember it.");
@@ -48,12 +48,12 @@ await t.send("What is my favorite word?");
 
 t.judge.autoevals
   .closedQA("The assistant remembers the user's favorite word across turns", {
-    on: t.transcript,
+    on: session.transcript,
   })
   .atLeast(0.8);
 ```
 
-`t.transcript` 包含 session 按 turn 顺序的 user 和 assistant 消息。它排除 reasoning、tool calls 和 tool results。格式和独立 session 见 [Multi-turn evals](../cases#multi-turn-evals)。
+`session.transcript` 包含 session 按 turn 顺序的 user 和 assistant 消息。它排除 reasoning、tool calls 和 tool results。格式和独立 session 见 [Multi-turn evals](../cases#multi-turn-evals)。
 
 ## Soft scoring 和 thresholds
 
@@ -83,7 +83,7 @@ Runner 构造 `t` 时会解析一次 judge model。它 **永远不是** 被测 A
 import { defineEvalConfig } from "eve/evals";
 
 export default defineEvalConfig({
-  judge: { model: "openai/gpt-5.4-mini" }, // 本 eval tree 的默认 judge
+  judge: { model: "openai/gpt-5.6-luna" }, // 本 eval tree 的默认 judge
 });
 ```
 
