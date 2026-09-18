@@ -101,7 +101,7 @@ eve 在渲染前会规范化并截断投影文本。回调抛错或返回空字�
 
 ## 审批和输出
 
-敏感动作可配置 `approval`（`eve/tools/approval` 的 `always` / `once` / `never` 等）。详见 [人在环中](./human-in-the-loop)。
+敏感动作可配置 `approval`（`eve/tools/approval` 的 `auto` / `always` / `once` / `never` 等）。`auto()` 用评估模型分流常规调用与需人审的调用，见 [自动模型选择](../guides/evaluate) 与 [人在环中](./human-in-the-loop)。
 
 默认模型看到完整 `execute` 返回。可用 `toModelOutput` 只给模型摘要，channels / hooks 仍拿完整 `action.result`。图像等可用 `toolOutput` / `toolOutputPart` 构造 content parts（base64，注意体积与 compaction）。
 
