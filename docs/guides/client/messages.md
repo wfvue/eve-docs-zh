@@ -37,6 +37,8 @@ console.log(result.status, result.message);
 
 如果 stream 中包含 `session.failed`，turn 会返回 `status: "failed"`，而不是抛错。Transport 和 route errors 会抛 `ClientError`。
 
+`session.send()` 在 durable run 已接受但 command inbox 仍在启动时，会对 `409 session_not_ready` 做有界指数退避重试，最多约 20 秒；调用方 abort signal 会取消等待。其它错误、`session.respond()`、控制方法与原始 HTTP 请求不走这套重试。未知或已终结的 session 会立刻抛带 `session_not_active` 的 `ClientError`。客户端**从不**创建替代 session。
+
 ## 发送完整 turn payload（Send a full turn payload）
 
 当需要的不只是纯文本时，可以给 `send()` 传对象：

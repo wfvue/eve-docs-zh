@@ -100,7 +100,24 @@ await response.result();
 
 ## Sessions（Sessions）
 
-每段对话创建一个 `ClientSession`：
+用户还在打字时，可以先创建并停泊一个按 ID 寻址的对话（prewarm）：
+
+```ts
+const { session } = await client.sessions.create();
+
+const response = await session.send("Summarize account A.");
+await response.result();
+```
+
+create promise 在服务端接受 durable workflow 时 resolve；它**不会**打开 event stream，也不会等初始化。过早的 `session.send()` 与其它 follow-up 一样，使用有界启动重试（见 [消息](./messages)）。
+
+要在一次请求里创建并启动首 turn，带上 message：
+
+```ts
+const { session, response } = await client.sessions.create({ message: "Summarize account A." });
+```
+
+也可以用本地句柄：
 
 ```ts
 const session = client.session();
