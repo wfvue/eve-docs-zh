@@ -19,13 +19,23 @@ React、Vue 和 Svelte 应用用 [`useEveAgent()`](../guides/frontend/overview) 
 
 ## 启动 session
 
+可以先创建并「停泊」一个对话 session，不带 `message`（prewarm）：
+
+```sh
+curl -X POST http://127.0.0.1:2000/eve/v1/session
+```
+
+eve 会启动 durable workflow、建立 inbox，并在第一条消息到来前等待——此时**不会**跑 session 级初始化，也不会发 `session.started`。发到返回的 `sessionId` 上的第一条消息仍是 `turn_0`。无消息创建只支持 conversation 模式，不接受 turn 作用域的 `clientContext`、`outputSchema`、callbacks 或 activity observers。
+
+要在一次请求里创建并启动首 turn，带上 message：
+
 ```sh
 curl -X POST http://127.0.0.1:2000/eve/v1/session \
   -H 'content-type: application/json' \
   -d '{"message":"Summarize the latest forecast."}'
 ```
 
-eve 立即在 JSON body 和 `x-eve-session-id` 头中返回 durable `sessionId`。
+两种形式下，Workflow 一接受 run，eve 就在 JSON body 和 `x-eve-session-id` 头里返回 `202` 与 durable `sessionId`。此时 command inbox 可能仍在启动；立刻 follow-up 可能收到 `409 session_not_ready`——用有界退避重试。TypeScript client 会对 send 重试最多约 20 秒，并尊重调用方 abort signal。**不要**在 prewarmed session 上干等 `session.waiting`：初始化与首批事件需要消息触发。
 
 ## 流式监听 session
 
