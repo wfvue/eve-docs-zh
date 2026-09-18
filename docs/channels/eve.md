@@ -26,7 +26,7 @@ export default eveChannel({
 
 - `GET /eve/v1/health`（检查应用是否可达）
 - `GET /eve/v1/info`（检查 Agent）
-- `POST /eve/v1/session`（启动 session 并发送首条消息）
+- `POST /eve/v1/session`（创建 session，可选同时发送首条消息）
 - `POST /eve/v1/session/:sessionId`（发送后续消息）
 - `POST /eve/v1/session/:sessionId/cancel`（取消进行中的 turn）
 - `POST /eve/v1/session/:sessionId/clear`（清空 session 的模型历史）
@@ -37,6 +37,17 @@ export default eveChannel({
 Session 路由只使用 durable session ID。先显式创建 session，然后把返回的 ID 放进每个后续消息、控制与流式请求的路径里。
 
 ### 启动并继续 session（Start and continue a session）
+
+可以先用不带 body 的请求创建对话 session（prewarm），再发首条消息：
+
+```sh
+curl -X POST https://<deployment>/eve/v1/session
+# {"ok":true,"sessionId":"wrun_A","status":"accepted"}
+```
+
+创建仍需要路由鉴权。Session audience 与超时在**创建时**选定，不会等首条消息再变。Task mode 以及 `clientContext` / `outputSchema` 等 turn 作用域字段，要求 create 请求本身就带 message。初始化边界、首 turn 身份、就绪响应与重试见 [启动 session](../concepts/sessions-runs-and-streaming#启动-session)。
+
+带上初始 message，可在一次请求里创建并启动首 turn：
 
 ```sh
 curl -X POST https://<deployment>/eve/v1/session \
@@ -49,7 +60,7 @@ curl -X POST https://<deployment>/eve/v1/session/wrun_A \
   -d '{"message":"How about tomorrow?"}'
 ```
 
-第一个请求必须带 `message`。后续请求只接受 `message` 或 `inputResponses` 之一；用后者回答挂起的 HITL 请求：
+当 create 请求带了 message 时，后续请求只接受 `message` 或 `inputResponses` 之一；用后者回答挂起的 HITL 请求：
 
 ```sh
 curl -X POST https://<deployment>/eve/v1/session/wrun_A \
@@ -65,7 +76,7 @@ curl -X POST https://<deployment>/eve/v1/session/wrun_A \
 {"code":"session_not_active","error":"The session is no longer active.","ok":false}
 ```
 
-TypeScript 客户端会把稳定 code 暴露为 `ClientError.code`。该路由从不创建或跟随替代 session。
+若 workflow 已存在但 inbox 尚未就绪，则返回 `409 session_not_ready`。TypeScript 客户端会把稳定 code 暴露为 `ClientError.code`。该路由从不创建或跟随替代 session。
 
 ### 流式监听事件（Stream events）
 
@@ -221,7 +232,7 @@ export default eveChannel({
 });
 ```
 
-`onMessage` 必须返回一个 auth 结果。一条成功的规范 eve HTTP 消息总是会 dispatch，因此总是产生或继续一个 session。
+`onMessage` 必须返回一个 auth 结果。与 `auth` 一起返回 `title`，可在 dispatch **创建 session** 或向 **prewarmed session** 发送首条消息时设置标题。一条成功的规范 eve HTTP 消息总是会 dispatch，因此总是产生或继续一个 session。
 
 ## 客户端（Clients）
 
