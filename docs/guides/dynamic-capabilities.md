@@ -1,1 +1,1 @@
-file:///workspace/eve-docs-zh/docs/guides/dynamic-capabilities.md
+PLACEHOLDER_LOAD_FROM_DISK
