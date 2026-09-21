@@ -112,7 +112,7 @@ export default defineDynamic({
 - 本地返回的配置必须用**静态** model，不能再嵌一层 `defineDynamic` model；运行时选中的模型要用**字符串 model ID**。
 - 构建 / Workflow-world 相关配置放在外层 `defineDynamic` 上；handler 结果里不能再选这些。
 
- eve **始终**会编译子智能体的 filesystem 资源（instructions、tools、skills、connections、sandbox、嵌套子智能体），但不会给动态子智能体编译占位 agent config / placeholder model。Resolver 选中后，再把返回的 config 与这些资源合并，启动子 session。每次解析可以返回不同 model 或其他 runtime agent 设置。
+eve **始终**会编译子智能体的 filesystem 资源（instructions、tools、skills、connections、sandbox、嵌套子智能体），但不会给动态子智能体编译占位 agent config / placeholder model。Resolver 选中后，再把返回的 config 与这些资源合并，启动子 session。每次解析可以返回不同 model 或其他 runtime agent 设置。
 
 ### 远程子智能体
 
@@ -216,3 +216,33 @@ export default defineDynamic({
 向 `defineDynamic` 传入 `events`；handler 返回单个 `defineTool(...)`、`Record<string, defineTool(...)>`，或 `null`。每条都要用 `defineTool()` 包住。
 
 **官方说明：** eve 会为动态工具记录 durable descriptors：`execute`、审批请求/响应策略、**按输入作用域的 `approvalKey` 回调**，以及 `toModelOutput`，以便 parked call 在新进程里重建同一套回调。
+
+动态工具的 executor 拿到的 `ToolContext` 与静态 authored 工具相同，包括 `ctx.getToken(provider)` / `ctx.requireAuth(provider)` 的 inline provider auth。
+
+下面按数仓表各建一个工具；map 用裸 key 命名，模型看到的是 `orders`、`users` 等。
+
+```ts title="agent/tools/query.ts"
+import { defineDynamic, defineTool } from "eve/tools";
+import { z } from "zod";
+import { listTables, runReadOnly } from "../lib/warehouse";
+
+export default defineDynamic({
+  events: {
+    "session.started": async (_event, ctx) =>
+      Object.fromEntries(
+        (await listTables()).map((t) => [
+          t.name,
+          defineTool({
+            description: `Query ${t.name}. Columns: ${t.columns.join(", ")}`,
+            inputSchema: z.object({ sql: z.string() }),
+            execute: ({ sql }) => runReadOnly(t.name, sql),
+          }),
+        ]),
+      ),
+  },
+});
+```
+
+### 编写可重放的回调（replayable callbacks）
+
+把回调写成内联函数表达式、箭头、方法简写，或模块级函数引用。eve 会变换导入了 `defineTool` 的 authored 模块（含 `agent/tools/` 之外的 helper），并分别存储每个回调引用的 closure 值。
