@@ -113,3 +113,100 @@ export default defineDynamic({
 - 构建 / Workflow-world 相关配置放在外层 `defineDynamic` 上；handler 结果里不能再选这些。
 
 eve **始终**会编译子智能体的 filesystem 资源（instructions、tools、skills、connections、sandbox、嵌套子智能体），但不会给动态子智能体编译占位 agent config / placeholder model。Resolver 选中后，再把返回的 config 与这些资源合并，启动子 session。每次解析可以返回不同 model 或其他 runtime agent 设置。
+
+### 远程子智能体
+
+单文件远程子智能体生命周期相同：返回 `defineRemoteAgent(...)` 暴露，`null` 省略。
+
+```ts title="agent/subagents/finance.ts"
+import { defineDynamic, defineRemoteAgent } from "eve";
+
+export default defineDynamic({
+  events: {
+    "session.started": (_event, ctx) =>
+      ctx.session.auth.current?.attributes.plan === "enterprise"
+        ? defineRemoteAgent({
+            description: "Analyze financial and accounting data.",
+            url: "https://finance-agent.example.com",
+          })
+        : null,
+  },
+});
+```
+
+返回的远程定义可以改 URL、path、headers、auth、principal 转发、output schema。函数型 URL 在动态事件跑时解析；auth / headers 保持懒解析，在每次出站请求前解析，且不进入 durable workflow state。更多见 [远程 Agent](./remote-agents)。
+
+### 事件、委派与 `SUBAGENT_UNAVAILABLE`
+
+- 支持 `session.started` 与 `turn.started`。turn 选择会盖住该 turn 的 session 选择（含 turn 返回 `null`）。
+- Resolver 抛错或返回非法定义时，eve 记日志并**省略**该子智能体。
+- 解析后的集合适用于本地与远程的直接委派；authored workflow 可通过 `ctx.agent` 调用所选子智能体；生成的程序可通过提供的 `workflow` 工具调用。
+- 启动子级前 eve 会再检查可用性：过期或手工构造的调用以 `SUBAGENT_UNAVAILABLE` 失败。
+
+> **项目建议：** 把条件可用性当作**能力组合**，而不是唯一授权边界。敏感子工具仍要各自做鉴权与审批。
+
+---
+
+## 动态连接（Dynamic connections）
+
+可用的 MCP / OpenAPI 服务取决于已鉴权调用方时，用动态连接。Handler 返回一个 `defineMcpClientConnection(...)` / `defineOpenAPIConnection(...)`、一张连接定义 map，或 `null`。每个返回值都要用对应协议 helper 包起来。
+
+**官方说明：** Connection resolver 能拿到 `ctx.session` 与 `ctx.channel.kind`；**拿不到**对话消息、delivery payload、工具输入、模型输出、continuation token，或随意的 channel metadata。账号与端点应从已鉴权 session 身份或应用自有数据选择。
+
+```ts title="agent/connections/accounts.ts"
+import { defineDynamic, defineMcpClientConnection } from "eve/connections";
+import { listEnabledAccounts, mintAccountToken } from "../lib/accounts";
+
+export default defineDynamic({
+  events: {
+    "session.started": async (_event, ctx) => {
+      const principal = ctx.session.auth.current;
+      if (principal?.principalType !== "user") return null;
+
+      const accounts = await listEnabledAccounts(principal);
+      return Object.fromEntries(
+        accounts.map((account) => [
+          account.slug,
+          defineMcpClientConnection({
+            url: "https://mcp.cloud.example.com",
+            description: `${account.label} (${account.accountId})`,
+            instanceKey: account.accountId,
+            auth: {
+              credentialOwner: "user",
+              getToken: ({ principal }) => mintAccountToken(principal, account),
+            },
+          }),
+        ]),
+      );
+    },
+  },
+});
+```
+
+返回定义与静态 [MCP](../connections/mcp) / [OpenAPI](../connections/openapi) 连接共用同一套 auth、headers、过滤、provided arguments、审批选项。解析后的连接进入 per-step registry，出现在 `connection_search`，发现的工具名为 `<connection>__<tool>`。
+
+### `instanceKey`（必设）
+
+**带鉴权的动态连接必须设稳定、非密钥的 `instanceKey`。** 用稳定的账号 / 租户标识；端点、账号或鉴权提供方变更时一并改它。eve 会先哈希再写入 durable authorization state。若 parked 的登录回调恢复时，resolver 已选了不同 instance，eve 会拒绝该回调，而不是交给新连接或复用其 token。
+
+### 命名与冲突
+
+| 返回形状 | 文件 | 连接名 |
+| --- | --- | --- |
+| 单个连接定义 | `agent/connections/accounts.ts` | `accounts` |
+| map `{ production, staging }` | `agent/connections/accounts.ts` | `production`、`staging` |
+
+- Map key 须是合法连接名：小写 ASCII 字母、数字、短横线，以字母开头，最长 64 字符。
+- Map key 是**裸名**：eve **不会**自动加文件 slug 前缀。
+- 动态连接会**覆盖**同名静态连接。
+- 两个生效的动态 resolver 不能发出同名；给其中一个 map key 加命名空间消歧。
+
+### 事件与恢复
+
+- 支持 `session.started` / `turn.started`。turn 结果替换该文件本 turn 的 session 结果（含返回 `null`）。
+- 抛错或非法 handler 会使该生命周期失败，且**不会**重建 registry——被动态结果盖住的静态连接不会作为 fallback 重新出现。
+- parked turn 恢复或 durable step 重试时，eve 可能再跑活跃的 session / turn handler，以重建 live 的 auth、header、approval、provided-argument 回调，而**不**把它们序列化进 workflow state。
+
+**项目建议：** 连接 resolver 保持幂等；外部副作用放在 handler 外。
+
+---
