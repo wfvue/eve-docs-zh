@@ -1,1 +1,3 @@
-smoke
+# 动态能力测试
+
+`defineDynamic` from eve — eve.dev OK.
