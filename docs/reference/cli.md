@@ -131,7 +131,7 @@ eve invoke "Summarize station telemetry"
 - [Agent Files](./agent-files)：`eve info` 发现什么
 - [项目布局（实践）](./project-layout)
 - [CLI 遥测](./telemetry)
-- [instrumentation.ts](../guides/instrumentation/overview)
+- [Instrumentation](../guides/instrumentation/instrumentation)
 - [Deploy to Vercel](../guides/deployment/vercel)
 - [File Memory](../memory/file)
 - [部署（Deployment）](../guides/deployment/overview)
