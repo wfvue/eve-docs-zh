@@ -1,1 +1,0 @@
-@/tmp/eve-push/ts_content.md
