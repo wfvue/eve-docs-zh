@@ -34,7 +34,7 @@
 - [守护支出（Guard the Spend）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/guard-the-spend/)：Build an Agent 教程第 7 步：用基于成本的审批门禁昂贵查询。Agent 暂停、询问、恢复。
 - [上线（Ship It）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/ship-it/)：Build an Agent 教程第 8 步：用 useEveAgent 给 Agent 加 Web 仪表盘，替换 placeholderAuth，并部署到 Vercel。
 - [连接仓库（可选）（Connect a Warehouse）](https://wfvue.github.io/eve-docs-zh/docs/tutorial/connect-a-warehouse/)：Build an Agent 教程的可选后续：通过 Vercel Connect 上的 OAuth MCP，让每个用户连接自己的仓库。
-- [项目结构（Project Structure）](https://wfvue.github.io/eve-docs-zh/docs/concepts/project-structure/)：先从一个 Agent 起步、把应用代码放在旁边；只有需要可分别寻址的多个根 Agent 时，再拆成 workspace。
+- [项目结构（Project Structure）](https://wfvue.github.io/eve-docs-zh/docs/concepts/project-structure/)：先从一个 Agent 起步，把应用代码放在旁边；只有需要可分别寻址的多个根 Agent 时，再拆成 workspace。
 - [执行模型与持久性（Execution Model and Durability）](https://wfvue.github.io/eve-docs-zh/docs/concepts/execution-model-and-durability/)：eve session 如何运行：durable 对话、按 step 打点的 turn，以及稍后恢复的 parked work。
 - [Sessions、Runs 与 Streaming](https://wfvue.github.io/eve-docs-zh/docs/concepts/sessions-runs-and-streaming/)：ID 地址化的 session 契约：消息、控制、NDJSON 事件流与重连。
 - [状态（State）](https://wfvue.github.io/eve-docs-zh/docs/concepts/state/)：使用 defineState 保存每个 session 的 durable memory：get() 和 update() 会跨 step boundaries 持久化。
