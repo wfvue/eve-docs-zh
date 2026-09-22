@@ -106,7 +106,7 @@ Stream-event hooks 和 channel adapter event handlers 在结构上相同。当�
 
 ## 接下来读什么（What to read next）
 
-- [Instrumentation](./instrumentation/overview)：typed channel metadata 与 runtime context
+- [Instrumentation](./instrumentation/instrumentation)：typed channel metadata 与 runtime context
 - [工具（Tools）](../../tools)
 - [上下文控制（Context control）](../../concepts/context-control)
 - [Session context](../../reference/typescript-api)
