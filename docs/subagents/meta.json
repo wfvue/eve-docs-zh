@@ -1,0 +1,5 @@
+{
+  "title": "子智能体（Subagents）",
+  "defaultOpen": false,
+  "pages": ["index", "../guides/remote-agents"]
+}
