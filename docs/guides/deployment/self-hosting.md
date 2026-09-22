@@ -126,5 +126,5 @@ eve dev https://your_agent.example.com
 ## 继续配置生产
 
 - [鉴权与路由保护](../auth-and-route-protection)：配置宿主的路由策略
-- [可观测性](../instrumentation/overview)：导出 traces 并诊断 runtime 失败
+- [可观测性](../instrumentation/instrumentation)：导出 traces 并诊断 runtime 失败
 - [沙盒（Sandbox）](../../sandbox)：选择并加固 sandbox 后端
