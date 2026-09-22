@@ -19,7 +19,7 @@ eve 从 Agent 目录下的文件构建 Agent。每个受支持路径决定 eve �
 agent/
 ├── agent.ts
 ├── instructions.md
-├── instrumentation.ts
+├── instrumentation/
 ├── channels/
 ├── connections/
 ├── extensions/
@@ -56,7 +56,7 @@ eve 从文件路径派生能力名：
 | --- | --- | --- | --- |
 | `agent.ts` | 运行时配置 | Yes | 模型、model options、compaction、build、experimental。见 [Agents](/docs/agent-config)。 |
 | `instructions.md` / `instructions.ts` / `instructions/` | 基础系统提示 | Yes | 扁平文件或 `.md` / `.ts` 目录。根上必填，子智能体可选。见 [Instructions](/docs/instructions)。 |
-| `instrumentation.ts` | 遥测配置 | No | 自动发现，在 Agent 代码前运行。见 [Instrumentation](/docs/guides/instrumentation/overview)。 |
+| `instrumentation/` | 遥测 providers 与 destinations | No | 每个文件一个按路径命名的 provider。见 [Instrumentation](/docs/observability/instrumentation)。 |
 | `channels/` | HTTP 与消息入口 | No | 见 [Channels](/docs/channels/overview)。 |
 | `connections/` | 外部 MCP / OpenAPI | Yes | 静态文件定义路径命名连接；动态源可按调用方解析。 |
 | `extensions/` | 挂载的可复用能力 | Yes | 文件或目录挂载。见 [Extensions](/docs/extensions)。 |
