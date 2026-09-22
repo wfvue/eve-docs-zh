@@ -40,7 +40,7 @@ export default defineAgent({
 
 本地 ChatGPT 订阅用 `eve/models/openai` 的 `chatgpt()`，并用 `/login` 登录。默认也是 `gpt-5.6-luna-fast`，**不能**在部署环境运行。
 
-`/login` 可以把静态 Gateway 字符串切到 eve helper 并管理 import。`/model` 会立即改所选模型与设置。自定义 provider SDK 调用与动态表达式仍保留 authored 行为，需手动改源码。需要 provider 专属配置时，仍可安装 AI SDK provider 包并传入其 `LanguageModel`。
+`/login` 可以把静态 Gateway 字符串切到 eve helper 并管理 import。`/model` 会立刻改所选模型与设置。自定义 provider SDK 调用与动态表达式仍保留 authored 行为，需手动改源码。需要 provider 专属配置时，仍可安装 AI SDK provider 包并传入其 `LanguageModel`。
 
 模型使用会受到你选择的提供商和路由路径的条款、数据处理承诺、保留策略以及可用控制项约束。通过 Gateway 路由的模型请查看 [AI Gateway model catalog](https://vercel.com/ai-gateway/models)；直接配置 `LanguageModel` 时，请查看对应 provider 的条款。
 
@@ -198,7 +198,7 @@ export default defineAgent({
 | 每个工具的审批（HITL） | `agent/tools/*.ts`，[Tools](./tools) |
 | 入站鉴权和网络策略 | channel 层，[Auth & route protection](./guides/auth-and-route-protection) |
 | Sandbox / workspace | `agent/sandbox/`，[Sandbox](./sandbox) |
-| Telemetry 和调试 | `agent/instrumentation.ts`，[Instrumentation](./guides/instrumentation/overview) |
+| Telemetry 和调试 | `agent/instrumentation/`，[Instrumentation](./guides/instrumentation/instrumentation) |
 
 ## 接下来读什么
 
