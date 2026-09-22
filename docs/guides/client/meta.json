@@ -1,1 +1,5 @@
-{"title":"客户端 SDK（TypeScript SDK）","pages":["overview","messages","continuations","streaming","output-schema"]}
+{
+  "title": "客户端 SDK（Client SDK）",
+  "defaultOpen": false,
+  "pages": ["overview", "messages", "continuations", "streaming", "output-schema"]
+}

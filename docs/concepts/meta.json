@@ -1,5 +1,6 @@
 {
   "title": "概念（Concepts）",
+  "defaultOpen": false,
   "pages": [
     "project-structure",
     "execution-model-and-durability",

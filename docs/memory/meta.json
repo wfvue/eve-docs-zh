@@ -1,5 +1,5 @@
 {
   "title": "记忆（Memory）",
   "defaultOpen": false,
-  "pages": ["index", "file", "custom-provider"]
+  "pages": ["overview", "file", "../patterns/multi-tenant-memory", "custom-provider"]
 }

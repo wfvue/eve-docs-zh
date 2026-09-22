@@ -1,5 +1,6 @@
 {
   "title": "渠道（Channels）",
+  "defaultOpen": false,
   "pages": [
     "overview",
     "eve",

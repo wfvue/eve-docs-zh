@@ -1,5 +1,6 @@
 {
-  "title": "构建 Agent（Build an Agent）",
+  "title": "教程（Tutorial）",
+  "defaultOpen": false,
   "pages": [
     "first-agent",
     "how-it-runs",

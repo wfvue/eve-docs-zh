@@ -1,1 +1,5 @@
-{"title":"评测（Evals）","pages":["overview","cases","assertions","judge","targets","reporters","running"]}
+{
+  "title": "评测（Evals）",
+  "defaultOpen": false,
+  "pages": ["overview", "cases", "assertions", "judge", "targets", "reporters", "running"]
+}

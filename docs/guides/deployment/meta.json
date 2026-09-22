@@ -1,5 +1,5 @@
 {
   "title": "部署（Deployment）",
   "defaultOpen": false,
-  "pages": ["index", "vercel", "self-hosting"]
+  "pages": ["overview", "vercel", "self-hosting"]
 }

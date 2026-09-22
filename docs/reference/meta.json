@@ -1,11 +1,12 @@
 {
   "title": "参考（Reference）",
   "pages": [
-    "agent-files",
-    "http-api",
-    "typescript-api",
     "cli",
+    "typescript-api",
+    "../guides/session-context",
+    "agent-files",
     "telemetry",
+    "http-api",
     "project-layout"
   ]
 }

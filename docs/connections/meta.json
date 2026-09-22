@@ -1,1 +1,5 @@
-{"title":"连接（Connections）","pages":["overview","mcp","openapi"]}
+{
+  "title": "连接（Connections）",
+  "defaultOpen": false,
+  "pages": ["overview", "mcp", "openapi"]
+}
