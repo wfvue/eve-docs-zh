@@ -49,7 +49,7 @@ export default defineTool({
 | `defineSchedule` | `eve/schedules` | `agent/schedules/<name>.ts` | [定时任务（Schedules）](../schedules) |
 | `defineState` | `eve/context` | tools、hooks、lifecycle | [Session context](../guides/session-context) |
 | `defineSandbox` | `eve/sandbox` | `agent/sandbox.ts` | [Sandbox](../sandbox) |
-| `defineInstrumentation` | `eve/instrumentation` | `agent/instrumentation.ts` | [instrumentation.ts](../guides/instrumentation/overview) |
+| `defineInstrumentation` | `eve/instrumentation` | `agent/instrumentation/` | [Instrumentation](../guides/instrumentation/instrumentation) |
 | `defineRemoteAgent` | `eve` | `agent/subagents/<id>/agent.ts` | [远程 Agent（Remote agents）](../guides/remote-agents) |
 | `defineEval` | `eve/evals` | `evals/*.eval.ts` | [Evals](../evals/overview) |
 | `defineEvalConfig` | `eve/evals` | `evals/evals.config.ts` | [Evals](../evals/overview) |
