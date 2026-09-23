@@ -58,11 +58,12 @@ eve init [target] [--agents <name,...>] [--model <provider/model-id>] [--reasoni
 | Flag | 类型 | 默认 | 描述 |
 | --- | --- | --- | --- |
 | `--agents <names>` | list | unset | 逗号分隔，创建 `agents/` workspace |
-| `--model <model>` | string | `openai/gpt-5.6-luna-fast` | 根 Agent AI Gateway model ID |
+| `--model <model>` | string | `openai/gpt-6-luna-fast` | 根 Agent AI Gateway model ID |
 | `--reasoning <effort>` | enum | provider default | `none`…`xhigh`；`provider-default` 保持未编写 |
 | `--channel-web-nextjs` | flag | off | 新项目加 Web Chat；已有项目用 `eve add channel/web` |
+| `-n, --non-interactive` | flag | off | 只脚手架并装依赖，不启动开发会话 |
 
-交互式人工终端脚手架完成后，eve 会**直接打开 TUI**。非交互与 coding-agent 调用则返回，不启交互 session。
+交互式人工终端脚手架完成后，eve 会**直接打开 TUI**。传 `-n` / `--non-interactive` 则脚手架后返回（仍会装依赖并遵循常规 Git 设置）。非交互与 coding-agent 调用不启交互 session。新项目优先沿用父 workspace 的包管理器，否则用启动 `eve init` 的那个。
 
 **项目建议：** CI / 非交互脚本在 workspace 中始终传 `--agent`。
 
