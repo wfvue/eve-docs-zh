@@ -50,11 +50,11 @@ export default defineAgent({
 
 底层 Workflow SDK 抽象见 [Workflow Worlds](https://workflow-sdk.dev/worlds)。`experimental.workflow.world` 是 beta，可能在任意版本变化。
 
-## 选择 sandbox 后端
+## 选择 sandbox provider
 
-`defaultBackend()` 按可用性选择本地 sandbox 后端。也可以为容器、虚拟机或隔离服务选择 Docker、microsandbox 或自定义 `SandboxBackend` adapter。
+默认 sandbox environment 按本地可用性选择 Docker、microsandbox 或 just-bash。也可显式选一个，或用 `defineSandboxProvider()` 为容器 / 虚拟机 / 隔离服务实现自定义 provider。
 
-除非自托管进程确实要创建托管 Vercel sandboxes，否则不要选择 `vercel()`。后端配置和选择顺序见 [沙盒（Sandbox）](../../sandbox)。
+除非自托管进程确实要创建托管 Vercel sandboxes，否则不要选 `VercelSandbox.environment()`。provider 配置与选择顺序见 [沙盒（Sandbox）](../../sandbox)。
 
 ## 配置代理路由
 
@@ -127,4 +127,4 @@ eve dev https://your_agent.example.com
 
 - [鉴权与路由保护](../auth-and-route-protection)：配置宿主的路由策略
 - [可观测性](../instrumentation/instrumentation)：导出 traces 并诊断 runtime 失败
-- [沙盒（Sandbox）](../../sandbox)：选择并加固 sandbox 后端
+- [沙盒（Sandbox）](../../sandbox)：选择并加固 sandbox provider
