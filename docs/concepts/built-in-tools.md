@@ -130,26 +130,6 @@ export default webSearch({ provider: "parallel" });
 
 也可用 `defineTool()` 完全替换成自建检索；或 `disableTool()` 关掉。
 
-### `todo`
-
-维护 session 级 durable todo 列表。
-
-```sh
-eve add tool/todo
-```
-
-包装时请 **spread** 原定义，以保留 durable state key。
-
-### `ask_question`
-
-向用户提问或给选项，然后 park turn 直到回答。只在 session 能请求用户输入时出现。见 [人在环中](../tools/human-in-the-loop)。
-
-```sh
-eve add tool/ask_question
-```
-
-可用普通 authored tool 替换其「请求输入」行为，或 `disableTool()`。
-
 ### `agent`
 
 把子任务委派给根 Agent 的新副本。**仅根可用**，始终后台运行，立刻返回 task receipt。子级拿到根的 instructions、tools、connections、sandbox，但从全新对话历史和 [state](./state) 开始。见 [子智能体](../subagents)。
@@ -197,6 +177,22 @@ authored 的 `agent/tools/connection_search.ts` 会替换框架行为。需要�
 ## Opt-in 框架工具
 
 这些**默认不加**。Agent 需要时再加。
+
+### `ask_question`
+
+`ask_question` 让模型向用户提**一个**问题，然后等待回答。模型可提供两到三个选项（各有 `label` 与一句 `description`）；用户始终可以自己打字回答。Channels 会把选项渲染成原生 UI（如 Slack select menu）。没有该工具时，模型仍可在回复文本里提问，用户用下一条消息回答。见 [人在环中](../tools/human-in-the-loop)。添加：
+
+```sh
+eve add tool/ask_question
+```
+
+```ts title="agent/tools/ask_question.ts"
+import { askQuestion } from "eve/tools/ask_question";
+
+export default askQuestion();
+```
+
+> **官方说明（BREAKING）：** `todo` 工具已移除。`ask_question` 是基于 `ctx.ask()` 的 [workflow 工具](../tools/workflows)，**默认不加**，需 `eve add`。模型收到 `{ status: "answered", answer }`（`answer` 为所选选项的 label 或用户原文）。当它是**唯一**挂起提问时，普通 follow-up 消息也可作答；若还有其它挂起提问，消息不会回答其中任何一个——`ask_question` 解析为 `{ status: "dismissed" }`，消息正常到达模型。无法请求输入的 session（如 scheduled run）返回 `{ status: "unavailable" }`，模型自行继续。删文件即移除工具。
 
 ### `glob` / `grep`
 
