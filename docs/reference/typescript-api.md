@@ -14,7 +14,7 @@ description: "define* helpers、运行时 ctx，以及每个从哪导入。"
 ```ts title="agent/agent.ts"
 import { defineAgent } from "eve";
 
-export default defineAgent({ model: "anthropic/claude-opus-4.8" });
+export default defineAgent({ model: "anthropic/claude-opus-5.5" });
 ```
 
 ```ts title="agent/tools/get_weather.ts"
@@ -56,7 +56,7 @@ export default defineTool({
 | `mockModel` | `eve/evals` | 确定性 fixture agent models | [Evals](../evals/overview) |
 | `useEveAgent` | `eve/react`、`eve/vue`、`eve/svelte` | frontend | [前端（Frontend）](../guides/frontend/overview) |
 
-工具级编写 helpers（`defineTool`、`defineWorkflowTool`、`defineDurableCallback`、`defineDurableSchema`、`defineDynamic`、`disableTool`、`ToolLabelDefinition`）来自 `eve/tools`。几个非 `define\*` helper 补全了集合：`eve/tools` 的 `disableTool`、`webSearch`（见 [默认 Harness（Default harness）](../concepts/default-harness)），`eve/tools/sleep` 的 `sleep`，`eve/channels` 的路由动词 `GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`WS`，`eve/tools/approval` 的审批策略 `auto`/`always`/`once`/`never`，以及 `eve/channels/auth` 的渠道认证 helpers `localDev`/`vercelOidc`/`placeholderAuth`。要包装内置工具，从 `eve/tools/defaults` 导入它的默认值（`bash`、`readFile`、`writeFile`、`glob`、`grep`、`webFetch`、`todo`、`loadSkill`）。`AgentReasoningDefinition` 从 `eve` 导出，用于顶层 `defineAgent({ reasoning })` 设置。`AgentLimitsDefinition` 为 `defineAgent({ limits })` 导出。`AgentWorkflowDefinition`、`AgentWorkflowRetentionDefinition` 和 `AgentWorkflowWorldDefinition` 从 `eve` 为 `defineAgent({ experimental: { workflow } })` 配置形状导出。`WebSearchToolInput` 和 `WebSearchProvider` 从 `eve/tools` 为它们对应的工具配置 helpers 导出。
+工具级编写 helpers（`defineTool`、`defineWorkflowTool`、`defineDurableCallback`、`defineDurableSchema`、`defineDynamic`、`disableTool`、`ToolLabelDefinition`）来自 `eve/tools`。几个非 `define\*` helper 补全了集合：`eve/tools` 的 `disableTool`、`webSearch`（见 [默认 Harness（Default harness）](../concepts/default-harness)），`eve/tools/sleep` 的 `sleep`，`eve/channels` 的路由动词 `GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`WS`，`eve/tools/approval` 的审批策略 `auto`/`always`/`once`/`never`，以及 `eve/channels/auth` 的渠道认证 helpers `localDev`/`vercelOidc`/`placeholderAuth`。要包装内置工具，从 `eve/tools/defaults` 导入它的默认值（`bash`、`readFile`、`writeFile`、`glob`、`grep`、`webFetch`、`loadSkill`）。`AgentReasoningDefinition` 从 `eve` 导出，用于顶层 `defineAgent({ reasoning })` 设置。`AgentLimitsDefinition` 为 `defineAgent({ limits })` 导出。`AgentWorkflowDefinition`、`AgentWorkflowRetentionDefinition` 和 `AgentWorkflowWorldDefinition` 从 `eve` 为 `defineAgent({ experimental: { workflow } })` 配置形状导出。`WebSearchToolInput` 和 `WebSearchProvider` 从 `eve/tools` 为它们对应的工具配置 helpers 导出。
 
 `eve/connections` 这一份 `defineDynamic` 接受 `session.started` 和 `turn.started` handlers，返回一个 MCP 或 OpenAPI 连接定义、一份定义 map，或 `null`。Resolver 上下文暴露已认证 session 身份和 `channel.kind`，但不暴露对话历史、投递 payload、工具输入、模型输出或自由 channel metadata。带鉴权的返回定义必须设置 `instanceKey`：稳定、非密钥的账号或租户标识，这样 durable 授权恢复不会串到别的实例。
 
@@ -110,13 +110,13 @@ export default defineTool({
 
 ## 直接 provider 模型
 
-`eve/models/openai` 的 `openai(model?)` 与 `eve/models/anthropic` 的 `anthropic(model?)` 返回 eve 自有的模型实例（vendored providers），只接受可选 model ID。默认分别为 `gpt-5.6-luna-fast` 与 `claude-sonnet-5`。
+`eve/models/openai` 的 `openai(model?)` 与 `eve/models/anthropic` 的 `anthropic(model?)` 返回 eve 自有的模型实例（vendored providers），只接受可选 model ID。默认分别为 `gpt-6-luna-fast` 与 `claude-sonnet-5`。
 
 本地用 `/login`，或设置 `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`。部署环境禁用本地 secret-store 发现，须显式配置服务端凭据。示例见[设置模型](../agent-config#设置模型)。
 
 ## ChatGPT 订阅模型
 
-`eve/models/openai` 的 `chatgpt()` 通过本地 ChatGPT 登录服务 OpenAI 模型，并记到 ChatGPT 订阅账上。不带参数时选择 `gpt-5.6-luna-fast`：
+`eve/models/openai` 的 `chatgpt()` 通过本地 ChatGPT 登录服务 OpenAI 模型，并记到 ChatGPT 订阅账上。不带参数时选择 `gpt-6-luna-fast`：
 
 ```ts title="agent/agent.ts"
 import { defineAgent } from "eve";
