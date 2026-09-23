@@ -57,7 +57,7 @@ Total revenue across all customers, all time, broken out by day.
 
 每个 session 恰好有一个活跃 continuation。用过期 handle 回答审批会被拒绝，所以没有办法双重恢复同一个 parked turn。
 
-同样的机制支撑内置 `ask_question` 工具（模型在 turn 中途问你）和 per-connection 审批（`approval: once()`）。见 [工具与 human-in-the-loop（Tools and human-in-the-loop）](../tools)。
+同样的机制支撑 opt-in 的 `ask_question` 工具（模型在 turn 中途问你，底层是 `ctx.ask()`）和 per-connection 审批（`approval: once()`）。见 [工具与 human-in-the-loop](../tools/human-in-the-loop)。
 
 → 下一步：[上线（Ship it）](./ship-it)
 了解更多：[工具与 human-in-the-loop（Tools and human-in-the-loop）](../tools)

@@ -127,17 +127,15 @@ Eve 默认带一些通用工具，例如：
 bash
 read_file
 write_file
-glob
-grep
 web_fetch
 web_search
-todo
-ask_question
 agent
+task_cancel
 load_skill
+connection_search   # 有 connections 时自动加入
 ```
 
-敏感系统建议审查这些默认工具。
+`glob` / `grep` / `sleep` / `ask_question` 等是 **opt-in**（`eve add tool/...`）；`todo` 已移除。敏感系统建议审查默认工具。
 
 例如不希望 Agent 任意抓网页，可以覆盖或禁用：
 
