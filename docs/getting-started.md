@@ -50,7 +50,7 @@ eve 会补上缺失的 `eve`、`ai`、`zod` 依赖，不改动项目已有文件
 要用不同的 AI Gateway 模型或 reasoning effort，传 `--model` 或 `--reasoning`：
 
 ```bash
-npx eve@latest init my-agent --model openai/gpt-5.6-terra --reasoning high
+npx eve@latest init my-agent --model openai/gpt-6-luna --reasoning high
 ```
 
 ## 运行 Agent

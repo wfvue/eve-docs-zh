@@ -1,11 +1,13 @@
 ---
 title: "Judge"
-description: "通过 t.judge.autoevals 使用 LLM judge 给 eval 评分，在断言上设置阈值，并配置 judge model。"
+description: "用 evaluation model 通过 criteria、类型化问题或批次给 eval 打分，并为每条断言设阈值。"
 ---
 
 # Judge
 
-当没有确定性 [assertion](../assertions) 能表达什么叫“好”时，例如事实正确性、摘要质量或自由形式标准，可以用 LLM judge 给 run 评分。`t.judge.*` 是唯一由模型支撑的 assertion surface，并且它使用的 judge model 会和被测试的 Agent 分开解析。Eve 只会用它评分，绝不会用它替换被测 Agent。
+官方原文：[Judge](https://eve.dev/docs/evals/judge)。
+
+当确定性 [assertion](./assertions) 表达不了「什么叫好」时，用 `t.judge(...)`。它调用 [`evaluate`（`eve/ai`）](../guides/evaluate#官方说明在工具里调用-evaluate)，默认 `typesafe-ai/jev`（TypeSafe AI 的 [Jev evaluation model](https://vercel.com/i/what-is-jev)）。Judge 与被测 Agent **分开**，只用于评分。
 
 ```ts
 import { defineEval } from "eve/evals";
@@ -14,98 +16,83 @@ export default defineEval({
   async test(t) {
     await t.send("Explain quantum tunneling to a 10-year-old.");
     t.succeeded();
-    t.judge.autoevals.closedQA("uses no math beyond arithmetic").atLeast(0.8);
+    t.judge("The response uses no math beyond arithmetic.").atLeast(0.8);
   },
 });
 ```
 
+不必先写 judge 配置。凭据见下文 [配置 judge model](#配置-judge-model)。
+
 ## Graders
 
-Judges 位于 `t.judge.autoevals` 下。这个 namespace 来自 [Braintrust autoevals](https://github.com/braintrustdata/autoevals) grader family，因此 factuality 和 closedQA 的语义来自 autoevals，而不是 Eve 自己发明的。每个 grader 默认对**最近 settle 的 turn** 的 assistant message 评分，并且默认是 soft（跟踪但不 gate）：
+`t.judge` 接受 criteria 字符串、单个类型化问题，或一批命名问题。字符串会变成「回复是否满足这些标准」的 boolean 题。单个问题返回一个 assertion handle；批次为每个问题返回一个 handle。
 
-| Grader | 评分内容 |
+| Question | Assertion score |
 | --- | --- |
-| `t.judge.autoevals.factuality(expected)` | 回复与 expected answer 的事实一致性，使用 A–E buckets |
-| `t.judge.autoevals.summarizes(expected)` | 回复对 expected text 的摘要质量 |
-| `t.judge.autoevals.closedQA(criteria)` | 回复是否满足一个自由形式 yes/no 标准，不需要 expected answer 匹配 |
-| `t.judge.autoevals.sql(expected)` | 两段 SQL 语句的语义等价性 |
+| Criteria 字符串或 `boolean` | 返回的为真概率，0–1 |
+| `score` | 返回的 rubric 位置 ÷ 最高 level index |
+| `choice` | 所选选项等于 `expected` 时为 1，否则 0 |
 
-Reference 或 criteria 是第一个位置参数。后面可以跟一个 options object：
-
-- `on` 是要评分的值，默认是最近 settle 的 turn 的 assistant message。也可以传入中间草稿或解析后的值。Judges 从「最近 settle 的那次 turn 所属 session」取最新消息文本作为 input prompt；审批响应与 stream reads 会刷新该 prompt。
-- `model` 和 `modelOptions` 是单次 judge 调用的覆盖配置，见下文。
+Boolean 分数是模型估计，**不保证**校准后的置信度。Rubric 至少两级，从差到好。SDK 可能返回分数位置；eve 归一化到断言阈值用的 0–1。
 
 ```ts
-const draft = await t.send("Draft the welcome email.");
-t.judge.autoevals.closedQA("professional tone", { on: draft.message }).atLeast(0.6);
+t.judge({
+  type: "score",
+  instructions: "Grade the response's clarity.",
+  criteria: ["Unclear", "Mostly clear", "Clear and concise"],
+})
+  .label("clarity")
+  .atLeast(0.6);
 ```
 
-对多轮 eval，传入 `session.transcript` 可以给主 session 完整观察到的对话评分，而不是只看最后一条回复：
+## Soft scoring 与阈值
 
-```ts
-await t.send("My favorite word is marigold. Remember it.");
-await t.send("What is my favorite word?");
-
-t.judge.autoevals
-  .closedQA("The assistant remembers the user's favorite word across turns", {
-    on: session.transcript,
-  })
-  .atLeast(0.8);
-```
-
-`session.transcript` 包含 session 按 turn 顺序的 user 和 assistant 消息。它排除 reasoning、tool calls 和 tool results。格式和独立 session 见 [Multi-turn evals](../cases#multi-turn-evals)。
-
-## Soft scoring 和 thresholds
-
-Judge assertions 是 soft，所以 threshold 直接挂在 assertion handle 上，不需要单独的 thresholds map：
-
-- **没有 threshold**：只记录。分数会进入 reports 和 artifacts，永远不会让 eval 失败。适合观察指标但不阻断。
-- `.atLeast(threshold)`：soft bar。低于阈值会把 eval 标记为 `scored`，只有在 `eve eval --strict` 下才会 fatal。
-- `.gate(threshold)`：把 judge 提升成硬 gate，低于阈值会直接让 eval 失败。
-
-```ts
-t.judge.autoevals.closedQA("cites a source"); // 仅跟踪，永不失败
-t.judge.autoevals.closedQA("cites a source").atLeast(0.6); // soft，--strict 下低于 0.6 失败
-t.judge.autoevals.factuality(reference).gate(0.8); // 0.8 的硬 gate
-```
-
-一次 judge assertion 会运行一次 judge，并消耗 token。因此只有在确定性方法表达不了时才使用 judge。Judge 调用会在记录 assertion 时启动，runner 会在 finalize 阶段等待所有 judge 结束；assertion handle 本身有意设计成不可 await。
+默认 soft（跟踪但不 gate）。用 `.atLeast` / `.atMost` 等阈值方法把判断变成硬门。详见 [Assertions](./assertions)。
 
 ## 配置 judge model
 
-Runner 构造 `t` 时会解析一次 judge model。它 **永远不是** 被测 Agent 的 model。解析优先级有三层，越内层优先级越高：
+解析顺序：
 
-1. **Per-call**：`t.judge.autoevals.closedQA("…", { model, modelOptions })`。
-2. **Per-eval**：`defineEval({ judge: { model, modelOptions }, test })`。
-3. **Project default**：在 `evals.config.ts` 里 `defineEvalConfig({ judge: { model, modelOptions } })`。
+1. 每次调用：`t.judge("…", { model, modelOptions })`
+2. 每个 eval：`defineEval({ judge: { model, modelOptions }, test })`
+3. 项目默认：`defineEvalConfig({ judge: { model, modelOptions } })`
+4. `evaluate` 的默认模型，当前为 `typesafe-ai/jev`
+
+per-eval 的 `judge` 会替换项目级配置；per-call 字段再覆盖。`judge` 与其 `model` 可选；纯确定性 eval 不会发 evaluation 请求。
 
 ```ts title="evals/evals.config.ts"
 import { defineEvalConfig } from "eve/evals";
 
 export default defineEvalConfig({
-  judge: { model: "openai/gpt-5.6-luna" }, // 本 eval tree 的默认 judge
+  judge: { model: "typesafe-ai/jev" },
 });
 ```
 
-```ts title="evals/quantum.eval.ts"
-import { defineEval } from "eve/evals";
+字符串 ID 走 AI SDK 默认 provider；未配置时走 Vercel AI Gateway。Gateway 用 `AI_GATEWAY_API_KEY` 或 Vercel OIDC；`evaluate` 也会尊重 eve 已有的本地 Gateway 连接。显式 provider evaluation model 用该 provider 的凭据：
 
-export default defineEval({
-  judge: { model: "anthropic/claude-opus-4.8" }, // 当前 eval 使用更强 judge
-  async test(t) {
-    await t.send("Explain quantum tunneling to a 10-year-old.");
-    t.judge.autoevals.factuality(reference).atLeast(0.7);
-    t.judge.autoevals.closedQA("is concise", { model: "anthropic/claude-haiku-4.5" }); // 单次调用使用更便宜 judge
-  },
+```ts
+import { openai } from "@ai-sdk/openai";
+
+t.judge("The response addresses the request.", {
+  model: openai.evaluationModel("gpt-6-luna"),
+  modelOptions: { providerOptions: { openai: { reasoningEffort: "high" } } },
 });
 ```
 
-`evals.config.ts` 中的 `judge` 是可选的。一整棵完全确定性的 eval tree 可以省略它。如果在没有解析到 judge model 的情况下调用 `t.judge.*`，会记录一个 failed gate：runner 会在 `test` 函数执行后对 assertion 评分，缺失 model 会抛出，并让 eval 以该消息失败。
+请用 provider 的 `evaluationModel` factory，**不要**传语言模型实例。Gateway 接受原生 evaluation 模型如 `typesafe-ai/jev`；传入 `openai/gpt-6-luna` 这类语言模型 ID **不会**自动选 OpenAI adapter——语言模型请用上面的 evaluation-model 实例。
 
-**字符串 model id**（例如 `"anthropic/claude-opus-4.8"`）会走 Vercel AI Gateway，并要求环境里有 `AI_GATEWAY_API_KEY` 或 `VERCEL_OIDC_TOKEN`。**AI SDK `LanguageModel` instance** 会被直接使用。配置了 model 但没有 credentials 时，由 judge 支撑的 eval 会显式 skipped，而不是失败，因此 run 会报告 skip，避免伪错误。Provider-specific judge settings 可以通过 `modelOptions.providerOptions` 传入。
+缺凭据、非法答案、不支持的问题类型与 provider 错误都会变成失败的 gate（即使是 tracked-only 判断），不会静默 skip 或换模型。
+
+## 诊断与迁移
+
+报告使用 `judge.boolean` / `judge.score` / `judge.choice`；批次断言名还带 question key。
+
+> **官方说明（BREAKING）：** autoevals graders 已移除。把 `t.judge.autoevals.closedQA(criteria, options)` 换成 `t.judge(criteria, options)`。分数现在是概率而非二元 yes/no，请对照样例重看阈值。事实性 / 摘要 / SQL 等价等请写显式问题，并把参考放进共享 state。
+
+把已配置的语言模型实例改成 evaluation model 实例。`modelOptions.providerOptions`、assertion labels 与阈值方法仍可用。[Braintrust reporting](./reporters) 继续独立接受 judge 分数。
 
 ## 接下来读什么
 
-- [Assertions](../assertions)：确定性的 run-level 和 value assertions
-- [Reporters](../reporters)：把 judged scores 发到 Braintrust experiments
-- [Targets](../targets)：judge-backed evals 如何跑本地或远程目标
+- [Assertions](./assertions)
+- [Automatic model selection / evaluate](../guides/evaluate)
+- [Evals overview](./overview)
