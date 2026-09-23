@@ -12,7 +12,7 @@
 - [agent.ts](https://wfvue.github.io/eve-docs-zh/docs/agent-config/)：在 agent.ts 中使用 defineAgent 设置 Agent 运行时配置，包括模型、reasoning effort 和上下文压缩。
 - [Instructions](https://wfvue.github.io/eve-docs-zh/docs/instructions/)：使用 instructions.md 或 instructions.ts 编写 Agent 的常驻系统提示词。
 - [技能（Skills）](https://wfvue.github.io/eve-docs-zh/docs/skills/)：编写按需加载的流程文档，让模型通过 load_skill 拉入上下文。
-- [沙盒（Sandbox）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：Agent 的隔离 bash 环境：内置文件工具、播种的 /workspace、后端、生命周期与网络策略。
+- [沙盒（已迁入子目录）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：本页已迁至 sandbox/；请改读 sandbox 概览与各 provider 页。
 - [Tools](https://wfvue.github.io/eve-docs-zh/docs/tools/overview/)：定义 Agent 可以调用的类型化动作，并用人工审批保护敏感动作；支持后台任务与 durable workflow 工具。
 - [连接（Connections）](https://wfvue.github.io/eve-docs-zh/docs/connections/overview/)：把外部 MCP 或 OpenAPI 服务暴露给模型，并让凭据始终留在模型上下文之外。
 - [渠道（Channels）](https://wfvue.github.io/eve-docs-zh/docs/channels/overview/)：Channel 契约、内置 eve HTTP 渠道与自定义渠道：用户如何触达你的 Agent。
@@ -45,7 +45,7 @@
 - [agent.ts](https://wfvue.github.io/eve-docs-zh/docs/agent-config/)：在 agent.ts 中使用 defineAgent 设置 Agent 运行时配置，包括模型、reasoning effort 和上下文压缩。
 - [Instructions](https://wfvue.github.io/eve-docs-zh/docs/instructions/)：使用 instructions.md 或 instructions.ts 编写 Agent 的常驻系统提示词。
 - [技能（Skills）](https://wfvue.github.io/eve-docs-zh/docs/skills/)：编写按需加载的流程文档，让模型通过 load_skill 拉入上下文。
-- [沙盒（Sandbox）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：Agent 的隔离 bash 环境：内置文件工具、播种的 /workspace、后端、生命周期与网络策略。
+- [沙盒（已迁入子目录）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：本页已迁至 sandbox/；请改读 sandbox 概览与各 provider 页。
 - [定时任务（Schedules）](https://wfvue.github.io/eve-docs-zh/docs/schedules/)：让 Agent 按 cron 节奏运行：一次性 prompt 或把工作交给渠道的 handler。
 - [记忆概览（Memory overview）](https://wfvue.github.io/eve-docs-zh/docs/memory/overview/)：给 Agent 跨 session 的上下文：eve 管 slot、scope 和生命周期；provider 管存储与检索。
 - [文件记忆（File Memory）](https://wfvue.github.io/eve-docs-zh/docs/memory/file/)：配置内置 fileMemory()：每个 scope 一份由模型维护的有限文档，带 save / remove 工具；可用 eve add memory/file 开通 Vercel Blob。
@@ -71,7 +71,6 @@
 - [Linear](https://wfvue.github.io/eve-docs-zh/docs/channels/linear/)：通过 Linear Agent Sessions 触达 Agent，带原生 Agent Activities（进度、提问、回复）与 Vercel Connect 凭证。
 - [Chat SDK](https://wfvue.github.io/eve-docs-zh/docs/channels/chat-sdk/)：用一个 channel 把任意 Vercel Chat SDK adapter 接到 Agent，使用你自己的凭据和 state store。
 - [自定义渠道（Custom Channels）](https://wfvue.github.io/eve-docs-zh/docs/channels/custom/)：用 routes、events、metadata、continuation tokens 和文件上传编写自定义 HTTP 与 WebSocket 渠道。
-- [Slack](https://wfvue.github.io/eve-docs-zh/docs/channels/slack.full/)：从 Slack 应用提及、私信、slash commands 和交互回调触达 Agent。
 - [子智能体（Subagents）](https://wfvue.github.io/eve-docs-zh/docs/subagents/)：把工作委派给根 Agent 副本或声明式专家；委派统一作为 durable 后台任务运行。
 - [动态能力（Dynamic Capabilities）](https://wfvue.github.io/eve-docs-zh/docs/dynamic-configuration/)：官方侧栏分组：运行时解析能力，以及按请求自动选择模型。
 - [添加集成（Add Integrations）](https://wfvue.github.io/eve-docs-zh/docs/install-integrations/)：从 eve 官方目录或第三方源发现并安装 extensions 和其它 integrations。
@@ -79,7 +78,7 @@
 - [评测概览（Overview）](https://wfvue.github.io/eve-docs-zh/docs/evals/overview/)：用 defineEval 为 Eve Agent 定义可重复、可评分的检查，并通过 eve eval 运行。
 - [用例（Cases）](https://wfvue.github.io/eve-docs-zh/docs/evals/cases/)：使用 test(t) 编写 single-turn 和 multi-turn eval，并让一个文件基于数据集展开多个 eval。
 - [断言（Assertions）](https://wfvue.github.io/eve-docs-zh/docs/evals/assertions/)：Scoped methods、value assertions、matcher mini-language，以及 gate / soft severity。
-- [Judge](https://wfvue.github.io/eve-docs-zh/docs/evals/judge/)：通过 t.judge.autoevals 使用 LLM judge 给 eval 评分，在断言上设置阈值，并配置 judge model。
+- [Judge](https://wfvue.github.io/eve-docs-zh/docs/evals/judge/)：用 evaluation model 通过 criteria、类型化问题或批次给 eval 打分，并为每条断言设阈值。
 - [目标（Targets）](https://wfvue.github.io/eve-docs-zh/docs/evals/targets/)：让同一组 eval 文件指向本地 dev server 或部署环境。
 - [报告器（Reporters）](https://wfvue.github.io/eve-docs-zh/docs/evals/reporters/)：把 eval 结果发送到 Braintrust、Datadog Experiments 或 JUnit XML。Eve 自己运行并评分全部 eval。
 - [运行评测（Running Evals）](https://wfvue.github.io/eve-docs-zh/docs/evals/running/)：eve eval CLI：参数、过滤器、退出码、artifacts，以及如何把 evals 接入 CI。
@@ -130,7 +129,7 @@
 - [Evals](https://wfvue.github.io/eve-docs-zh/docs/guides/evals/)：Evals 是给 Eve Agent 写自动化测试。
 - [自动模型选择（Automatic Model Selection）](https://wfvue.github.io/eve-docs-zh/docs/guides/evaluate/)：用 eve/models 的 auto 按请求自动选模型，或在工具与应用代码里用 eve/ai 的 evaluate 做类型化评判。
 - [Instrumentation](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/instrumentation/)：在 agent/instrumentation/ 下处理生命周期事件，并为每个目的地控制内容采集。
-- [OpenTelemetry](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/otel/)：配置 OpenTelemetry destinations、内容捕获、托管导出与 destination 级过滤。
+- [OpenTelemetry](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/otel/)：配置 OpenTelemetry destinations、内容捕获与第三方导出。
 - [迁移 Instrumentation](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/migration/)：把单个 instrumentation.ts 拆为生命周期 instrumentation 与 OpenTelemetry destinations。
 - [可观测性（Observability）](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/)：生命周期 instrumentation、OpenTelemetry destinations，以及从 instrumentation.ts 迁移。
 - [可观测性（Instrumentation）](https://wfvue.github.io/eve-docs-zh/docs/guides/instrumentation/overview/)：在 instrumentation.ts 中用 OpenTelemetry 跟踪 Agent，读取 Eve 写出的 workflow run tags，并用 eve info 和常见失败表排查 discovery。
@@ -144,4 +143,10 @@
 - [CLI 遥测（Telemetry）](https://wfvue.github.io/eve-docs-zh/docs/reference/telemetry/)：了解 eve CLI 遥测收集哪些数据，以及如何关闭或调试。
 - [HTTP API](https://wfvue.github.io/eve-docs-zh/docs/reference/http-api/)：eve 应用暴露的稳定 HTTP 接口：session 路由、事件流与控制。
 - [项目布局（Project Layout）](https://wfvue.github.io/eve-docs-zh/docs/reference/project-layout/)：agent/ 下的 authored slots 与路径派生的命名规则。
+- [沙盒（Sandbox）](https://wfvue.github.io/eve-docs-zh/docs/sandbox/)：配置 eve Agent 使用的隔离文件系统与命令环境。
+- [Default Sandbox](https://wfvue.github.io/eve-docs-zh/docs/sandbox/default/)：让 eve 为当前环境自动选择 sandbox provider。
+- [Vercel Sandbox](https://wfvue.github.io/eve-docs-zh/docs/sandbox/vercel/)：在 Vercel 上创建基于 snapshot 的持久 sandbox。
+- [Docker Sandbox](https://wfvue.github.io/eve-docs-zh/docs/sandbox/docker/)：用镜像或 Dockerfile 创建本地持久容器。
+- [microsandbox](https://wfvue.github.io/eve-docs-zh/docs/sandbox/microsandbox/)：用 OCI 镜像或 Dockerfile 创建本地轻量 VM。
+- [just-bash Sandbox](https://wfvue.github.io/eve-docs-zh/docs/sandbox/just-bash/)：纯 JavaScript shell 与虚拟文件系统。
 - [子智能体（Subagents）](https://wfvue.github.io/eve-docs-zh/docs/subagents/)：把工作委派给根 Agent 副本或声明式专家；委派统一作为 durable 后台任务运行。
