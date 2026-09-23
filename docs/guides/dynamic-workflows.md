@@ -28,7 +28,7 @@ import { defineAgent } from "eve";
 
 export default defineAgent({
   description: "Analyzes one metric: queries, computes, writes a short finding.",
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
 });
 ```
 
