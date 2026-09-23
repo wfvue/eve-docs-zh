@@ -18,7 +18,7 @@ description: "用 eve/models 的 auto 按请求自动选模型，或在工具与
 
 ## 官方说明：从 Gateway 模型里选
 
-默认情况下，`auto` 用 `typesafe-ai/jev` 做评估。和其它 AI SDK 模型字符串一样，除非你配置了全局默认 provider，否则走 [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)。
+默认情况下，`auto` 用 `typesafe-ai/jev`（TypeSafe AI 的 [Jev evaluation model](https://vercel.com/i/what-is-jev)）做评估。和其它 AI SDK 模型字符串一样，除非你配置了全局默认 provider，否则走 [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)。
 
 ```ts title="agent/agent.ts"
 import { defineAgent } from "eve";
@@ -27,14 +27,14 @@ import { auto } from "eve/models";
 export default defineAgent({
   model: auto({
     options: {
-      "openai/gpt-5.6-sol": "Difficult reasoning and engineering tasks",
-      "openai/gpt-5.6-luna": "Routine tasks where fast completion matters",
+      "openai/gpt-6-sol": "Difficult reasoning and engineering tasks",
+      "openai/gpt-6-luna": "Routine tasks where fast completion matters",
     },
   }),
 });
 ```
 
-Gateway 认证方式和其它 AI SDK 模型一样。eve **不会**额外加 TypeSafe 凭据层。`eve dev` 期间，Gateway evaluator 与 Gateway 语言模型共用 `/login` 选中的连接。若已配置 AI SDK 默认 provider，开发期的字符串模型解析仍由它负责。TUI 页脚在使用 `auto` 时显示 `dynamic model`，并带上本 turn 解析出的模型，例如 `dynamic model · openai/gpt-5.6-luna`。
+Gateway 认证方式和其它 AI SDK 模型一样。eve **不会**额外加 TypeSafe 凭据层。`eve dev` 期间，Gateway evaluator 与 Gateway 语言模型共用 `/login` 选中的连接。若已配置 AI SDK 默认 provider，开发期的字符串模型解析仍由它负责。TUI 页脚在使用 `auto` 时显示 `dynamic model`，并带上本 turn 解析出的模型，例如 `dynamic model · openai/gpt-6-luna`。
 
 ### 直接使用 provider 的 evaluation model
 
@@ -53,8 +53,8 @@ export default defineAgent({
   model: auto({
     model: typeSafeAi.evaluationModel("jev-latest"),
     options: {
-      "openai/gpt-5.6-sol": "Difficult reasoning and engineering tasks",
-      "openai/gpt-5.6-luna": "Routine tasks where fast completion matters",
+      "openai/gpt-6-sol": "Difficult reasoning and engineering tasks",
+      "openai/gpt-6-luna": "Routine tasks where fast completion matters",
     },
   }),
 });
@@ -75,7 +75,7 @@ export default defineAgent({
   reasoning: "medium",
   model: auto({
     options: {
-      "openai/gpt-5.6-sol": "Hard problems",
+      "openai/gpt-6-sol": "Hard problems",
       my_secret_model: {
         model: anthropic("sonnet-5"),
         description: "Routine work that can use the direct Anthropic provider",
@@ -122,7 +122,7 @@ export default defineTool({
 });
 ```
 
-上面的 choice 类型是 `"billing" | "support"`。每个问题按你写的 key 出现在 `result.answers`；结果还带 token usage、warnings、provider / response metadata。
+上面的 choice 类型是 `"billing" | "support"`。每个问题按你写的 key 出现在 `result.answers`；结果还带 token usage、warnings、provider / response metadata。要把该 choice 用于委派、同时让专家子智能体不出现在父模型工具集里，见 [用 Jev 路由到隐藏子智能体](../tools/workflows#用-jev-路由到隐藏子智能体)。
 
 `evaluate` 接受 AI SDK evaluation 选项（如 `maxRetries`、`headers`、`providerOptions`）。传 `abortSignal` 可取消。输入/答案校验、重试、provider 错误语义跟 AI SDK 一致。
 
@@ -145,7 +145,7 @@ export default defineTool({
 });
 ```
 
-评估模型会看工具名和输入是否有危险效果。标 caution、评审失败或输入不完整时，需要人工审批。分类器选项与数据处理见 [Human-in-the-loop](../tools/human-in-the-loop#approvals)。
+评估模型会看工具名和输入是否有危险效果。标 caution、评审失败或输入不完整时，需要人工审批。分类器选项与数据处理见 [Human-in-the-loop](../tools/human-in-the-loop#approvals)；端到端 walkthrough 见官方指南 [Auto-approve tool calls with Jev](https://vercel.com/kb/guide/auto-approve-tool-calls-eve-jev)。
 
 ## 运行时行为（白话）
 
