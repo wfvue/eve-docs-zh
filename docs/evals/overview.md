@@ -53,7 +53,7 @@ import { defineEvalConfig } from "eve/evals";
 import { Braintrust } from "eve/evals/reporters";
 
 export default defineEvalConfig({
-  judge: { model: "openai/gpt-5.6-luna" },
+  judge: { model: "openai/gpt-6-luna" },
   reporters: [Braintrust({ projectName: "my-agent" })],
 });
 ```
