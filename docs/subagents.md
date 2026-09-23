@@ -41,7 +41,7 @@ eve 支持两种委派：仅根可用的内置 `agent` 工具（启动或续跑�
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   tool: false,
 });
 ```
@@ -57,7 +57,7 @@ import { defineAgent } from "eve";
 
 export default defineAgent({
   description: "Investigate ambiguous questions before the parent agent responds.",
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
 });
 ```
 
@@ -68,7 +68,7 @@ import { defineAgent } from "eve";
 
 export default defineAgent({
   description: "Investigate ambiguous questions for the routing workflow.",
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   tool: false,
 });
 ```
