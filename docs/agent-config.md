@@ -15,13 +15,13 @@ Agent 的 `agent.ts` 会调用从 `eve` 导出的 `defineAgent`，用来设置�
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
 });
 ```
 
-如果不需要运行时配置，可以省略根目录下的 `agent.ts`。这种情况下，eve 会在同一 slot 选择默认 `agent.ts` 源，配置为 `openai/gpt-5.6-luna-fast`；自己写这个文件会替换该默认源。如果存在 `agent.ts`，则必须提供 `model`。
+如果不需要运行时配置，可以省略根目录下的 `agent.ts`。这种情况下，eve 会在同一 slot 选择默认 `agent.ts` 源，配置为 `spacexai/grok-4.7`；自己写这个文件会替换该默认源。如果存在 `agent.ts`，则必须提供 `model`。
 
-对静态 AI Gateway model ID，也可以从项目根运行 `eve set --model anthropic/claude-opus-4.8`，或在本地 dev TUI 里用 `/model anthropic/claude-opus-4.8`。
+对静态 AI Gateway model ID，也可以从项目根运行 `eve set --model anthropic/claude-opus-5.5`，或在本地 dev TUI 里用 `/model anthropic/claude-opus-5.5`。
 
 `model` 可以是一个 Gateway 模型 ID 字符串，这会通过 [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) 路由。要直接调用某个模型提供商，并在代码里配置模型，则传入该提供商实现的 `LanguageModel`。
 
@@ -36,9 +36,9 @@ export default defineAgent({
 });
 ```
 
-`eve/models/openai` 的 `openai()` 默认 `gpt-5.6-luna-fast`。两个 helper 都接受可选的原生 provider model ID，并使用 `OPENAI_API_KEY` 或 `ANTHROPIC_API_KEY`。本地开发也可使用通过 `/login` 保存的凭据；部署环境必须在服务端配置 API key。
+`eve/models/openai` 的 `openai()` 默认 `gpt-6-luna-fast`。两个 helper 都接受可选的原生 provider model ID，并使用 `OPENAI_API_KEY` 或 `ANTHROPIC_API_KEY`。本地开发也可使用通过 `/login` 保存的凭据；部署环境必须在服务端配置 API key。
 
-本地 ChatGPT 订阅用 `eve/models/openai` 的 `chatgpt()`，并用 `/login` 登录。默认也是 `gpt-5.6-luna-fast`，**不能**在部署环境运行。
+本地 ChatGPT 订阅用 `eve/models/openai` 的 `chatgpt()`，并用 `/login` 登录。默认也是 `gpt-6-luna-fast`，**不能**在部署环境运行。
 
 `/login` 可以把静态 Gateway 字符串切到 eve helper 并管理 import。`/model` 会立刻改所选模型与设置。自定义 provider SDK 调用与动态表达式仍保留 authored 行为，需手动改源码。需要 provider 专属配置时，仍可安装 AI SDK provider 包并传入其 `LanguageModel`。
 
@@ -67,7 +67,7 @@ Compaction 会在接近上下文窗口时总结较早的轮次。它默认开启
 
 ```ts title="agent/agent.ts"
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   compaction: {
     thresholdPercent: 0.75, // 默认 0.9
   },
@@ -83,7 +83,7 @@ export default defineAgent({
 
 ```ts title="agent/agent.ts"
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   limits: {
     maxInputTokensPerSession: 200_000,
     maxOutputTokensPerSession: 20_000,
@@ -113,7 +113,7 @@ export default defineAgent({
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   experimental: {
     workflow: {
       world: "@workflow/world-postgres",
@@ -140,7 +140,7 @@ npm 的 `latest` tag 可能滞后于这个系列，所以不固定版本可能�
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   experimental: {
     workflow: {
       modelCallsPerStep: 4,
@@ -161,7 +161,7 @@ run 结束后，运行时默认仍保留该 run 的数据（模型与工具载�
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",
+  model: "anthropic/claude-opus-5.5",
   experimental: {
     workflow: {
       retention: 0,
