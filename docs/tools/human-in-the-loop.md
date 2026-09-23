@@ -42,7 +42,7 @@ export default defineTool({
 
 默认省略 `approval` 的行为和 `never()` 一样，所以 tool calls 可能不经人工审批就执行。对敏感、不可逆、受监管、金融、医疗、雇佣、住房、法律、安全相关、影响用户或会产生外部副作用的动作，要求人工审批或其他防护。见 [负责任使用](../responsible-use)。
 
-`auto()` 用 [AI SDK evaluation model](../guides/evaluate) 把每次调用分成 `clear` 或 `caution`，默认 `typesafe-ai/jev`。和 `evaluate` 一样，模型字符串走 Vercel AI Gateway（除非应用配置了全局 AI SDK 默认 provider）：
+`auto()` 用 [AI SDK evaluation model](../guides/evaluate) 把每次调用分成 `clear` 或 `caution`，默认 `typesafe-ai/jev`（TypeSafe AI 的 [Jev evaluation model](https://vercel.com/i/what-is-jev)）。和 `evaluate` 一样，模型字符串走 Vercel AI Gateway（除非应用配置了全局 AI SDK 默认 provider）：
 
 ```ts
 approval: auto({ model: "typesafe-ai/jev" });
@@ -149,22 +149,33 @@ export default defineTool({
 
 ## Questions
 
-内置 `ask_question` 工具让模型暂停并向用户提问，而不是猜测。它没有 `execute`——模型用 `{ prompt, options?, allowFreeform? }` 调用它：
+`ask_question` 工具让模型暂停并向用户提**一个**问题，而不是猜测。模型用 `{ question, options? }` 调用它：
 
-- `prompt`：向用户提出的问题。
-- `options`：可选的选项列表。Channels 把它们渲染成按钮或 select menu。
-- `allowFreeform`：用户是否可以不选选项而用自由文本回答。
+- `question`：向用户提出的问题，并带上回答所需上下文。
+- `options`：两到三个互斥选项，各有 `label` 与一句 `description`。Channels 渲染成按钮或 select menu。省略 `options` 即为开放式提问。
 
-`ask_question` 属于[默认工具集](../concepts/built-in-tools)，所以你不用定义任何东西。它产生与审批相同的 `input.requested` 暂停，并以同样方式恢复。
+用户始终可以自己打字而不选选项，因此模型不需要单独的「其它」选项。工具返回 `{ status: "answered", answer }`（所选 label 或用户原文）、用户未答就离开时的 `{ status: "dismissed" }`，或 session 无法请求输入时的 `{ status: "unavailable" }`。
+
+`ask_question` 是 [opt-in 框架工具](../concepts/built-in-tools#ask_question)。用 `eve add tool/ask_question` 添加，会生成：
+
+```ts title="agent/tools/ask_question.ts"
+import { askQuestion } from "eve/tools/ask_question";
+
+export default askQuestion();
+```
+
+它是基于 `ctx.ask()` 的普通 [workflow 工具](./workflows)。需要不同 schema、或要在同一次调用里处理答案时，可自己写 workflow 工具调用 `ctx.ask()`。没有任何提问工具时，模型在回复文本里提问，用户下一条消息携带答案。
 
 ## 暂停和恢复如何工作
 
 审批和提问共用一套协议：
 
-1. 模型请求输入（审批或 `ask_question`）。
+1. 工具调用需要审批，或像 `ask_question` 这样的 workflow 工具调用了 `ctx.ask()`。
 2. eve 发出携带 pending requests 的 `input.requested` stream event。
 3. turn 持久停在 `session.waiting`，要等多久都可以。
 4. 客户端用 `inputResponses`（结构化，按 `requestId` 键控）或普通 follow-up `message` 回答。follow-up 文本匹配 option ID、option label 或数字 option index 时会自动解析，包括 `approve` 和 `cancel` 这类审批选项。
+
+对阻塞工具里的 `ctx.ask()` 提问：仅当**恰好一个**提问挂起时，follow-up 消息才能作答；消息须匹配选项，或该提问允许自由文本。否则消息作为普通 turn 到达模型，且每个 `dismissible: true` 的挂起提问解析为 `dismissed`。后台工具与子智能体的提问需要结构化响应。
 
 每个请求包含 `kind` 判别器：`tool-approval`、`question` 或 `session-limit`。客户端应该用 `kind` 选择行为和呈现；`toolName` 和 `requestId` 标识动作和请求，但不编码语义。
 
