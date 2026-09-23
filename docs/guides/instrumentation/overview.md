@@ -101,7 +101,7 @@ eve 创建 `ai.eve.turn` 父 span，并把 telemetry 交给 [AI SDK](https://ai-
 
 与 OpenTelemetry 分开，eve 给每个 Workflow run 打上保留的 `$eve.*` 属性。这些是框架拥有的属性，可在 Workflow dashboard 查询，而不是写到 OTel spans 上。无论有没有 `instrumentation.ts` 都会发出。
 
-结构性 tags 描述 run 在树中的位置：`$eve.type`、`$eve.parent`、`$eve.root`、`$eve.subagent`、`$eve.trigger`、`$eve.schedule`、`$eve.title`、`$eve.trace_id`（采样 trace 种子，不是跨对话身份）。每个 turn 还会累计 `$eve.model`、token 类与 `$eve.tool_count`，驱动 Vercel **Observability** 里的 **Agent Runs**。开启方式见 [部署到 Vercel](../deployment/vercel#inspect-agent-runs)。
+结构性 tags 描述 run 在树中的位置：`$eve.type`、`$eve.parent`、`$eve.root`、`$eve.subagent`、`$eve.trigger`、`$eve.schedule`、`$eve.title`、`$eve.trace_id`（采样 trace 种子，不是跨对话身份）。每个 turn 还会累计 `$eve.model`、token 类与 `$eve.tool_count`，便于在你配置的 OpenTelemetry destination 里按对话检索。导出与过滤见 [OpenTelemetry](./otel)。
 
 ## 排查 discovery（Debug discovery）
 
