@@ -65,7 +65,7 @@ API key 与 eve 自有的 OAuth refresh 凭据经 just-secrets 存在 OS secret 
 
 `/model` 打开模型选择与设置。每次完成选择立即生效并回聊天，没有最终 Done 步。成功的 login 或模型变更在下一条 prompt 生效。
 
-OpenAI / ChatGPT / Gateway 默认 `gpt-5.6-luna-fast`；Anthropic 默认 `claude-sonnet-5`。已显式编写且兼容的模型会保留。新默认不可用时，eve 提供该连接上可用的模型。动态或自定义 model 表达式须在 `agent.ts` 里改。
+Gateway 连接默认 `spacexai/grok-4.7`；OpenAI 与 ChatGPT 默认 `gpt-6-luna-fast`；Anthropic 默认 `claude-sonnet-5`。已显式编写且兼容的模型会保留。新默认不可用时，eve 提供该连接上可用的模型。动态或自定义 model 表达式须在 `agent.ts` 里改。
 
 ## 添加集成（Add an integration）
 
