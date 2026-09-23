@@ -31,22 +31,21 @@ eve link --project your_project_name --non-interactive
 
 把直接模型提供商、tools 和 connections 的凭据加到 Vercel 项目环境。把 [路由鉴权策略](../auth-and-route-protection) 需要的签名密钥或密码也加上。在浏览器发出生产请求前替换 `placeholderAuth()`。
 
-## 选择 sandbox 后端
+## 选择 sandbox environment
 
-不写 sandbox `backend` 时使用 `defaultBackend()`。在 Vercel 上它会选择 Vercel Sandbox。也可以显式选择：
+默认 environment 在 Vercel 上会选 Vercel Sandbox。要显式选择：
 
 ```ts
 import { defineSandbox } from "eve/sandbox";
-import { vercel } from "eve/sandbox/vercel";
+import { VercelSandbox } from "eve/sandbox/vercel";
 
-export default defineSandbox({
-  backend: vercel(),
-});
+export const environment = VercelSandbox.environment();
+export default defineSandbox(() => environment.open());
 ```
 
-资源限制、网络策略和生命周期 hooks 见 [沙盒（Sandbox）](../../sandbox)。
+准备、资源限制、网络策略与生命周期见 [沙盒（Sandbox）](../../sandbox)。
 
-**官方说明：** Vercel 构建期间，如果 sandbox 有 `bootstrap()` 或 seed files，eve 会自动创建或复用 sandbox template。构建需要创建 Vercel Sandbox templates 的权限，预热失败会阻断部署。模板与 session 设置见 [sandbox 生命周期](../../sandbox#生命周期lifecycle)。
+> **官方说明：** Vercel 构建期间，当 environment 使用 `VercelSandbox.environment({ prepare })` 或有 seed files 时，eve 会创建或复用基于 snapshot 的 template。预热失败会阻断部署。见 [sandbox 生命周期](../../sandbox#生命周期)。
 
 ## 部署 Agent
 
@@ -114,7 +113,7 @@ Vercel 用生成的 output 配置这些服务：
 - **Web runtime**：服务 health、session、stream、channel、callback 和 schedule 路由
 - **Vercel Workflow**：持久化并恢复 durable runs，开启 optimistic replay preconditions，让过期 event-log snapshot 在提交前重新加载
 - **Vercel Cron**：调用编写的 schedules
-- **Vercel Sandbox**：运行 `defaultBackend()` 选出的 sandbox sessions
+- **Vercel Sandbox**：运行默认 sandbox environment 选出的 sandbox sessions
 
 ## 验证部署
 
@@ -133,12 +132,6 @@ eve dev https://your_agent.vercel.app/eve/support
 ```
 
 如果部署开了 Deployment Protection，连接前先在本地设置 `VERCEL_AUTOMATION_BYPASS_SECRET`。
-
-## 在仪表盘查看运行
-
-Vercel 检测到 eve 后，可以在项目 **Observability** 视图下加一个 **Agent Runs** tab，用来浏览 sessions 并检查每段对话的 trace。
-
-Agent Runs tab 需要为你的 Vercel team 开启。看不到时联系 Vercel 代表。第三方 tracing backend 配置见 [可观测性](../instrumentation/instrumentation)。
 
 ## 继续配置生产
 
